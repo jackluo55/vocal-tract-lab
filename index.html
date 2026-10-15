@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta property="og:title" content="声道实验台 · Vocal Tract Lab"><meta property="og:image" content="https://lf3-static.bytednsdoc.com/obj/eden-cn/ylcylz_fsph_ryhs/ljhwZthlaukjlkulzlp/feisuda/avatar/3.svg">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071018">
+  <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
+  <title>声道实验台 · Vocal Tract Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css?v=20261015-2">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <g class="bm-wave" fill="currentColor">
+              <rect x="4" y="12" width="2.6" height="8" rx="1.3"/>
+              <rect x="9.4" y="8" width="2.6" height="16" rx="1.3"/>
+              <rect x="14.7" y="3.5" width="2.6" height="25" rx="1.3"/>
+              <rect x="20" y="8" width="2.6" height="16" rx="1.3"/>
+              <rect x="25.4" y="12" width="2.6" height="8" rx="1.3"/>
+            </g>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <p class="eyebrow">VOCAL TRACT LAB · 01</p>
+          <h1>声道实验台</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="audio-state" id="audioState"><span class="state-dot"></span><span class="audio-state-text">等待发声</span></div>
+        <label class="voice-picker">
+          <svg class="voice-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 12a7 7 0 0 1-14 0"/><path d="M12 19v3"/></svg>
+          <select id="voiceSelect" aria-label="当前个人声线">
+            <option value="default-personal">初始声线 · 我的声线</option>
+          </select>
+        </label>
+        <button class="button ghost" id="openVoiceLab"><span class="btn-plus">+</span>添加声线</button>
+        <button class="icon-button" id="openInfo" aria-label="查看使用说明">i</button>
+      </div>
+    </header>
+
+    <nav class="mobile-tabs" aria-label="工作区切换">
+      <button class="active" data-tab="anatomy">声道</button>
+      <button data-tab="controls">参数</button>
+      <button data-tab="acoustics">声学</button>
+    </nav>
+
+    <main class="workspace">
+      <section class="panel anatomy-panel active" data-panel="anatomy" aria-labelledby="anatomyTitle">
+        <div class="panel-heading">
+          <div>
+            <span class="section-number">A</span>
+            <h2 id="anatomyTitle">矢状剖面</h2>
+          </div>
+          <p>拖动亮色节点改变构形</p>
+        </div>
+
+        <div class="anatomy-stage medical-stage" id="anatomyStage">
+          <img class="anatomy-base" src="./assets/vocal-tract-anatomy.png" alt="无舌体的头颈部矢状切面医学底图">
+          <svg id="tractSvg" class="anatomy-overlay" viewBox="0 0 1536 1152" role="img" aria-label="可直接拖动舌位、下颌、唇部、软腭、舌骨肌群与喉位的头颈矢状切面">
+            <defs>
+              <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <linearGradient id="tongueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ef7685"/><stop offset=".55" stop-color="#d94d69"/><stop offset="1" stop-color="#a92c50"/></linearGradient>
+            </defs>
+            <path class="tongue tongue-overlay" id="tonguePath" d="M385 545 C470 458 650 452 820 585 C730 635 615 672 494 650 C430 638 396 596 385 545Z"/>
+            <path class="muscle suprahyoid" id="suprahyoidPath" d="M470 670 Q585 710 708 674 Q638 744 500 731Z"/>
+            <path class="muscle thyrohyoid" id="thyrohyoidPath" d="M729 681 Q781 722 786 795 L741 802 Q742 746 704 706Z"/>
+            <path class="air-path" id="airPath" d="M802 825 C810 720 842 635 816 555 C790 483 720 432 605 429 C515 426 432 449 363 489"/>
+            <g id="velumGroup"><path class="velum-marker" d="M715 370 Q776 392 800 458"/></g>
+            <g id="larynxGroup"><path class="larynx-marker" d="M746 746 L805 731 L826 821 L759 836Z"/></g>
+            <g id="jawGroup"><path class="jaw-guide" d="M352 618 Q469 700 653 721"/></g>
+            <g id="lipsGroup"><path class="lip-guide" d="M330 452 Q292 491 334 519 M334 530 Q294 560 343 584"/></g>
+
+            <g class="handle" data-control="tongue" tabindex="0" role="slider" aria-label="舌位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="614" cy="540" r="22"/><circle class="handle-core" cx="614" cy="540" r="7"/><text x="646" y="532">舌位</text><text class="handle-value" x="646" y="555">H 30 · F 52</text></g>
+            <g class="handle" data-control="jawOpening" tabindex="0" role="slider" aria-label="下颌开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="500" cy="712" r="20"/><circle class="handle-core" cx="500" cy="712" r="6"/><text x="530" y="720">下颌</text></g>
+            <g class="handle" data-control="lipRounding" tabindex="0" role="slider" aria-label="唇部圆展控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="314" cy="523" r="20"/><circle class="handle-core" cx="314" cy="523" r="6"/><text x="247" y="487">唇部</text></g>
+            <g class="handle" data-control="velumOpening" tabindex="0" role="slider" aria-label="软腭开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="765" cy="423" r="20"/><circle class="handle-core" cx="765" cy="423" r="6"/><text x="795" y="414">软腭</text></g>
+            <g class="handle" data-control="suprahyoidTension" tabindex="0" role="slider" aria-label="舌骨上肌群控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring muscle-handle" cx="652" cy="704" r="20"/><circle class="handle-core" cx="652" cy="704" r="6"/><text x="555" y="754">舌骨上肌群</text></g>
+            <g class="handle" data-control="thyrohyoidTension" tabindex="0" role="slider" aria-label="甲状舌骨肌控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring muscle-handle" cx="763" cy="756" r="20"/><circle class="handle-core" cx="763" cy="756" r="6"/><text x="798" y="760">甲状舌骨肌</text></g>
+            <g class="handle" data-control="larynxHeight" tabindex="0" role="slider" aria-label="喉位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="790" cy="785" r="20"/><circle class="handle-core" cx="790" cy="785" r="6"/><text x="824" y="810">喉位</text></g>
+          </svg>
+          <div class="vowel-readout">
+            <span>当前元音</span>
+            <strong id="nearestVowel">[a]</strong>
+            <small id="vowelDescription">开口 · 央元音</small>
+          </div>
+          <div class="gesture-hint">图上节点与下方滑杆实时同步</div>
+        </div>
+
+        <div class="vowel-switcher" aria-label="五个歌唱元音">
+          <div><strong>元音教学锚点</strong><small>点击恢复完整基准构形；位置为典型近似，并非每个人唯一答案</small></div>
+          <button class="vowel-button active" data-vowel-select="a" aria-pressed="true">[a]</button>
+          <button class="vowel-button" data-vowel-select="e" aria-pressed="false">[e]</button>
+          <button class="vowel-button" data-vowel-select="i" aria-pressed="false">[i]</button>
+          <button class="vowel-button" data-vowel-select="o" aria-pressed="false">[o]</button>
+          <button class="vowel-button" data-vowel-select="u" aria-pressed="false">[u]</button>
+        </div>
+
+        <div class="phonation-dock">
+          <button class="phonate-button" id="phonateButton" aria-pressed="false">
+            <span class="phonate-orbit"></span>
+            <span class="phonate-icon" aria-hidden="true"></span>
+            <span><strong>点击持续发声</strong><small>再次点击停止 · 也可长按试听</small></span>
+          </button>
+          <div class="level-meter" aria-label="输出电平"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <button class="button lock" id="lockButton" aria-pressed="false">持续发声：关</button>
+        </div>
+      </section>
+
+      <section class="panel controls-panel" data-panel="controls" aria-labelledby="controlsTitle">
+        <div class="panel-heading">
+          <div><span class="section-number">B</span><h2 id="controlsTitle">构形参数</h2></div>
+          <button class="text-button" id="resetButton">复位</button>
+        </div>
+        <div class="pitch-reference-banner" role="note">
+          <span>当前录制与比较音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音必须使用同一个已选音高</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
+        </div>
+        <div class="tenor-preset">
+          <div><span class="preset-kicker">SELECTED-PITCH PRESET</span><strong>经典意大利男高音构形</strong><small>按当前元音和上方所选音高载入教学估算参数；保留当前声线。</small></div>
+          <button class="button tenor-button" id="applyTenorPreset">载入参数（静音）</button>
+        </div>
+        <div class="control-list" id="controlList">
+          <label class="control-row" data-key="tongueHeight"><span><b>舌高</b><em>Tongue height</em></span><output>30</output><input type="range" min="0" max="100" value="30" aria-label="舌高"></label>
+          <label class="control-row" data-key="tongueFrontness"><span><b>舌位前后</b><em>Frontness</em></span><output>52</output><input type="range" min="0" max="100" value="52" aria-label="舌位前后"></label>
+          <label class="control-row" data-key="suprahyoidTension"><span><b>舌骨上肌群</b><em>放松 — 上提前移</em></span><output>30</output><input type="range" min="0" max="100" value="30" aria-label="舌骨上肌群"></label>
+          <label class="control-row" data-key="thyrohyoidTension"><span><b>甲状舌骨肌</b><em>放松 — 喉位靠近舌骨</em></span><output>35</output><input type="range" min="0" max="100" value="35" aria-label="甲状舌骨肌"></label>
+          <label class="control-row" data-key="jawOpening"><span><b>下颌开度</b><em>Jaw opening</em></span><output>72</output><input type="range" min="0" max="100" value="72" aria-label="下颌开度"></label>
+          <label class="control-row" data-key="lipRounding"><span><b>唇部圆展</b><em>展唇 — 向前圆唇</em></span><output>22</output><input type="range" min="0" max="100" value="22" aria-label="唇部圆展"></label>
+          <label class="control-row" data-key="larynxHeight"><span><b>喉位</b><em>Larynx height</em></span><output>42</output><input type="range" min="0" max="100" value="42" aria-label="喉位"></label>
+          <label class="control-row" data-key="velumOpening"><span><b>软腭开度</b><em>Velum opening</em></span><output>18</output><input type="range" min="0" max="100" value="18" aria-label="软腭开度"></label>
+        </div>
+
+        <section class="parameter-comparison" aria-labelledby="comparisonTitle">
+          <div class="comparison-heading"><div><span class="preset-kicker">SAME-PITCH COMPARISON</span><strong id="comparisonTitle">同音高构形对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz</b> · <b id="comparisonVowel">[a]</b></span></div>
+          <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">经典男高音</b></span></div>
+          <div class="comparison-rows" id="comparisonRows"></div>
+          <p>左侧是当前滑杆实时值；右侧由 C4 参考构形按所选音高作教学估算。真实歌者会因声部与技术而不同。</p>
+        </section>
+
+        <div class="preset-section">
+          <div class="section-label"><span>构形记录</span><span id="snapshotCount">0 个快照</span></div>
+          <div class="save-row">
+            <input id="presetName" type="text" maxlength="24" placeholder="命名当前构形" aria-label="构形名称">
+            <button class="button primary" id="savePreset">保存</button>
+          </div>
+          <div class="ab-row">
+            <button class="ab-slot" id="slotA" data-slot="A"><span>A</span><strong>未设置</strong><small>点击载入</small></button>
+            <button class="swap-button" id="swapAB" aria-label="交换 A/B">⇄</button>
+            <button class="ab-slot" id="slotB" data-slot="B"><span>B</span><strong>未设置</strong><small>点击载入</small></button>
+          </div>
+          <div class="snapshot-list" id="snapshotList"><p class="empty-state">保存一个构形，开始 A/B 比较。</p></div>
+          <button class="button export" id="exportCsv">导出 CSV 实验记录</button>
+        </div>
+      </section>
+
+      <section class="panel acoustics-panel" data-panel="acoustics" aria-labelledby="acousticsTitle">
+        <div class="panel-heading">
+          <div><span class="section-number">C</span><h2 id="acousticsTitle">声学观察</h2></div>
+          <span class="live-label">LIVE</span>
+        </div>
+        <div class="formant-grid">
+          <div class="formant-cell" title="F0 基频（Fundamental Frequency）：声带每秒振动的次数，决定你唱的音高，数值越高音越高。">
+            <div class="formant-head"><span class="formant-tag">F0</span><span class="formant-name">基频</span></div>
+            <div class="formant-value"><strong id="f0Value">220</strong><small>Hz</small></div>
+            <p class="formant-desc">决定音高</p>
+          </div>
+          <div class="formant-cell" title="F1 第一共振峰（First Formant）：声道共鸣频率之一，主要受舌位高低与下颌开度影响，开口越大 F1 越高。">
+            <div class="formant-head"><span class="formant-tag">F1</span><span class="formant-name">第一共振峰</span></div>
+            <div class="formant-value"><strong id="f1Value">800</strong><small>Hz</small></div>
+            <p class="formant-desc">舌高 · 开口</p>
+          </div>
+          <div class="formant-cell" title="F2 第二共振峰（Second Formant）：主要受舌位前后与唇部圆展影响，决定元音的前后色彩，如 [i] 高、[u] 低。">
+            <div class="formant-head"><span class="formant-tag">F2</span><span class="formant-name">第二共振峰</span></div>
+            <div class="formant-value"><strong id="f2Value">1200</strong><small>Hz</small></div>
+            <p class="formant-desc">舌位前后 · 唇形</p>
+          </div>
+          <div class="formant-cell" title="F3 第三共振峰（Third Formant）：主要影响音色的明亮度与个性，歌唱训练中与高位共鸣、歌手共振峰相关。">
+            <div class="formant-head"><span class="formant-tag">F3</span><span class="formant-name">第三共振峰</span></div>
+            <div class="formant-value"><strong id="f3Value">2500</strong><small>Hz</small></div>
+            <p class="formant-desc">音色 · 明亮度</p>
+          </div>
+        </div>
+        <p class="formant-key"><b>F</b> 是 Formant（共振峰）的缩写：<b>F0</b> 是基频（你唱的音高）；<b>F1/F2/F3</b> 是声道放大的三个共鸣频率，共同决定元音音色。点击或悬停各卡片看详解。</p>
+
+        <div class="chart-block">
+          <div class="chart-title"><span>IPA 元音空间</span><small>F2 ← / F1 ↓</small></div>
+          <svg id="vowelChart" viewBox="0 0 420 260" role="img" aria-label="IPA 元音空间图">
+            <path class="vowel-frame" d="M55 35H345L385 220H95Z"/>
+            <g class="chart-grid"><path d="M69 97h290M82 159h290M153 35l-20 185M249 35l52 185"/></g>
+            <g class="vowel-anchor" data-vowel="i" transform="translate(334 49)"><circle r="13"/><text y="5">i</text></g>
+            <g class="vowel-anchor" data-vowel="e" transform="translate(292 92)"><circle r="13"/><text y="5">e</text></g>
+            <g class="vowel-anchor" data-vowel="a" transform="translate(233 205)"><circle r="13"/><text y="5">a</text></g>
+            <g class="vowel-anchor" data-vowel="o" transform="translate(142 130)"><circle r="13"/><text y="5">o</text></g>
+            <g class="vowel-anchor" data-vowel="u" transform="translate(101 55)"><circle r="13"/><text y="5">u</text></g>
+            <g id="vowelCursor" transform="translate(233 205)"><circle class="cursor-glow" r="17"/><circle class="cursor-core" r="6"/></g>
+          </svg>
+        </div>
+
+        <div class="chart-block spectrum-block">
+          <div class="chart-title"><span>实时频谱 · 三维</span><small>0 — 5 kHz · 发光竖线为 F1/F2/F3</small></div>
+          <div class="spectrum3d-wrap" id="spectrum3dWrap">
+            <canvas id="spectrum3d" aria-label="三维实时频谱图"></canvas>
+            <canvas id="spectrumCanvas" width="800" height="260" aria-label="实时频谱图"></canvas>
+          </div>
+          <div class="spectrum3d-legend">
+            <span class="lg-key"><i class="lg-bar lg-f1"></i>F1</span>
+            <span class="lg-key"><i class="lg-bar lg-f2"></i>F2</span>
+            <span class="lg-key"><i class="lg-bar lg-f3"></i>F3</span>
+            <span class="spectrum-axis"><span>100</span><span>500</span><span>1k</span><span>2k</span><span>3k</span><span>5k Hz</span></span>
+          </div>
+        </div>
+        <section class="calibration-card" id="voiceCalibration" aria-label="当前声线校准信息">
+          <div class="calibration-title"><span>录音原始校准</span><strong id="calibrationName">我的声线 · [a]</strong></div>
+          <dl>
+            <div><dt>目标 F0</dt><dd id="calibrationTarget">220.00 Hz</dd></div>
+            <div><dt>实测 F0</dt><dd id="calibrationMeasured">—</dd></div>
+            <div><dt>音高波动</dt><dd id="calibrationStability">—</dd></div>
+            <div><dt>素材来源</dt><dd id="calibrationSource">本地精选素材</dd></div>
+          </dl>
+          <p>上方 F0/F1/F2/F3 是随构形参数变化的实时教学估计；这里显示的是录音文件本身的离线分析值。</p>
+        </section>
+        <p class="model-note">教学近似模型 · 数值用于构形比较，不替代临床或实验室测量。</p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="voiceDialog" class="modal">
+    <form method="dialog" class="modal-card" id="voiceForm">
+      <div class="modal-header"><div><p class="eyebrow">PERSONAL VOICE PACK</p><h2>创建个人声线</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会分析每段录音的 F0 与 F1/F2/F3，并生成这位声音专属的五个构形参数点；声音和分析结果只保存在这台设备。</p>
+      <div class="recording-pitch-guide">
+        <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，五个元音都必须唱这个音；检测为其他音高的录音不会保存。</small></div>
+        <button class="button" id="playReferencePitch" type="button">播放所选参考音</button>
+      </div>
+      <div class="pitch-picker" id="pitchPicker" aria-label="选择录制音高">
+        <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C5 · 自然音级</small></div>
+        <div class="pitch-keyboard" id="pitchKeyboard"></div>
+      </div>
+      <label class="pack-name">声线名称<input id="packName" type="text" value="我的声线" maxlength="30"></label>
+      <div class="sample-grid" id="sampleGrid"></div>
+      <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
+      <div class="modal-actions"><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="infoDialog" class="modal">
+    <form method="dialog" class="modal-card info-card">
+      <div class="modal-header"><div><p class="eyebrow">METHOD / NOTES</p><h2>如何使用</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <ol>
+        <li><b>调整构形</b><span>拖动剖面节点，或使用六个数值滑杆做精细调整。</span></li>
+        <li><b>听辨变化</b><span>按住“发声”试听；双击或打开持续发声锁定音色。</span></li>
+        <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
+        <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
+      </ol>
+      <div class="license-note"><b>声音来源与处理</b><p>网站内置一套由作者本人授权提供的“初始声线”，用于首次打开时直接试听。访问者还可以在本机新增多套个人声线；新增录音只保存在访问者自己的浏览器，不上传服务器，也不会覆盖初始声线。</p></div>
+      <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；选择其他音高时，页面会根据音程作小幅教学估算。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
+      <div class="license-note"><b>个人声线分析</b><p>导入五个持续元音后，程序会在浏览器本机估计基准音高与前三个共振峰，并把结果换算成五个专属构形点。该结果用于声乐教学、听辨和个体比较，不等同于实验室 LPC 校准或医学检查。</p></div>
+      <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./three.min.js"></script>
+  <script src="./app.js?v=20261015-2"></script>
+  <script src="./spectrum3d.js?v=20261015-2"></script>
+</body>
+</html>
