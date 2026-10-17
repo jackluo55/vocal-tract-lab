@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta property="og:title" content="声道实验台 · Vocal Tract Lab"><meta property="og:image" content="https://lf3-static.bytednsdoc.com/obj/eden-cn/ylcylz_fsph_ryhs/ljhwZthlaukjlkulzlp/feisuda/avatar/3.svg">
+<head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071018">
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261015-2">
+  <link rel="stylesheet" href="./styles.css?v=20261017-6">
 </head>
 <body>
   <div class="app-shell">
@@ -107,6 +107,8 @@
           </button>
           <div class="level-meter" aria-label="输出电平"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
           <button class="button lock" id="lockButton" aria-pressed="false">持续发声：关</button>
+          <button class="button audio-test" id="audioSelfTest" type="button">声音测试</button>
+          <p class="media-audio-note" id="mediaAudioNote">手机会优先使用媒体播放通道；请调高“媒体音量”。</p>
         </div>
       </section>
 
@@ -233,14 +235,40 @@
       <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会分析每段录音的 F0 与 F1/F2/F3，并生成这位声音专属的五个构形参数点；声音和分析结果只保存在这台设备。</p>
       <div class="recording-pitch-guide">
         <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，五个元音都必须唱这个音；检测为其他音高的录音不会保存。</small></div>
-        <button class="button" id="playReferencePitch" type="button">播放所选参考音</button>
+        <button class="button" id="playReferencePitch" type="button">播放钢琴参考音</button>
+        <label class="octave-assist-toggle"><input id="humanOctaveAssist" type="checkbox" checked><span>人声低八度校正 +1</span><small>默认开启：仅当检测值恰好比所选目标低约一个八度时使用；调试区仍显示原始 Hz。</small></label>
       </div>
       <div class="pitch-picker" id="pitchPicker" aria-label="选择录制音高">
-        <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C5 · 自然音级</small></div>
+        <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C6 · Scientific Pitch Notation</small></div>
         <div class="pitch-keyboard" id="pitchKeyboard"></div>
       </div>
       <label class="pack-name">声线名称<input id="packName" type="text" value="我的声线" maxlength="30"></label>
       <div class="sample-grid" id="sampleGrid"></div>
+      <div class="recording-monitor" id="recordingMonitor" data-state="idle" aria-live="polite">
+        <div class="recording-monitor-head">
+          <span class="recording-dot" aria-hidden="true"></span>
+          <strong id="recordingTitle">等待录音</strong>
+          <time id="recordingTime">00:00.0</time>
+        </div>
+        <canvas id="recordingWaveform" width="640" height="120" aria-label="麦克风实时音量波形"></canvas>
+        <div class="recording-level-labels"><span>安静</span><span id="recordingLevelText">麦克风尚未启用</span><span>响亮</span></div>
+      </div>
+      <div class="pitch-debug" id="pitchDebug" aria-live="polite">
+        <div class="pitch-debug-title"><strong>人声音高检测调试</strong><span id="pitchDebugSource">等待录音</span></div>
+        <dl>
+          <div><dt>Raw frequency</dt><dd id="debugRawFrequency">—</dd></div>
+          <div><dt>Corrected frequency</dt><dd id="debugCorrectedFrequency">—</dd></div>
+          <div><dt>Pitch confidence</dt><dd id="debugPitchConfidence">—</dd></div>
+          <div><dt>MIDI</dt><dd id="debugMidi">—</dd></div>
+          <div><dt>Note name</dt><dd id="debugNote">—</dd></div>
+          <div><dt>Octave</dt><dd id="debugOctave">—</dd></div>
+          <div><dt>Decoded sample rate</dt><dd id="debugSampleRate">—</dd></div>
+          <div><dt>Recording duration</dt><dd id="debugDuration">—</dd></div>
+          <div><dt>Detector</dt><dd id="debugDetector">MPM + YIN</dd></div>
+        </dl>
+        <p class="pitch-debug-rule">显示音名只由 Corrected frequency 换算：130.81 Hz = C3；261.63 Hz = C4。</p>
+        <p id="pitchTestStatus">科学音高自动测试：等待运行</p>
+      </div>
       <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
       <div class="modal-actions"><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
     </form>
@@ -264,7 +292,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261015-2"></script>
+  <script src="./app.js?v=20261017-5"></script>
   <script src="./spectrum3d.js?v=20261015-2"></script>
 </body>
 </html>
