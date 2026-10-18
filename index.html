@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261018-2">
   <link rel="stylesheet" href="./mobile.css?v=20261018-2">
-  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-3">
+  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-8">
 </head>
 <body>
   <div class="app-shell">
@@ -33,12 +33,15 @@
       </div>
       <div class="header-actions">
         <div class="audio-state" id="audioState"><span class="state-dot"></span><span class="audio-state-text">等待发声</span></div>
-        <label class="voice-picker">
-          <svg class="voice-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 12a7 7 0 0 1-14 0"/><path d="M12 19v3"/></svg>
-          <select id="voiceSelect" aria-label="当前个人声线">
-            <option value="default-personal">初始声线 · 我的声线</option>
-          </select>
-        </label>
+        <div class="voice-picker-wrap">
+          <label class="voice-picker">
+            <svg class="voice-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 12a7 7 0 0 1-14 0"/><path d="M12 19v3"/></svg>
+            <select id="voiceSelect" aria-label="切换声线">
+              <option value="default-personal">初始声线 · 我的声线</option>
+            </select>
+          </label>
+          <button class="voice-delete-button" id="deleteVoiceButton" type="button" aria-label="删除当前新增声线" title="删除当前新增声线" hidden>删除</button>
+        </div>
         <button class="button ghost" id="openVoiceLab"><span class="btn-plus">+</span>添加声线</button>
         <button class="icon-button" id="openInfo" aria-label="查看使用说明">i</button>
       </div>
@@ -74,10 +77,11 @@
             <path class="muscle suprahyoid" id="suprahyoidPath" d="M470 670 Q585 710 708 674 Q638 744 500 731Z"/>
             <path class="muscle thyrohyoid" id="thyrohyoidPath" d="M729 681 Q781 722 786 795 L741 802 Q742 746 704 706Z"/>
             <path class="air-path" id="airPath" d="M802 825 C810 720 842 635 816 555 C790 483 720 432 605 429 C515 426 432 449 363 489"/>
-            <g id="velumGroup"><path class="velum-marker" d="M715 370 Q776 392 800 458"/></g>
-            <g id="larynxGroup"><path class="larynx-marker" d="M746 746 L805 731 L826 821 L759 836Z"/></g>
-            <g id="jawGroup"><path class="jaw-guide" d="M352 618 Q469 700 653 721"/></g>
-            <g id="lipsGroup"><path class="lip-guide" d="M330 452 Q292 491 334 519 M334 530 Q294 560 343 584"/></g>
+            <g class="anatomy-reference" aria-hidden="true"><path d="M326 456 Q298 487 331 517 M330 535 Q301 559 341 581"/><path d="M353 619 Q470 694 654 717"/><path d="M715 371 Q773 390 800 458"/><path d="M745 747 L805 731 L826 821 L759 836Z"/></g>
+            <g id="velumGroup"><path class="velum-tissue" d="M710 365 Q752 368 781 401 Q801 428 808 458 Q790 461 779 446 Q757 402 707 390Z"/><path class="velum-marker" d="M715 370 Q776 392 800 458"/></g>
+            <g id="larynxGroup"><path class="larynx-tissue" d="M748 747 Q777 732 804 735 L828 814 Q798 835 761 832Z"/><path class="larynx-marker" d="M746 746 L805 731 L826 821 L759 836Z"/></g>
+            <g id="jawGroup"><path class="jaw-tissue" d="M349 600 Q447 661 631 695 Q650 701 655 721 Q469 713 354 637Z"/><path class="jaw-guide" d="M352 618 Q469 700 653 721"/></g>
+            <g id="lipsGroup"><path class="lip-tissue upper-lip" d="M330 451 Q306 452 295 480 Q293 507 328 516 Q309 497 315 481 Q322 469 338 467Z"/><path class="lip-tissue lower-lip" d="M332 530 Q302 537 300 558 Q308 583 344 585 Q319 568 319 555 Q321 542 341 541Z"/><path class="lip-guide" d="M330 452 Q292 491 334 519 M334 530 Q294 560 343 584"/></g>
 
             <g class="handle" data-control="tongue" tabindex="0" role="slider" aria-label="舌位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="614" cy="540" r="52"/><circle class="handle-ring" cx="614" cy="540" r="22"/><circle class="handle-core" cx="614" cy="540" r="7"/><text x="646" y="532">舌位</text><text class="handle-value" x="646" y="555">H 30 · F 52</text></g>
             <g class="handle" data-control="jawOpening" tabindex="0" role="slider" aria-label="下颌开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="500" cy="712" r="52"/><circle class="handle-ring" cx="500" cy="712" r="20"/><circle class="handle-core" cx="500" cy="712" r="6"/><text x="530" y="720">下颌</text></g>
@@ -92,7 +96,8 @@
             <strong id="nearestVowel">[a]</strong>
             <small id="vowelDescription">开口 · 央元音</small>
           </div>
-          <div class="gesture-hint">图上节点与下方滑杆实时同步</div>
+          <div class="organ-motion-readout" id="organMotionReadout" aria-live="off"></div>
+          <div class="gesture-hint">器官色块随参数变化 · 淡线为中性参考位置</div>
         </div>
 
         <div class="vowel-switcher" aria-label="五个歌唱元音">
@@ -120,11 +125,20 @@
           <button class="text-button" id="resetButton">复位</button>
         </div>
         <div class="pitch-reference-banner" role="note">
-          <span>当前录制与比较音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音必须使用同一个已选音高</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
+          <span>录音目标与参数比较音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音录制时须使用同一目标音高；选择目标不会自动移调现有声线。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
+          <p class="voice-pitch-status" id="voicePitchStatus" aria-live="polite">正在读取当前声线原音高…</p>
         </div>
         <div class="tenor-preset">
-          <div><span class="preset-kicker">SELECTED-PITCH PRESET</span><strong>经典意大利男高音构形</strong><small>按当前元音和上方所选音高载入教学估算参数；保留当前声线。</small></div>
+          <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>按当前元音和目标音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
           <button class="button tenor-button" id="applyTenorPreset">载入参数（静音）</button>
+          <details class="tenor-provenance">
+            <summary>这些参数从哪里来？</summary>
+            <div>
+              <p><b>数值来源：</b>本项目先用五个元音的教学锚点，人工设定 C4 下的 0–100 构形数值；选择其他音高时，再按程序中的有限幅度规则推算。它们<b>不是</b>帕瓦罗蒂或某位男高音的测量数据，也不是论文给出的标准比例。</p>
+              <p><b>研究能支持什么：</b>舌、颌、唇与声道形状会影响共振峰；训练歌者会随音高调整元音和声道构形。研究支持方向和机制，不能把某一套 0–100 数值规定为所有人的正确答案。</p>
+              <p class="source-links"><a href="https://www.csc.kth.se/utbildning/kth/kurser/DT2212/Singing%20Sundberg.pdf" target="_blank" rel="noopener noreferrer">Sundberg，1974：歌唱共振峰</a><a href="https://pubmed.ncbi.nlm.nih.gov/28029556/" target="_blank" rel="noopener noreferrer">Titze 等，2016：歌者共振峰范围</a></p>
+            </div>
+          </details>
         </div>
         <div class="mobile-control-modes" role="group" aria-label="手机参数查看方式">
           <button type="button" data-control-view="sliders" aria-pressed="true">调节滑杆</button>
@@ -142,10 +156,10 @@
         </div>
 
         <section class="parameter-comparison" aria-labelledby="comparisonTitle">
-          <div class="comparison-heading"><div><span class="preset-kicker">SAME-PITCH COMPARISON</span><strong id="comparisonTitle">同音高构形对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz</b> · <b id="comparisonVowel">[a]</b></span></div>
+          <div class="comparison-heading"><div><span class="preset-kicker">TARGET-PITCH COMPARISON</span><strong id="comparisonTitle">同目标音高·参数对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz</b> · <b id="comparisonVowel">[a]</b></span></div>
           <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">经典男高音</b></span></div>
           <div class="comparison-rows" id="comparisonRows"></div>
-          <p>左侧是当前滑杆实时值；右侧由 C4 参考构形按所选音高作教学估算。真实歌者会因声部与技术而不同。</p>
+          <p>左侧是当前滑杆值，右侧是按目标音高推算的教学参考。此图不表示两段录音实测于同一音高；选择目标不会自动移调当前声线。</p>
         </section>
 
         <div class="preset-section">
@@ -170,10 +184,10 @@
           <span class="live-label">LIVE</span>
         </div>
         <div class="formant-grid">
-          <div class="formant-cell" data-formant="f0" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F0 基频（Fundamental Frequency）：声带每秒振动的次数，决定你唱的音高，数值越高音越高。">
+          <div class="formant-cell" data-formant="f0" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F0 基频（Fundamental Frequency）：此处为当前元音录音素材的基频分析估计，不是上方选择的录制目标。">
             <div class="formant-head"><span class="formant-tag">F0</span><span class="formant-name">基频</span></div>
             <div class="formant-value"><strong id="f0Value">220</strong><small>Hz</small></div>
-            <p class="formant-desc">决定音高</p>
+            <p class="formant-desc">样本基频估计</p>
           </div>
           <div class="formant-cell" data-formant="f1" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F1 第一共振峰（First Formant）：声道共鸣频率之一，主要受舌位高低与下颌开度影响，开口越大 F1 越高。">
             <div class="formant-head"><span class="formant-tag">F1</span><span class="formant-name">第一共振峰</span></div>
@@ -221,14 +235,14 @@
           </div>
         </div>
         <section class="calibration-card" id="voiceCalibration" aria-label="当前声线校准信息">
-          <div class="calibration-title"><span>录音原始校准</span><strong id="calibrationName">我的声线 · [a]</strong></div>
+          <div class="calibration-title"><span>录音文件分析</span><strong id="calibrationName">我的声线 · [a]</strong></div>
           <dl>
-            <div><dt>目标 F0</dt><dd id="calibrationTarget">220.00 Hz</dd></div>
-            <div><dt>实测 F0</dt><dd id="calibrationMeasured">—</dd></div>
+            <div><dt>录制时目标</dt><dd id="calibrationTarget">—</dd></div>
+            <div><dt>样本标注 F0</dt><dd id="calibrationMeasured">—</dd></div>
             <div><dt>音高波动</dt><dd id="calibrationStability">—</dd></div>
             <div><dt>素材来源</dt><dd id="calibrationSource">本地精选素材</dd></div>
           </dl>
-          <p>上方 F0/F1/F2/F3 是随构形参数变化的实时教学估计；这里显示的是录音文件本身的离线分析值。</p>
+          <p>上方 F0 取当前元音样本的基频分析值；F1/F2/F3 随构形变化，是实时教学估计。旧版内置样本若无音高波动记录，会如实显示“未记录”。</p>
         </section>
         <p class="model-note">教学近似模型 · 数值用于构形比较，不替代临床或实验室测量。</p>
       </section>
@@ -281,6 +295,14 @@
     </form>
   </dialog>
 
+  <dialog id="deleteVoiceDialog" class="modal confirm-voice-delete">
+    <div class="modal-card">
+      <h2>删除这条声线？</h2>
+      <p id="deleteVoiceMessage">这会删除该声线保存在本机的五段录音和分析结果，无法撤销。两条网站内置声线不会受影响。</p>
+      <div class="modal-actions"><button class="button ghost" id="cancelDeleteVoice" type="button">取消</button><button class="button danger" id="confirmDeleteVoice" type="button">确认删除</button></div>
+    </div>
+  </dialog>
+
   <dialog id="infoDialog" class="modal">
     <form method="dialog" class="modal-card info-card">
       <div class="modal-header"><div><p class="eyebrow">METHOD / NOTES</p><h2>如何使用</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
@@ -290,7 +312,7 @@
         <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
         <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
       </ol>
-      <div class="license-note"><b>声音来源与处理</b><p>网站内置一套由作者本人授权提供的“初始声线”，用于首次打开时直接试听。访问者还可以在本机新增多套个人声线；新增录音只保存在访问者自己的浏览器，不上传服务器，也不会覆盖初始声线。</p></div>
+      <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增的声线只保存在自己的浏览器，不上传服务器；可在切换声线处删除。两套内置录音会随公开网页提供。</p></div>
       <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；选择其他音高时，页面会根据音程作小幅教学估算。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
       <div class="license-note"><b>个人声线分析</b><p>导入五个持续元音后，程序会在浏览器本机估计基准音高与前三个共振峰，并把结果换算成五个专属构形点。该结果用于声乐教学、听辨和个体比较，不等同于实验室 LPC 校准或医学检查。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
@@ -299,7 +321,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261018-6"></script>
+  <script src="./app.js?v=20261018-8"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
 </body>
 </html>

@@ -36,13 +36,13 @@ const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',sup
 const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='default-personal';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
 const FORMANT_EXPLANATIONS={
-  f0:'<b>F0 · 基频</b>：声带每秒振动的次数，也就是你实际唱出的音高。数值越高，声音越高；它不是元音本身的共鸣峰。',
+  f0:'<b>F0 · 基频</b>：这里显示当前元音录音素材的基频估计，不是麦克风实时测音，也不是上方选择的录制目标音高。选择目标不会自动改变现有录音的音高。',
   f1:'<b>F1 · 第一共振峰</b>：主要反映开口程度、下颌开度与舌位高低。一般来说，嘴张得越开、舌位越低，F1 越高。',
   f2:'<b>F2 · 第二共振峰</b>：主要反映舌位前后与唇部圆展。舌位越靠前，F2 通常越高；圆唇、后缩会让 F2 降低。',
   f3:'<b>F3 · 第三共振峰</b>：更多影响声音的明亮度与个性，也会受到声道长度、喉位与咽腔形状影响。它是教学观察值，不单独决定一个元音。'
 };
 const state={...DEFAULT_STATE,currentVowel:'a',isPhonating:false,voicePackId:DEFAULT_VOICE_ID};
-let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null;
+let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null,organHighlightTimer=null;
 const mediaOutputRoutes=new WeakMap();
 const personalSamples={a:null,e:null,i:null,o:null,u:null};
 const previewSamples={a:null,e:null,i:null,o:null,u:null};
@@ -98,10 +98,10 @@ function renderCalibration(){
   const card=$('#voiceCalibration');if(!card)return;
   const pack=personalVoicePacks.get(state.voicePackId),item=personalVoiceAnalysis()?.vowels?.[state.currentVowel];
   $('#calibrationName').textContent=`${item?($('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','')||'我的声线'):'我的声线 · 尚未录制'} · [${state.currentVowel}]`;
-  $('#calibrationTarget').textContent=item?(personalVoiceAnalysis()?.targetPitch?.note||'保留原音高'):'—';
+  $('#calibrationTarget').textContent=item?(personalVoiceAnalysis()?.targetPitch?.note||'旧版未记录'):'—';
   $('#calibrationMeasured').textContent=item?`${Number(item.measuredF0??item.f0).toFixed(2)} Hz`:'—';
-  $('#calibrationStability').textContent=item?`F1 ${Math.round(item.f1)} · F2 ${Math.round(item.f2)}`:'—';
-  $('#calibrationSource').textContent=item?(pack?.source==='bundled'?'网站初始模型 · 作者授权':'浏览器本机分析 · 不上传'):'请创建个人声线';
+  $('#calibrationStability').textContent=Number.isFinite(Number(item?.pitchStdCents))?`±${Math.round(item.pitchStdCents)} 音分`:'未记录';
+  $('#calibrationSource').textContent=item?(pack?.source==='bundled'?'网站内置声线 · 作者授权':'浏览器本机分析 · 不上传'):'请创建个人声线';
   card.classList.add('personal');
 }
 function renderComparison(){
@@ -121,10 +121,24 @@ function runPitchCoreTests(){
 function tenorPresetAtPitch(vowel){const semitones=12*Math.log2(recordingTargetPitch.hz/261.63),base=TENOR_VOWEL_PRESETS[vowel],rise=Math.max(-12,Math.min(12,semitones));return {...base,jawOpening:clamp(base.jawOpening+Math.max(0,rise)*1.25+Math.min(0,rise)*.35),tongueHeight:clamp(base.tongueHeight-rise*.55),tongueFrontness:clamp(base.tongueFrontness-rise*.35),suprahyoidTension:clamp(base.suprahyoidTension+rise*.35),thyrohyoidTension:clamp(base.thyrohyoidTension+rise*.45),larynxHeight:clamp(base.larynxHeight+rise*.35)}}
 function renderPitchSelection(){
   const label=pitchLabel();if($('#activePitchLabel'))$('#activePitchLabel').textContent=label;if($('#recordingPitchLabel'))$('#recordingPitchLabel').textContent=label;
+  const sample=personalVoiceAnalysis()?.vowels?.[state.currentVowel],sampleF0=Number(sample?.measuredF0??sample?.f0),status=$('#voicePitchStatus');
+  if(status){
+    if(Number.isFinite(sampleF0)&&sampleF0>0){const samplePitch=pitchFromHz(sampleF0),cents=Math.round(1200*Math.log2(sampleF0/recordingTargetPitch.hz)),different=Math.abs(cents)>50,message=`当前 [${state.currentVowel}] 样本分析标注：约 ${sampleF0.toFixed(2)} Hz（${samplePitch.note}）${different?`，与目标 ${recordingTargetPitch.note} 不同。`: `，与目标 ${recordingTargetPitch.note} 接近。`}试听不自动移调；如与听感不符，请重新录制核对。`;if(status.textContent!==message)status.textContent=message;status.dataset.match=different?'different':'near'}
+    else {const message='当前声线尚无可分析的元音素材；上方仅是录音与比较的目标音高。';if(status.textContent!==message)status.textContent=message;status.dataset.match='unknown'}
+  }
   $$('.pitch-option').forEach(button=>{const active=Number(button.dataset.midi)===recordingTargetPitch.midi;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
 }
 function moveHandle(key,x,y){const h=$(`[data-control="${key}"]`); if(!h)return; const circles=h.querySelectorAll('circle');circles.forEach(c=>{c.setAttribute('cx',x);c.setAttribute('cy',y)});const texts=h.querySelectorAll('text');texts.forEach((t,i)=>{if(key==='tongue'){t.setAttribute('x',x+22);t.setAttribute('y',y+(i?12:-7))}else if(key==='jawOpening'){t.setAttribute('x',x+21);t.setAttribute('y',y+5)}else if(key==='lipRounding'){t.setAttribute('x',x-45);t.setAttribute('y',y-27)}else if(key==='velumOpening'){t.setAttribute('x',x+22);t.setAttribute('y',y-5)}else{t.setAttribute('x',x+25);t.setAttribute('y',y+5)}})}
-function setParam(key,value){state[key]=clamp(Number(value));render()}
+function setParam(key,value){
+  state[key]=clamp(Number(value));
+  const stage=$('#anatomyStage'),motion=$('#organMotionReadout');
+  if(stage){
+    stage.dataset.activeOrgan=key==='tongueHeight'||key==='tongueFrontness'?'tongue':key;
+    if(motion){const descriptions={tongueHeight:'舌体升降',tongueFrontness:'舌体前后',jawOpening:'下颌开合',lipRounding:'嘴唇圆展',velumOpening:'软腭升降',larynxHeight:'喉部升降',suprahyoidTension:'舌骨上肌群',thyrohyoidTension:'甲状舌骨肌'};motion.textContent=`${descriptions[key]} · ${Math.round(state[key])}`}
+    clearTimeout(organHighlightTimer);organHighlightTimer=setTimeout(()=>delete stage.dataset.activeOrgan,1500);
+  }
+  render();
+}
 async function selectVowel(vowel,{audition=false}={}){
   state.currentVowel=vowel;Object.assign(state,vowelPreset(vowel));render();showToast(`已选择 [${vowel}]；继续调舌位仍保持 [${vowel}]`);
   if(!audition||locked)return;
@@ -138,7 +152,7 @@ async function switchVoice(id,{announce=true}={}){
   state.voicePackId=id;$('#voiceSelect').value=id;stopAndClearAudio();
   audio=await initAudio();if(personalVoicePacks.has(id))await loadVoicePack(id);
   Object.assign(state,vowelPreset(state.currentVowel));
-  if(announce)showToast('已载入我的声线及五个专属元音参数点');render();
+  updateVoiceDeleteButton();if(announce)showToast('已载入所选声线及五个专属元音参数点');render();
 }
 function applyTenorPreset(){
   clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;
@@ -307,6 +321,7 @@ function setupVoiceLab(){
   $$('.sample-card input').forEach(input=>input.addEventListener('change',e=>validateSample(e.target.closest('.sample-card').dataset.vowel,e.target.files[0])));$$('.sample-card .record').forEach(btn=>btn.addEventListener('click',()=>recordSample(btn.closest('.sample-card').dataset.vowel,btn)));$$('.sample-card .preview').forEach(btn=>btn.addEventListener('click',()=>playSamplePreview(btn.closest('.sample-card').dataset.vowel,btn)));
   $$('.pitch-option').forEach(button=>button.addEventListener('click',()=>selectRecordingPitch(Number(button.dataset.midi))));
   $('#openVoiceLab').onclick=()=>openVoiceDialog(false);$('#openPitchPicker').onclick=()=>openVoiceDialog(true);$('#openInfo').onclick=()=>$('#infoDialog').showModal();$('#saveVoicePack').onclick=saveVoicePack;$('#exportCurrentVoice').onclick=exportCurrentVoice;$('#playReferencePitch').onclick=()=>playReferencePitch($('#playReferencePitch'));
+  $('#deleteVoiceButton').onclick=promptDeleteVoice;$('#cancelDeleteVoice').onclick=()=>$('#deleteVoiceDialog').close();$('#confirmDeleteVoice').onclick=confirmDeleteVoice;
   $('#humanOctaveAssist').addEventListener('change',event=>{humanOctaveAssist=event.target.checked;resetPitchDebugForTarget();showToast(humanOctaveAssist?'人声低八度校正已开启':'人声低八度校正已关闭')});
   $('#voiceDialog').addEventListener('close',cancelRecordingSession);
   renderPitchSelection();
@@ -438,7 +453,7 @@ async function saveVoicePack(){
   for(const [v,s] of Object.entries(personalSamples)){manifest.vowels[v]={duration:s.duration,type:s.blob.type||'audio/wav',size:s.blob.size,analysis:s.analysis};records.push({id:`${id}-${v}`,packId:id,vowel:v,blob:s.blob,duration:s.duration,analysis:s.analysis})}
   button.disabled=true;button.textContent='正在保存…';$('#recordStatus').textContent='正在保存到这台设备，请稍候…';
   try{await dbSaveVoicePack(manifest,records)}catch(err){console.error('Voice pack save failed.',err);button.textContent='保存声线';button.disabled=false;$('#recordStatus').textContent='保存失败：浏览器未能写入本机存储。请确认没有使用无痕模式，并为此页面允许站点数据。';showToast('个人声线保存失败，录音仍保留在当前窗口');return}
-  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；现在共有 ${personalVoicePacks.size} 套个人声线`);
+  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；可以在切换声线处选择或删除`);
   if(audio){try{stopAndClearAudio();await loadVoicePack(id)}catch(err){console.warn('Saved voice pack could not be loaded immediately.',err);setAudioState('error','声线已保存 · 载入失败');showToast('声线已保存；重新选择该声线即可再次载入')}}
   discardUnsavedVoiceSamples();$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;
 }
@@ -453,14 +468,17 @@ async function loadVoicePack(id){
     for(const r of records){const buffer=await audio.ctx.decodeAudioData(await r.blob.arrayBuffer());if(needsPitchUpgrade&&!upgradeFailed){try{r.analysis=analyzeVoiceSample(buffer,r.vowel,targetPitch.hz);recalibrated[r.vowel]={analysis:r.analysis}}catch(err){upgradeFailed=true;console.warn('Existing voice pitch recalibration was skipped.',err)}}createLoopSource(r.vowel,buffer)}
     if(needsPitchUpgrade&&!upgradeFailed&&Object.keys(recalibrated).length===5){pack.analysis=buildPersonalAnalysis(recalibrated,targetPitch);pack.f0=pack.analysis.f0;for(const [vowel,sample] of Object.entries(recalibrated))if(pack.vowels?.[vowel])pack.vowels[vowel].analysis=sample.analysis;await dbSaveVoicePack(pack,records);personalVoicePacks.set(pack.id,pack);showToast(`“${pack.name}”已用新版人声八度消歧算法重新校准`)}
   }
-  audio.mode='personal';setAudioState('ready',pack.source==='bundled'?'初始声线已就绪':'个人声线已就绪');render()
+  audio.mode='personal';setAudioState('ready',pack.source==='bundled'?'内置声线已就绪':'个人声线已就绪');render()
 }
 function clearAudioVoices(){
   if(!audio)return;clearInterval(audio.loopTimer);audio.loopTimer=null;audio.sources.forEach(source=>{try{source.stop()}catch{}});audio.oscillators.forEach(source=>{try{source.stop()}catch{}});audio.sources=[];audio.loopers={};audio.gains={};audio.oscillators=[];
 }
 function stopAndClearAudio(){if(!audio)return;cancelAnimationFrame(audio.raf);clearAudioVoices();const ctx=audio.ctx;releaseMediaChannel(ctx);try{ctx.close()}catch{}audio=null}
-function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=voiceSelect.querySelector(`option[value="${pack.id}"]`);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=pack.source==='bundled'?pack.name:`${pack.name} · 本机`;voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}}
-async function loadVoicePacks(){try{const response=await fetch('./assets/default-voice/manifest.json',{cache:'no-cache'});if(!response.ok)throw Error(`初始声线清单 ${response.status}`);addVoiceOption(await response.json(),{select:true})}catch(err){console.warn('Bundled voice unavailable.',err)}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>addVoiceOption(pack))}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size)$('#voiceSelect').disabled=true;$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value))}
+function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=voiceSelect.querySelector(`option[value="${pack.id}"]`);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=pack.source==='bundled'?pack.name:`${pack.name} · 本机`;voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}updateVoiceDeleteButton()}
+function updateVoiceDeleteButton(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#deleteVoiceButton');button.hidden=!pack||pack.source==='bundled';button.disabled=!pack||pack.source==='bundled'}
+function promptDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack||pack.source==='bundled')return;$('#deleteVoiceMessage').textContent=`“${pack.name}”保存在这台设备的五段录音和分析结果将被删除，无法撤销。删除前可在“添加声线”中导出备份。两条网站内置声线不会受影响。`;$('#deleteVoiceDialog').showModal()}
+async function confirmDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#confirmDeleteVoice');if(!pack||pack.source==='bundled'){$('#deleteVoiceDialog').close();return}button.disabled=true;try{await dbDeleteVoicePack(pack.id);personalVoicePacks.delete(pack.id);$('#voiceSelect').querySelector(`option[value="${pack.id}"]`)?.remove();$('#deleteVoiceDialog').close();const fallback=personalVoicePacks.has(DEFAULT_VOICE_ID)?DEFAULT_VOICE_ID:personalVoicePacks.keys().next().value;await switchVoice(fallback,{announce:false});showToast(`已删除“${pack.name}”的本机录音`)}catch(err){console.error('Voice deletion failed.',err);showToast('删除失败，请检查浏览器存储空间后重试')}finally{button.disabled=false}}
+async function loadVoicePacks(){for(const path of ['./assets/default-voice/manifest.json','./assets/second-voice.json']){try{const response=await fetch(path,{cache:'no-cache'});if(!response.ok)throw Error(`内置声线清单 ${response.status}`);addVoiceOption(await response.json(),{select:path.includes('default-voice')})}catch(err){console.warn('Bundled voice unavailable.',path,err)}}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>{if(!personalVoicePacks.has(pack.id))addVoiceOption(pack)})}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size)$('#voiceSelect').disabled=true;$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value));updateVoiceDeleteButton()}
 
 function bindMobileTabs(){
   const layout=$('#mobileLayout'),anchor=$('#mobileStageAnchor'),stage=$('#anatomyStage'),dock=$('#phonationDock'),anatomyPanel=$('[data-panel="anatomy"]'),vowels=$('.vowel-switcher');
@@ -496,6 +514,7 @@ let dbPromise;
 function getDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('VocalTractLab',1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('snapshots'))db.createObjectStore('snapshots',{keyPath:'id'});if(!db.objectStoreNames.contains('voicePacks'))db.createObjectStore('voicePacks',{keyPath:'id'});if(!db.objectStoreNames.contains('voiceSamples'))db.createObjectStore('voiceSamples',{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});return dbPromise}
 async function dbPut(store,value){const db=await getDb();return new Promise((res,rej)=>{const r=db.transaction(store,'readwrite').objectStore(store).put(value);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 async function dbSaveVoicePack(manifest,records){const db=await getDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['voicePacks','voiceSamples'],'readwrite'),packs=tx.objectStore('voicePacks'),samples=tx.objectStore('voiceSamples');packs.put(manifest);records.forEach(record=>samples.put(record));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error('本机存储写入失败'));tx.onabort=()=>reject(tx.error||Error('本机存储事务已取消'))})}
+async function dbDeleteVoicePack(id){const db=await getDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['voicePacks','voiceSamples'],'readwrite'),packs=tx.objectStore('voicePacks'),samples=tx.objectStore('voiceSamples');packs.delete(id);const request=samples.getAll();request.onsuccess=()=>request.result.filter(record=>record.packId===id).forEach(record=>samples.delete(record.id));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error('本机声线删除失败'));tx.onabort=()=>reject(tx.error||Error('本机声线删除已取消'))})}
 async function dbAll(store){const db=await getDb();return new Promise((res,rej)=>{const r=db.transaction(store).objectStore(store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
 async function dbDelete(store,id){const db=await getDb();return new Promise((res,rej)=>{const r=db.transaction(store,'readwrite').objectStore(store).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 

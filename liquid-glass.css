@@ -57,6 +57,17 @@ button:active { transform: translateY(1px) scale(.985); }
 .voice-picker:hover { border-color: #68aec4; }
 .voice-picker select { color: #1d394c; }
 .voice-picker option { background: #fff; color: var(--ink); }
+.voice-picker-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.voice-picker-wrap .voice-picker { min-width: 0; flex: 1; }
+.voice-picker-wrap select { min-width: 0; text-overflow: ellipsis; }
+.voice-delete-button { flex: none; min-height: 42px; padding: 0 10px; border: 1px solid rgba(205, 95, 103, .35); border-radius: 12px; background: rgba(255, 255, 255, .74); color: #af4b58; font-size: 12px; font-weight: 700; cursor: pointer; }
+.voice-delete-button:hover { background: #fff0f0; border-color: #c9676c; }
+.voice-delete-button[hidden] { display: none !important; }
+.confirm-voice-delete { width: min(440px, calc(100% - 24px)); }
+.confirm-voice-delete h2 { margin: 0 0 8px; font-size: 21px; }
+.confirm-voice-delete p { margin: 0; color: var(--muted); line-height: 1.65; }
+.button.danger { border-color: #bd5b64; background: #bd5b64; color: #fff; }
+.button.danger:hover { border-color: #aa4550; background: #aa4550; }
 .button, .icon-button, .text-button, .swap-button, .mini-button, .sample-actions button, .sample-actions label { transition: background .22s, color .22s, border-color .22s, box-shadow .22s, transform .22s; }
 .button { border-color: rgba(104,150,179,.28); background: rgba(255,255,255,.65); color: #225069; border-radius: 12px; }
 .button:hover, .icon-button:hover { border-color: rgba(8,127,149,.5); background: rgba(246,254,255,.9); box-shadow: 0 7px 19px rgba(79,130,159,.12); }
@@ -111,6 +122,27 @@ button:active { transform: translateY(1px) scale(.985); }
 .pitch-reference-banner strong { grid-column: 1; grid-row: 2; min-width: 0; }
 .pitch-reference-banner .button { grid-column: 2; grid-row: 2; white-space: nowrap; }
 .pitch-reference-banner small { grid-column: 1 / -1; grid-row: 3; white-space: normal; }
+.pitch-reference-banner .voice-pitch-status { grid-column: 1 / -1; grid-row: 4; margin: 7px 0 0; padding: 9px 11px; border-radius: 10px; background: rgba(255,255,255,.66); color: #315a6d; font-size: 12px; line-height: 1.5; }
+.pitch-reference-banner .voice-pitch-status[data-match="different"] { background: rgba(255,242,234,.86); color: #8d5e51; }
+.tenor-provenance { grid-column: 1 / -1; min-width: 0; border-top: 1px solid rgba(121,164,189,.25); padding-top: 9px; }
+.tenor-provenance summary { color: #087f95; font-size: 12px; font-weight: 700; cursor: pointer; width: max-content; max-width: 100%; padding: 4px 0; }
+.tenor-provenance summary:hover { color: #075d70; }
+.tenor-provenance[open] > div { padding: 3px 0 1px; }
+.tenor-provenance p { color: #506d7c; font-size: 11px; line-height: 1.65; margin: 5px 0 8px; }
+.tenor-provenance b { color: #315064; }
+.tenor-provenance .source-links { display: flex; flex-wrap: wrap; gap: 5px 14px; }
+.tenor-provenance a { color: #087f95; text-decoration: underline; text-underline-offset: 2px; }
+.medical-stage .anatomy-reference { fill: none; stroke: rgba(36,135,154,.34); stroke-width: 5; stroke-dasharray: 13 13; pointer-events: none; }
+.medical-stage #jawGroup, .medical-stage #lipsGroup, .medical-stage #velumGroup, .medical-stage #larynxGroup { transition: transform .2s ease-out; transform-box: view-box; }
+.medical-stage .lip-tissue { fill: rgba(214,97,118,.68); stroke: rgba(151,47,70,.68); stroke-width: 3; filter: drop-shadow(2px 3px 3px rgba(106,35,47,.18)); }
+.medical-stage .jaw-tissue { fill: rgba(237,185,151,.46); stroke: rgba(181,112,94,.66); stroke-width: 3; filter: drop-shadow(1px 4px 4px rgba(92,72,58,.13)); }
+.medical-stage .velum-tissue { fill: rgba(232,150,157,.59); stroke: rgba(164,86,111,.72); stroke-width: 3; filter: drop-shadow(2px 3px 3px rgba(95,52,64,.14)); }
+.medical-stage .larynx-tissue { fill: rgba(129,186,187,.42); stroke: rgba(67,126,135,.72); stroke-width: 3; filter: drop-shadow(2px 3px 4px rgba(50,89,95,.17)); }
+.medical-stage .velum-marker, .medical-stage .larynx-marker, .medical-stage .jaw-guide, .medical-stage .lip-guide { stroke: rgba(46,126,135,.5); stroke-width: 3; stroke-dasharray: none; }
+.medical-stage[data-active-organ="jawOpening"] .jaw-tissue, .medical-stage[data-active-organ="lipRounding"] .lip-tissue, .medical-stage[data-active-organ="velumOpening"] .velum-tissue, .medical-stage[data-active-organ="larynxHeight"] .larynx-tissue { stroke-width: 6; stroke: #087f95; }
+.medical-stage[data-active-organ="tongue"] .tongue-overlay { stroke: #087f95; stroke-width: 8; }
+.organ-motion-readout { display: none; position: absolute; left: 13px; bottom: 12px; max-width: 62%; padding: 6px 10px; border: 1px solid rgba(39,135,156,.3); border-radius: 9px; background: rgba(247,253,255,.92); color: #176b83; box-shadow: 0 3px 12px rgba(43,105,131,.13); font-size: 11px; font-weight: 700; pointer-events: none; }
+.medical-stage[data-active-organ] .organ-motion-readout { display: block; }
 .pitch-reference-banner span, .recording-pitch-guide span { color: #5e8291; font-size: 11px; }
 .pitch-reference-banner strong, .recording-pitch-guide strong { color: #c7605d; font-size: 17px; }
 .pitch-reference-banner small, .recording-pitch-guide small { color: #617a89; font-size: 11px; line-height: 1.5; }
