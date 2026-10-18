@@ -220,7 +220,12 @@ async function startPhonation(){
   const request=++phonationRequest;
   try{
     await initAudio();await resumeMediaChannel(audio.ctx);
-    if(audio.mode==='empty'){setAudioState('loading','正在载入五个元音…');await loadVoicePack(state.voicePackId)}
+    if(audio.mode==='empty'){
+      setAudioState('loading','正在载入五个元音…');
+      const currentAudio=audio;
+      if(!currentAudio.voiceLoadPromise)currentAudio.voiceLoadPromise=loadVoicePack(state.voicePackId).finally(()=>{currentAudio.voiceLoadPromise=null});
+      await currentAudio.voiceLoadPromise;
+    }
     if(request!==phonationRequest||(!pressing&&!locked&&!auditionActive)||audio.mode==='error')return false;
     if(audio.ctx.state==='suspended')await audio.ctx.resume();
     state.isPhonating=true;setAudioState('playing',`正在发 [${state.currentVowel}]`);$('#phonateButton').classList.add('is-playing');$('#phonateButton').setAttribute('aria-pressed','true');render();return true;
