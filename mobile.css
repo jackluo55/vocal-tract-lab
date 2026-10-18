@@ -1,5 +1,6 @@
 .mobile-layout{display:contents}
 .mobile-stage-anchor{display:none}
+.mobile-control-modes{display:none}
 .handle{touch-action:none}
 .handle-hit{fill:rgba(0,0,0,.001);stroke:none}
 
@@ -39,6 +40,12 @@
   .vowel-switcher{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}
   .vowel-switcher>div{grid-column:1/-1}
   .vowel-button{height:48px}
+  .mobile-control-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:12px 0 4px;padding:4px;border:1px solid var(--line2);border-radius:11px;background:#08151d}
+  .mobile-control-modes button{min-height:42px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer}
+  .mobile-control-modes button[aria-pressed="true"]{border-color:var(--mint);background:rgba(76,224,193,.13);color:var(--mint)}
+  .mobile-control-modes button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+  .controls-panel[data-control-view="sliders"] .parameter-comparison{display:none}
+  .controls-panel[data-control-view="comparison"] .control-list{display:none}
   .control-list{grid-template-columns:1fr;gap:2px}
   .control-row{padding:8px 0 10px;gap:3px}
   .control-row b{font-size:14px}

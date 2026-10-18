@@ -8,7 +8,7 @@
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261018-1">
-  <link rel="stylesheet" href="./mobile.css?v=20261018-1">
+  <link rel="stylesheet" href="./mobile.css?v=20261018-2">
 </head>
 <body>
   <div class="app-shell">
@@ -127,6 +127,10 @@
         <div class="tenor-preset">
           <div><span class="preset-kicker">SELECTED-PITCH PRESET</span><strong>经典意大利男高音构形</strong><small>按当前元音和上方所选音高载入教学估算参数；保留当前声线。</small></div>
           <button class="button tenor-button" id="applyTenorPreset">载入参数（静音）</button>
+        </div>
+        <div class="mobile-control-modes" role="group" aria-label="手机参数查看方式">
+          <button type="button" data-control-view="sliders" aria-pressed="true">调节滑杆</button>
+          <button type="button" data-control-view="comparison" aria-pressed="false">查看对比</button>
         </div>
         <div class="control-list" id="controlList">
           <label class="control-row" data-key="tongueHeight"><span><b>舌高</b><em>Tongue height</em></span><output>30</output><input type="range" min="0" max="100" value="30" aria-label="舌高"></label>
@@ -297,7 +301,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261018-1"></script>
+  <script src="./app.js?v=20261018-2"></script>
   <script src="./spectrum3d.js?v=20261015-2"></script>
 </body>
 </html>

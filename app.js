@@ -434,6 +434,12 @@ function bindMobileTabs(){
     $$('[data-panel]').forEach(panel=>panel.classList.toggle('active',panel.dataset.panel===name));
   };
   $$('.mobile-tabs [data-tab]').forEach(button=>button.addEventListener('click',()=>selectTab(button.dataset.tab)));
+  const controlsPanel=$('[data-panel="controls"]');
+  $$('.mobile-control-modes button').forEach(button=>button.addEventListener('click',()=>{
+    controlsPanel.dataset.controlView=button.dataset.controlView;
+    $$('.mobile-control-modes button').forEach(option=>option.setAttribute('aria-pressed',String(option===button)));
+  }));
+  controlsPanel.dataset.controlView='sliders';
   $('#toggleMobileStage').addEventListener('click',event=>{
     const collapsed=layout.classList.toggle('stage-collapsed');
     event.currentTarget.setAttribute('aria-expanded',String(!collapsed));
