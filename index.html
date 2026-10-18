@@ -7,7 +7,8 @@
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261017-6">
+  <link rel="stylesheet" href="./styles.css?v=20261018-1">
+  <link rel="stylesheet" href="./mobile.css?v=20261018-1">
 </head>
 <body>
   <div class="app-shell">
@@ -42,12 +43,15 @@
       </div>
     </header>
 
-    <nav class="mobile-tabs" aria-label="工作区切换">
-      <button class="active" data-tab="anatomy">声道</button>
-      <button data-tab="controls">参数</button>
-      <button data-tab="acoustics">声学</button>
+    <nav class="mobile-tabs" aria-label="手机工作区切换">
+      <button class="active" data-tab="anatomy" aria-pressed="true">元音与发声</button>
+      <button data-tab="controls" aria-pressed="false">调节与对比</button>
+      <button data-tab="acoustics" aria-pressed="false">声学观察</button>
+      <button id="toggleMobileStage" type="button" aria-expanded="true" aria-controls="mobileStageAnchor">收起图</button>
     </nav>
 
+    <div class="mobile-layout" id="mobileLayout">
+      <div class="mobile-stage-anchor" id="mobileStageAnchor" aria-label="持续显示的声道剖面"></div>
     <main class="workspace">
       <section class="panel anatomy-panel active" data-panel="anatomy" aria-labelledby="anatomyTitle">
         <div class="panel-heading">
@@ -74,13 +78,13 @@
             <g id="jawGroup"><path class="jaw-guide" d="M352 618 Q469 700 653 721"/></g>
             <g id="lipsGroup"><path class="lip-guide" d="M330 452 Q292 491 334 519 M334 530 Q294 560 343 584"/></g>
 
-            <g class="handle" data-control="tongue" tabindex="0" role="slider" aria-label="舌位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="614" cy="540" r="22"/><circle class="handle-core" cx="614" cy="540" r="7"/><text x="646" y="532">舌位</text><text class="handle-value" x="646" y="555">H 30 · F 52</text></g>
-            <g class="handle" data-control="jawOpening" tabindex="0" role="slider" aria-label="下颌开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="500" cy="712" r="20"/><circle class="handle-core" cx="500" cy="712" r="6"/><text x="530" y="720">下颌</text></g>
-            <g class="handle" data-control="lipRounding" tabindex="0" role="slider" aria-label="唇部圆展控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="314" cy="523" r="20"/><circle class="handle-core" cx="314" cy="523" r="6"/><text x="247" y="487">唇部</text></g>
-            <g class="handle" data-control="velumOpening" tabindex="0" role="slider" aria-label="软腭开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="765" cy="423" r="20"/><circle class="handle-core" cx="765" cy="423" r="6"/><text x="795" y="414">软腭</text></g>
-            <g class="handle" data-control="suprahyoidTension" tabindex="0" role="slider" aria-label="舌骨上肌群控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring muscle-handle" cx="652" cy="704" r="20"/><circle class="handle-core" cx="652" cy="704" r="6"/><text x="555" y="754">舌骨上肌群</text></g>
-            <g class="handle" data-control="thyrohyoidTension" tabindex="0" role="slider" aria-label="甲状舌骨肌控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring muscle-handle" cx="763" cy="756" r="20"/><circle class="handle-core" cx="763" cy="756" r="6"/><text x="798" y="760">甲状舌骨肌</text></g>
-            <g class="handle" data-control="larynxHeight" tabindex="0" role="slider" aria-label="喉位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-ring" cx="790" cy="785" r="20"/><circle class="handle-core" cx="790" cy="785" r="6"/><text x="824" y="810">喉位</text></g>
+            <g class="handle" data-control="tongue" tabindex="0" role="slider" aria-label="舌位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="614" cy="540" r="52"/><circle class="handle-ring" cx="614" cy="540" r="22"/><circle class="handle-core" cx="614" cy="540" r="7"/><text x="646" y="532">舌位</text><text class="handle-value" x="646" y="555">H 30 · F 52</text></g>
+            <g class="handle" data-control="jawOpening" tabindex="0" role="slider" aria-label="下颌开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="500" cy="712" r="52"/><circle class="handle-ring" cx="500" cy="712" r="20"/><circle class="handle-core" cx="500" cy="712" r="6"/><text x="530" y="720">下颌</text></g>
+            <g class="handle" data-control="lipRounding" tabindex="0" role="slider" aria-label="唇部圆展控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="314" cy="523" r="52"/><circle class="handle-ring" cx="314" cy="523" r="20"/><circle class="handle-core" cx="314" cy="523" r="6"/><text x="247" y="487">唇部</text></g>
+            <g class="handle" data-control="velumOpening" tabindex="0" role="slider" aria-label="软腭开度控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="765" cy="423" r="52"/><circle class="handle-ring" cx="765" cy="423" r="20"/><circle class="handle-core" cx="765" cy="423" r="6"/><text x="795" y="414">软腭</text></g>
+            <g class="handle" data-control="suprahyoidTension" tabindex="0" role="slider" aria-label="舌骨上肌群控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="652" cy="704" r="52"/><circle class="handle-ring muscle-handle" cx="652" cy="704" r="20"/><circle class="handle-core" cx="652" cy="704" r="6"/><text x="555" y="754">舌骨上肌群</text></g>
+            <g class="handle" data-control="thyrohyoidTension" tabindex="0" role="slider" aria-label="甲状舌骨肌控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="763" cy="756" r="52"/><circle class="handle-ring muscle-handle" cx="763" cy="756" r="20"/><circle class="handle-core" cx="763" cy="756" r="6"/><text x="798" y="760">甲状舌骨肌</text></g>
+            <g class="handle" data-control="larynxHeight" tabindex="0" role="slider" aria-label="喉位控制点" aria-valuemin="0" aria-valuemax="100"><circle class="handle-hit" cx="790" cy="785" r="52"/><circle class="handle-ring" cx="790" cy="785" r="20"/><circle class="handle-core" cx="790" cy="785" r="6"/><text x="824" y="810">喉位</text></g>
           </svg>
           <div class="vowel-readout">
             <span>当前元音</span>
@@ -99,7 +103,7 @@
           <button class="vowel-button" data-vowel-select="u" aria-pressed="false">[u]</button>
         </div>
 
-        <div class="phonation-dock">
+        <div class="phonation-dock" id="phonationDock">
           <button class="phonate-button" id="phonateButton" aria-pressed="false">
             <span class="phonate-orbit"></span>
             <span class="phonate-icon" aria-hidden="true"></span>
@@ -227,6 +231,7 @@
         <p class="model-note">教学近似模型 · 数值用于构形比较，不替代临床或实验室测量。</p>
       </section>
     </main>
+    </div>
   </div>
 
   <dialog id="voiceDialog" class="modal">
@@ -292,7 +297,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261017-5"></script>
+  <script src="./app.js?v=20261018-1"></script>
   <script src="./spectrum3d.js?v=20261015-2"></script>
 </body>
 </html>

@@ -422,7 +422,27 @@ function stopAndClearAudio(){if(!audio)return;cancelAnimationFrame(audio.raf);cl
 function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=voiceSelect.querySelector(`option[value="${pack.id}"]`);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=pack.source==='bundled'?pack.name:`${pack.name} · 本机`;voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}}
 async function loadVoicePacks(){try{const response=await fetch('./assets/default-voice/manifest.json',{cache:'no-cache'});if(!response.ok)throw Error(`初始声线清单 ${response.status}`);addVoiceOption(await response.json(),{select:true})}catch(err){console.warn('Bundled voice unavailable.',err)}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>addVoiceOption(pack))}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size)$('#voiceSelect').disabled=true;$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value))}
 
-function bindMobileTabs(){$$('.mobile-tabs button').forEach(btn=>btn.addEventListener('click',()=>{$$('.mobile-tabs button').forEach(b=>b.classList.toggle('active',b===btn));$$('[data-panel]').forEach(p=>p.classList.toggle('active',p.dataset.panel===btn.dataset.tab))}))}
+function bindMobileTabs(){
+  const layout=$('#mobileLayout'),anchor=$('#mobileStageAnchor'),stage=$('#anatomyStage'),dock=$('#phonationDock'),anatomyPanel=$('[data-panel="anatomy"]'),vowels=$('.vowel-switcher');
+  const mobileQuery=window.matchMedia('(max-width: 780px), (max-width: 950px) and (orientation: landscape)');
+  const placeStage=()=>{
+    if(mobileQuery.matches){if(stage.parentElement!==anchor)anchor.append(stage,dock)}
+    else if(stage.parentElement!==anatomyPanel){anatomyPanel.insertBefore(stage,vowels);anatomyPanel.append(dock)}
+  };
+  const selectTab=name=>{
+    $$('.mobile-tabs [data-tab]').forEach(button=>{const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
+    $$('[data-panel]').forEach(panel=>panel.classList.toggle('active',panel.dataset.panel===name));
+  };
+  $$('.mobile-tabs [data-tab]').forEach(button=>button.addEventListener('click',()=>selectTab(button.dataset.tab)));
+  $('#toggleMobileStage').addEventListener('click',event=>{
+    const collapsed=layout.classList.toggle('stage-collapsed');
+    event.currentTarget.setAttribute('aria-expanded',String(!collapsed));
+    event.currentTarget.textContent=collapsed?'展开图':'收起图';
+  });
+  if(mobileQuery.addEventListener)mobileQuery.addEventListener('change',placeStage);
+  else mobileQuery.addListener(placeStage);
+  placeStage();selectTab('anatomy');
+}
 function showToast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400)}
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 
