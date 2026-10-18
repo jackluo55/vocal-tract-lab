@@ -7,7 +7,7 @@
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261018-1">
+  <link rel="stylesheet" href="./styles.css?v=20261018-2">
   <link rel="stylesheet" href="./mobile.css?v=20261018-2">
 </head>
 <body>
@@ -172,28 +172,28 @@
           <span class="live-label">LIVE</span>
         </div>
         <div class="formant-grid">
-          <div class="formant-cell" title="F0 基频（Fundamental Frequency）：声带每秒振动的次数，决定你唱的音高，数值越高音越高。">
+          <div class="formant-cell" data-formant="f0" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F0 基频（Fundamental Frequency）：声带每秒振动的次数，决定你唱的音高，数值越高音越高。">
             <div class="formant-head"><span class="formant-tag">F0</span><span class="formant-name">基频</span></div>
             <div class="formant-value"><strong id="f0Value">220</strong><small>Hz</small></div>
             <p class="formant-desc">决定音高</p>
           </div>
-          <div class="formant-cell" title="F1 第一共振峰（First Formant）：声道共鸣频率之一，主要受舌位高低与下颌开度影响，开口越大 F1 越高。">
+          <div class="formant-cell" data-formant="f1" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F1 第一共振峰（First Formant）：声道共鸣频率之一，主要受舌位高低与下颌开度影响，开口越大 F1 越高。">
             <div class="formant-head"><span class="formant-tag">F1</span><span class="formant-name">第一共振峰</span></div>
             <div class="formant-value"><strong id="f1Value">800</strong><small>Hz</small></div>
             <p class="formant-desc">舌高 · 开口</p>
           </div>
-          <div class="formant-cell" title="F2 第二共振峰（Second Formant）：主要受舌位前后与唇部圆展影响，决定元音的前后色彩，如 [i] 高、[u] 低。">
+          <div class="formant-cell" data-formant="f2" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F2 第二共振峰（Second Formant）：主要受舌位前后与唇部圆展影响，决定元音的前后色彩，如 [i] 高、[u] 低。">
             <div class="formant-head"><span class="formant-tag">F2</span><span class="formant-name">第二共振峰</span></div>
             <div class="formant-value"><strong id="f2Value">1200</strong><small>Hz</small></div>
             <p class="formant-desc">舌位前后 · 唇形</p>
           </div>
-          <div class="formant-cell" title="F3 第三共振峰（Third Formant）：主要影响音色的明亮度与个性，歌唱训练中与高位共鸣、歌手共振峰相关。">
+          <div class="formant-cell" data-formant="f3" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F3 第三共振峰（Third Formant）：主要影响音色的明亮度与个性，歌唱训练中与高位共鸣、歌手共振峰相关。">
             <div class="formant-head"><span class="formant-tag">F3</span><span class="formant-name">第三共振峰</span></div>
             <div class="formant-value"><strong id="f3Value">2500</strong><small>Hz</small></div>
             <p class="formant-desc">音色 · 明亮度</p>
           </div>
         </div>
-        <p class="formant-key"><b>F</b> 是 Formant（共振峰）的缩写：<b>F0</b> 是基频（你唱的音高）；<b>F1/F2/F3</b> 是声道放大的三个共鸣频率，共同决定元音音色。点击或悬停各卡片看详解。</p>
+        <p class="formant-key" id="formantExplanation" aria-live="polite"><b>F</b> 是 Formant（共振峰）的缩写：<b>F0</b> 是基频（你唱的音高）；<b>F1/F2/F3</b> 是声道放大的三个共鸣频率，共同决定元音音色。点击任意一张卡片，在这里查看解释。</p>
 
         <div class="chart-block">
           <div class="chart-title"><span>IPA 元音空间</span><small>F2 ← / F1 ↓</small></div>
@@ -301,7 +301,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261018-4"></script>
+  <script src="./app.js?v=20261018-5"></script>
   <script src="./spectrum3d.js?v=20261015-2"></script>
 </body>
 </html>

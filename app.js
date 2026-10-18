@@ -35,6 +35,12 @@ let humanOctaveAssist=true;
 const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',suprahyoidTension:'舌骨上肌群',thyrohyoidTension:'甲状舌骨肌',jawOpening:'下颌开度',lipRounding:'唇部圆展',larynxHeight:'喉位',velumOpening:'软腭开度'};
 const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='default-personal';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
+const FORMANT_EXPLANATIONS={
+  f0:'<b>F0 · 基频</b>：声带每秒振动的次数，也就是你实际唱出的音高。数值越高，声音越高；它不是元音本身的共鸣峰。',
+  f1:'<b>F1 · 第一共振峰</b>：主要反映开口程度、下颌开度与舌位高低。一般来说，嘴张得越开、舌位越低，F1 越高。',
+  f2:'<b>F2 · 第二共振峰</b>：主要反映舌位前后与唇部圆展。舌位越靠前，F2 通常越高；圆唇、后缩会让 F2 降低。',
+  f3:'<b>F3 · 第三共振峰</b>：更多影响声音的明亮度与个性，也会受到声道长度、喉位与咽腔形状影响。它是教学观察值，不单独决定一个元音。'
+};
 const state={...DEFAULT_STATE,currentVowel:'a',isPhonating:false,voicePackId:DEFAULT_VOICE_ID};
 let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null;
 const mediaOutputRoutes=new WeakMap();
@@ -249,6 +255,18 @@ function bindControls(){
   const svg=$('#tractSvg');
   $$('.handle').forEach(h=>{h.addEventListener('pointerdown',e=>{dragControl=h.dataset.control;h.setPointerCapture(e.pointerId);e.preventDefault()});h.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const step=e.shiftKey?5:2,key=h.dataset.control;if(key==='tongue')setParam(e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness',(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*step+state[e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness']);else setParam(key,state[key]+(e.key==='ArrowUp'||e.key==='ArrowRight'?step:-step))})});
   svg.addEventListener('pointermove',e=>{if(!dragControl)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());if(dragControl==='tongue'){setParam('tongueFrontness',(p.x-500)/2.2);setParam('tongueHeight',(600-p.y)/2)}else if(dragControl==='jawOpening')setParam('jawOpening',(p.y-690)/.3);else if(dragControl==='lipRounding')setParam('lipRounding',(320-p.x)/.28);else if(dragControl==='velumOpening')setParam('velumOpening',(p.y-410)/.7);else if(dragControl==='suprahyoidTension')setParam('suprahyoidTension',(p.x-620)/1.05);else if(dragControl==='thyrohyoidTension')setParam('thyrohyoidTension',(p.x-748)/.45);else if(dragControl==='larynxHeight')setParam('larynxHeight',(835-p.y)/1.2)});window.addEventListener('pointerup',()=>dragControl=null);
+}
+function showFormantExplanation(key){
+  if(!FORMANT_EXPLANATIONS[key])return;
+  $$('.formant-cell').forEach(cell=>{const active=cell.dataset.formant===key;cell.classList.toggle('selected',active);cell.setAttribute('aria-pressed',String(active))});
+  $('#formantExplanation').innerHTML=FORMANT_EXPLANATIONS[key];
+}
+function bindFormantExplainer(){
+  $$('.formant-cell').forEach(cell=>{
+    const select=()=>showFormantExplanation(cell.dataset.formant);
+    cell.addEventListener('click',select);
+    cell.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select()}});
+  });
 }
 function bindPhonation(){
   const btn=$('#phonateButton');let pressStarted=0;
@@ -482,5 +500,5 @@ async function dbDelete(store,id){const db=await getDb();return new Promise((res
 
 window.__vocalLab={get audio(){return audio},get state(){return state},acousticValues,PitchCore,estimateF0,runPitchCoreTests,runPitchDetectionSelfTests};
 
-async function init(){bindControls();bindPhonation();bindSnapshots();bindMobileTabs();setupVoiceLab();const pitchCoreResult=runPitchCoreTests();if(new URLSearchParams(location.search).get('test')==='pitch-core')setTimeout(()=>runPitchDetectionSelfTests(pitchCoreResult));try{slots={...slots,...JSON.parse(localStorage.getItem('vocalLabSlots')||'{}')}}catch(err){console.warn('Local settings unavailable.',err)}try{snapshots=(await dbAll('snapshots')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}catch(err){console.warn('Snapshot storage unavailable.',err)}await loadVoicePacks();renderSnapshots();render();if(!personalVoicePacks.size)setAudioState('','请先创建我的声线')}
+async function init(){bindControls();bindFormantExplainer();bindPhonation();bindSnapshots();bindMobileTabs();setupVoiceLab();const pitchCoreResult=runPitchCoreTests();if(new URLSearchParams(location.search).get('test')==='pitch-core')setTimeout(()=>runPitchDetectionSelfTests(pitchCoreResult));try{slots={...slots,...JSON.parse(localStorage.getItem('vocalLabSlots')||'{}')}}catch(err){console.warn('Local settings unavailable.',err)}try{snapshots=(await dbAll('snapshots')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}catch(err){console.warn('Snapshot storage unavailable.',err)}await loadVoicePacks();renderSnapshots();render();if(!personalVoicePacks.size)setAudioState('','请先创建我的声线')}
 init();
