@@ -1,0 +1,295 @@
+/* 声道实验台 · light glass visual system. Loaded after the legacy responsive styles. */
+:root {
+  color-scheme: light;
+  --bg: #eaf2f8;
+  --panel: #f8fbff;
+  --panel2: #edf5fa;
+  --line: rgba(117, 151, 173, .24);
+  --line2: rgba(105, 144, 170, .34);
+  --ink: #162d3f;
+  --muted: #536c7c;
+  --mint: #087f95;
+  --yellow: #d56e62;
+  --rose: #d46165;
+  --blue: #6095c8;
+  --shadow: 0 18px 50px rgba(72, 104, 129, .11), 0 2px 8px rgba(72, 104, 129, .055);
+  --radius: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  background-image: radial-gradient(ellipse 60% 40% at 8% 4%, #ffffff 0%, transparent 80%),
+    radial-gradient(ellipse 44% 38% at 94% 8%, rgba(177, 211, 234, .66), transparent 88%),
+    linear-gradient(160deg, #f2f7fb 0%, #e5eff7 60%, #e8f1f7 100%);
+  background-attachment: fixed;
+}
+button, input, select { font-family: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, .formant-cell:focus-visible {
+  outline: 3px solid rgba(8, 127, 149, .55) !important;
+  outline-offset: 2px;
+}
+button:active { transform: translateY(1px) scale(.985); }
+.app-shell { max-width: 1660px; min-height: 100dvh; margin: auto; padding: clamp(10px, 1.5vw, 24px); }
+.topbar, .panel, .modal-card, .mobile-tabs, .mobile-stage-anchor {
+  background: linear-gradient(146deg, rgba(255,255,255,.84), rgba(244,250,255,.62));
+  border: 1px solid rgba(255,255,255,.92);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.98), inset 0 -1px 0 rgba(125,169,194,.12);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+.topbar { min-height: 78px; height: auto; padding: 12px 22px; margin-bottom: 16px; border-radius: 24px; overflow: visible; }
+.topbar::before { top: 1px; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent); }
+.brand { gap: 12px; }
+.brand-mark { width: 46px; height: 46px; color: #168eab; border: 1px solid rgba(135,194,218,.5); background: linear-gradient(145deg,rgba(255,255,255,.96),rgba(202,232,245,.65)); box-shadow: inset 0 1px 0 #fff, 0 5px 12px rgba(57,125,162,.12); }
+.brand-mark:hover { box-shadow: inset 0 1px 0 #fff, 0 8px 18px rgba(57,125,162,.18); }
+.brand h1 { font-size: 21px; font-weight: 700; letter-spacing: -.035em; color: #173149; }
+.eyebrow { color: #4d8da6; letter-spacing: .14em; }
+.audio-state, .voice-picker, .button.ghost, .icon-button {
+  background: rgba(255,255,255,.54); border: 1px solid rgba(121,164,190,.27);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+.audio-state { color: #526e7e; }
+.audio-state.ready, .audio-state.playing { border-color: rgba(8,127,149,.28); color: #087384; }
+.audio-state.ready .state-dot, .audio-state.playing .state-dot { background: #1595a5; box-shadow: 0 0 0 3px rgba(21,149,165,.12); }
+.audio-state.loading .state-dot { background: #d58068; }
+.voice-picker { color: #208aa3; border-radius: 13px; }
+.voice-picker:hover { border-color: #68aec4; }
+.voice-picker select { color: #1d394c; }
+.voice-picker option { background: #fff; color: var(--ink); }
+.button, .icon-button, .text-button, .swap-button, .mini-button, .sample-actions button, .sample-actions label { transition: background .22s, color .22s, border-color .22s, box-shadow .22s, transform .22s; }
+.button { border-color: rgba(104,150,179,.28); background: rgba(255,255,255,.65); color: #225069; border-radius: 12px; }
+.button:hover, .icon-button:hover { border-color: rgba(8,127,149,.5); background: rgba(246,254,255,.9); box-shadow: 0 7px 19px rgba(79,130,159,.12); }
+.button.primary { color: #fff; background: #168aa2; border-color: #168aa2; }
+.button.primary:hover { background: #0b778e; border-color: #0b778e; }
+.button.ghost { color: #28526a; }
+.button.ghost .btn-plus { color: #0e849a; }
+.icon-button { color: #31556a; }
+.workspace { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); gap: 16px; align-items: start; min-height: 0; }
+.panel { padding: clamp(15px, 1.5vw, 22px); border-radius: 25px; }
+.panel-heading { margin-bottom: 15px; }
+.panel-heading h2 { font-size: 17px; letter-spacing: -.02em; font-weight: 700; }
+.panel-heading p { color: #60798b; font-size: 12px; }
+.section-number { width: 29px; height: 29px; border-color: rgba(103,154,180,.28); background: rgba(255,255,255,.6); color: #0c7892; border-radius: 9px; font-size: 11px; }
+.text-button { color: #39758b; font-weight: 650; }
+.text-button:hover { color: #0b6e82; }
+.medical-stage { width: 100%; flex: none; aspect-ratio: 4/3; border: 1px solid rgba(119,158,183,.25); background: #fff; border-radius: 18px; box-shadow: inset 0 1px 0 #fff, 0 12px 28px rgba(86,126,154,.08); }
+.medical-stage .anatomy-base { object-fit: contain; }
+.medical-stage .tongue { filter: drop-shadow(0 5px 8px rgba(95,28,48,.2)); }
+.medical-stage .handle-ring { fill: rgba(255,255,255,.93); stroke: #10879a; filter: drop-shadow(0 3px 4px rgba(35,96,118,.28)); }
+.medical-stage .handle-ring.muscle-handle { stroke: #d97866; }
+.medical-stage .handle-core { fill: #0f8398; }
+.medical-stage .handle text { fill: #173b4d; stroke: rgba(255,255,255,.98); stroke-width: 8; }
+.medical-stage .handle .handle-value { fill: #285d69; }
+.medical-stage .air-path { stroke: rgba(31,151,173,.7); }
+.medical-stage .velum-marker, .medical-stage .larynx-marker, .medical-stage .jaw-guide, .medical-stage .lip-guide { stroke: rgba(13,126,145,.65); }
+.vowel-readout { background: rgba(255,255,255,.84); color: #18394c; border-color: rgba(255,255,255,.9); border-radius: 14px; box-shadow: 0 8px 24px rgba(69,108,130,.14); }
+.vowel-readout span, .gesture-hint { color: #547486; }
+.vowel-readout strong { color: #da7565; }
+.vowel-switcher { margin-top: 14px; padding: 12px; gap: 9px; border-color: rgba(135,171,193,.25); border-radius: 17px; background: rgba(235,245,250,.62); }
+.vowel-switcher strong { color: #234357; font-size: 13px; }
+.vowel-switcher small { color: #617a89; line-height: 1.45; }
+.vowel-button { border: 1px solid rgba(129,164,186,.27); background: rgba(255,255,255,.8); color: #244a5e; border-radius: 12px; font-size: 19px; box-shadow: inset 0 1px 0 #fff; }
+.vowel-button:hover, .vowel-button:focus-visible { border-color: #0b8799; background: #f0fbfd; }
+.vowel-button.active { color: #fff; border-color: #0a8299; background: linear-gradient(160deg,#2eabc0,#087e96); box-shadow: 0 7px 15px rgba(27,128,151,.22); }
+.phonation-dock { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.phonate-button { min-width: 230px; min-height: 66px; height: auto; padding: 9px 22px; border: 1px solid rgba(220,105,95,.4); border-radius: 18px; color: #fff; background: linear-gradient(155deg,#f38e7c,#e46f67); box-shadow: 0 10px 22px rgba(220,103,95,.23), inset 0 1px 0 rgba(255,255,255,.35); }
+.phonate-button:hover { border-color: #d7635b; box-shadow: 0 13px 25px rgba(220,103,95,.29), inset 0 1px 0 rgba(255,255,255,.35); }
+.phonate-button.is-playing { color: #fff; border-color: #0b8295; background: linear-gradient(155deg,#34a9b7,#0b8199); box-shadow: 0 10px 22px rgba(28,132,151,.22), inset 0 1px 0 rgba(255,255,255,.3); }
+.phonate-button strong { font-size: 19px; letter-spacing: .01em; }
+.phonate-button small { font-size: 11px; opacity: .9; }
+.phonate-orbit { border-color: rgba(255,255,255,.2); }
+.phonate-icon { width: 28px; height: 28px; }
+.level-meter { max-width: 160px; height: 32px; gap: 4px; }
+.level-meter span { width: 5px; background: #b7d1d9; }
+.pitch-reference-banner, .tenor-preset, .parameter-comparison, .calibration-card, .recording-pitch-guide {
+  background: rgba(238,247,251,.68); border: 1px solid rgba(121,164,189,.25); border-radius: 17px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+.pitch-reference-banner { gap: 4px 12px; padding: 14px 15px; margin-bottom: 12px; }
+.pitch-reference-banner span, .recording-pitch-guide span { color: #5e8291; font-size: 11px; }
+.pitch-reference-banner strong, .recording-pitch-guide strong { color: #c7605d; font-size: 17px; }
+.pitch-reference-banner small, .recording-pitch-guide small { color: #617a89; font-size: 11px; line-height: 1.5; }
+.pitch-reference-banner .button, .recording-pitch-guide .button { color: #98655f; border-color: rgba(217,128,109,.34); }
+.tenor-preset { padding: 13px 15px; margin-bottom: 12px; }
+.tenor-preset strong { color: #223d50; font-size: 14px; }
+.tenor-preset small { color: #60798b; font-size: 11px; }
+.preset-kicker { color: #a57065; font-size: 10px; }
+.tenor-button { color: #a85653; border-color: rgba(216,126,112,.37); }
+.control-list { grid-template-columns: 1fr 1fr; gap: 9px; }
+.control-row { min-width: 0; padding: 11px 12px 12px; border: 1px solid rgba(129,169,190,.23); border-radius: 13px; background: rgba(255,255,255,.48); gap: 8px; }
+.control-row b { color: #233f51; font-size: 13px; }
+.control-row em { color: #69808d; font-size: 10px; text-transform: none; letter-spacing: .01em; }
+.control-row output { color: #0a8096; font-weight: 700; font-size: 14px; }
+.control-row input { background: linear-gradient(90deg,#21a0b3 var(--pct,30%),#cbdfe7 var(--pct,30%)); }
+.control-row input::-webkit-slider-thumb { background: #fff; border: 3px solid #168fa3; width: 19px; height: 19px; box-shadow: 0 2px 7px rgba(39,109,130,.22); }
+.control-row input::-moz-range-thumb { background: #fff; border: 3px solid #168fa3; box-shadow: 0 2px 7px rgba(39,109,130,.22); }
+.parameter-comparison { margin-top: 14px; padding: 15px; }
+.comparison-heading { border-color: rgba(118,156,179,.24); }
+.comparison-heading strong { color: #294659; font-size: 15px; }
+.comparison-heading>span { color: #a25c54; background: rgba(255,255,255,.7); border-color: rgba(218,136,112,.28); }
+.comparison-legend span { color: #526d7d; }
+.current-dot { background: #118da2; }
+.tenor-dot { background: #e28a72; }
+.comparison-row>span { color: #3e5d6c; }
+.comparison-value { background: rgba(209,227,236,.75); }
+.comparison-value b { color: #1d3e50; }
+.current-value span { background: rgba(36,160,180,.38); }
+.tenor-value span { background: rgba(239,147,117,.4); }
+.comparison-row>small { color: #b1625e; }
+.parameter-comparison>p { color: #617c8c; font-size: 11px; line-height: 1.5; }
+.section-label { color: #2c4b5c; }
+.save-row input, .pack-name input { color: var(--ink); border-color: rgba(112,158,184,.28); background: rgba(255,255,255,.75); }
+.save-row input::placeholder { color: #8298a5; }
+.ab-slot, .swap-button, .snapshot-item { background: rgba(255,255,255,.61); border-color: rgba(125,167,190,.27); color: #23465b; }
+.ab-slot:hover, .swap-button:hover, .snapshot-item:hover { border-color: rgba(14,135,154,.4); background: #f6fcff; }
+.ab-slot>span { color: #0b8296; }
+.ab-slot small, .snapshot-item small, .empty-state { color: #66808e; }
+.mini-button { background: #e5f2f7; color: #27657c; }
+.acoustics-panel { grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.acoustics-panel .panel-heading, .acoustics-panel .formant-grid, .acoustics-panel .formant-key, .calibration-card, .model-note { grid-column: 1/-1; }
+.formant-grid { gap: 11px; }
+.formant-cell, .formant-cell:first-child { background: rgba(255,255,255,.66); border: 1px solid rgba(122,165,188,.28); border-radius: 15px; box-shadow: inset 0 1px 0 rgba(255,255,255,.96); }
+.formant-cell:hover, .formant-cell:first-child:hover { background: #f6fdff; border-color: rgba(12,133,152,.52); box-shadow: 0 9px 18px rgba(81,126,153,.13); }
+.formant-cell.selected, .formant-cell:first-child.selected { background: #e7f7fa; border-color: #0b8ea1; box-shadow: 0 0 0 2px rgba(20,151,169,.12), 0 7px 15px rgba(81,126,153,.12); }
+.formant-cell:first-child.selected { background: #fff0ed; border-color: #df8a76; box-shadow: 0 0 0 2px rgba(220,130,109,.11), 0 7px 15px rgba(81,126,153,.12); }
+.formant-tag { color: #0b849b; }
+.formant-cell:first-child .formant-tag { color: #c86960; }
+.formant-name, .formant-value strong { color: #213e51; }
+.formant-value strong { font-size: 26px; }
+.formant-value small, .formant-desc { color: #6a8290; }
+.formant-key { min-height: 0; margin-bottom: 2px; padding: 12px 15px; font-size: 12px; line-height: 1.55; color: #416273; background: rgba(255,255,255,.55); border-color: rgba(121,165,189,.25); border-left: 3px solid #1b9aae; border-radius: 11px; }
+.formant-key b { color: #147d91; }
+.chart-block { background: rgba(255,255,255,.53); border: 1px solid rgba(121,165,189,.25); border-radius: 16px; padding: 15px; }
+.chart-title { color: #2b4c5f; font-size: 13px; }
+.chart-title small { color: #66828e; font-size: 10px; }
+.vowel-frame { fill: rgba(224,240,247,.34); stroke: #85adbf; }
+.chart-grid path { stroke: #d3e5ec; }
+.vowel-anchor circle { fill: #edf7fa; stroke: #9bbdca; }
+.vowel-anchor text { fill: #385d70; }
+.vowel-anchor.active circle { stroke: #de8b77; fill: #fff0eb; }
+.vowel-anchor.active text { fill: #bd625e; }
+.cursor-glow { fill: rgba(28,150,168,.12); stroke: rgba(25,141,160,.25); }
+.cursor-core { fill: #168ca2; }
+.spectrum3d-wrap { border-color: rgba(119,161,185,.27); background: linear-gradient(180deg,#edf7fb,#dcecf4); border-radius: 12px; }
+.spectrum-axis { color: #66808f; }
+.lg-key { color: #4f7182; }
+.lg-f1 { background: #178da1; box-shadow: none; }.lg-f2 { background: #e28b77; box-shadow: none; }.lg-f3 { background: #6598cc; box-shadow: none; }
+.calibration-card { padding: 15px; }
+.calibration-title span, .calibration-card.personal .calibration-title span { color: #0a8398; }
+.calibration-title strong, .calibration-card dd { color: #2b4c5e; }
+.calibration-card dl>div { border-color: rgba(122,163,185,.24); }
+.calibration-card dt, .calibration-card p, .model-note { color: #64808e; font-size: 11px; line-height: 1.5; }
+.calibration-card dd { font-size: 12px; }
+.modal::backdrop { background: rgba(48,70,89,.35); backdrop-filter: blur(10px); }
+.modal-card { max-height: min(92dvh,950px); background: linear-gradient(145deg,rgba(255,255,255,.96),rgba(235,246,251,.93)); border-radius: 25px; box-shadow: 0 28px 90px rgba(41,80,112,.25), inset 0 1px 0 #fff; }
+.modal-header h2 { color: #183a4d; }
+.modal-intro { color: #536e7e; line-height: 1.6; }
+.recording-pitch-guide { padding: 15px; }
+.octave-assist-toggle { border-color: rgba(127,165,186,.26); }
+.octave-assist-toggle span { color: #9c5d56; }.octave-assist-toggle input { accent-color: #d77b6d; }
+.pitch-picker, .recording-monitor, .pitch-debug, .license-note { background: rgba(236,246,250,.62); border: 1px solid rgba(121,163,188,.26); border-radius: 15px; }
+.pitch-picker-heading strong, .recording-monitor-head strong, .pitch-debug-title strong, .license-note b { color: #234759; }
+.pitch-picker-heading small, .pitch-debug-title span { color: #607b8a; }
+.pitch-keyboard { scrollbar-color: #77b2c3 #dcebf2; }
+.pitch-option { color: #244859; border-color: rgba(120,164,186,.3); background: rgba(255,255,255,.68); }
+.pitch-option span, .pitch-option small { color: #627e8b; }
+.pitch-option:hover, .pitch-option:focus-visible { border-color: #158ba1; }
+.pitch-option.active { border-color: #d78270; background: #fff1eb; box-shadow: 0 0 0 2px rgba(217,126,106,.1); }
+.pitch-option.active strong, .pitch-option.active span { color: #aa625a; }
+.pack-name { color: #516c7c; }.pack-name input { border-radius: 11px; }
+.sample-card { background: rgba(255,255,255,.62); border-color: rgba(122,164,187,.27); }
+.sample-card strong { color: #ce7264; }
+.sample-card small { color: #587485; }
+.sample-card.ready { border-color: rgba(19,143,157,.55); }.sample-card.error { border-color: #d86c72; }
+.sample-actions label, .sample-actions button { color: #24596f; background: #e2f0f6; }
+.sample-actions label:hover, .sample-actions button:hover { background: #d3e9f2; }
+.sample-actions .preview { color: #216f89; background: #e1f3f8; border-color: rgba(19,132,154,.3); }
+.sample-actions .preview.playing { color: #a85c51; background: #fff0eb; border-color: #dc8570; }
+.recording-monitor canvas { background: #eaf5fa; }
+.recording-dot { background: #a2bdc8; }
+.recording-level-labels, .record-status, .pitch-debug dt, .pitch-debug p, .pitch-debug .pitch-debug-rule { color: #5d7888; }
+.recording-monitor[data-state="recording"] { box-shadow: 0 0 0 3px rgba(216,95,106,.08); }
+.pitch-debug dl>div { background: rgba(255,255,255,.66); border-color: rgba(119,158,182,.25); }
+.pitch-debug dd { color: #294d60; }.pitch-debug p[data-state="passed"] { color: #087e8e; }
+.record-status { background: rgba(255,255,255,.58); border-color: rgba(122,165,189,.25); }
+.info-card li { border-color: rgba(121,164,187,.25); }.info-card li span { color: #557080; }
+.license-note p { color: #547080; }.license-note a { color: #087e93; }
+.disclaimer { color: #a35f5c; }
+.toast { z-index: 30; color: #174154; background: rgba(246,253,255,.94); border-color: rgba(108,158,185,.32); box-shadow: 0 10px 35px rgba(42,95,128,.16); backdrop-filter: blur(15px); }
+@media (max-width: 1180px) {
+  .workspace { grid-template-columns: minmax(0,1.07fr) minmax(330px,.93fr); }
+  .control-list { grid-template-columns: 1fr; }
+  .vowel-switcher { grid-template-columns: repeat(5,minmax(0,1fr)); }
+  .vowel-switcher>div { grid-column: 1/-1; }
+}
+@media (max-width: 780px), (max-width: 950px) and (orientation: landscape) {
+  .app-shell { padding: 8px; }
+  .topbar { gap: 9px; padding: 10px 12px; border-radius: 18px; margin-bottom: 8px; }
+  .brand h1 { font-size: 18px; }
+  .header-actions { gap: 7px; }
+  .mobile-tabs { border-color: rgba(255,255,255,.93); border-radius: 15px; background: rgba(245,251,255,.81); box-shadow: 0 7px 24px rgba(75,120,148,.12); }
+  .mobile-tabs button { min-height: 43px; border-color: transparent; background: rgba(222,237,246,.52); color: #456a7c; border-radius: 10px; }
+  .mobile-tabs button.active { border-color: rgba(24,142,164,.25); background: rgba(255,255,255,.9); color: #0b8096; box-shadow: 0 3px 9px rgba(55,111,140,.1); }
+  #toggleMobileStage { color: #aa645c; }
+  .mobile-stage-anchor { top: 62px; border-color: rgba(255,255,255,.9); border-radius: 16px; background: rgba(255,255,255,.75); box-shadow: 0 10px 24px rgba(65,105,130,.13); }
+  .mobile-stage-anchor .medical-stage { border-radius: 11px; }
+  .mobile-stage-anchor .phonation-dock { display: flex; margin: 6px 0 0; }
+  .mobile-stage-anchor .phonate-button { width: 100%; min-width: 0; height: 50px; min-height: 50px; padding: 4px 15px; justify-content: center; }
+  .mobile-stage-anchor .phonate-button strong { font-size: 15px; }
+  .mobile-stage-anchor .phonate-button small { display: block; font-size: 9px; }
+  .mobile-stage-anchor .level-meter { display: none; }
+  .workspace>[data-panel], .workspace>[data-panel].active { padding: 14px; border-radius: 18px; }
+  .vowel-switcher { padding: 10px; margin-top: 0; }
+  .vowel-button { min-width: 0; height: 47px; }
+  .mobile-control-modes { background: rgba(224,239,246,.55); border-color: rgba(123,165,188,.27); border-radius: 13px; }
+  .mobile-control-modes button { color: #577487; }
+  .mobile-control-modes button[aria-pressed="true"] { border-color: rgba(20,138,156,.27); background: rgba(255,255,255,.8); color: #0b8094; }
+  .control-list { grid-template-columns: 1fr; gap: 7px; }
+  .control-row { padding: 10px 12px; }
+  .control-row input { height: 36px; background: transparent; }
+  .control-row input::-webkit-slider-runnable-track { background: linear-gradient(90deg,#21a0b3 var(--pct,30%),#ccdee7 var(--pct,30%)); }
+  .control-row input::-webkit-slider-thumb { background: #fff; border-color: #168fa3; }
+  .control-row input::-moz-range-track { background: linear-gradient(90deg,#21a0b3 var(--pct,30%),#ccdee7 var(--pct,30%)); }
+  .control-row input::-moz-range-thumb { background: #fff; border-color: #168fa3; }
+  .acoustics-panel .formant-cell { background: rgba(255,255,255,.7); }
+  .sample-grid { grid-template-columns: 1fr; }
+  .sample-card { min-height: 68px; }
+  .recording-monitor { position: static; background: rgba(238,247,251,.96); box-shadow: none; }
+  .recording-monitor canvas { background: #e8f4f9; }
+}
+@media (max-width: 560px) and (orientation: portrait) {
+  .topbar { padding: 10px; }
+  .brand-mark { width: 40px; height: 40px; }
+  .header-actions .button.ghost { font-size: 12px; }
+  .mobile-tabs { grid-template-columns: repeat(3,minmax(0,1fr)) auto; gap: 4px; padding: 5px; }
+  .mobile-tabs button { font-size: 11px; padding: 4px; }
+  .mobile-stage-anchor .medical-stage { width: min(100%,38dvh); }
+  .phonate-icon { width: 23px; height: 23px; }
+  .pitch-reference-banner { grid-template-columns: minmax(0,1fr) auto; }
+  .pitch-reference-banner strong { grid-column: 1/-1; grid-row: auto; font-size: 16px; }
+  .pitch-reference-banner .button { grid-column: 2; grid-row: 1; padding: 7px 9px; font-size: 12px; }
+  .pitch-reference-banner small { grid-column: 1/-1; }
+  .tenor-preset { grid-template-columns: 1fr; }
+  .tenor-button { width: 100%; }
+  .acoustics-panel .formant-grid { gap: 8px; }
+  .acoustics-panel .formant-cell { padding: 10px; }
+  .acoustics-panel .formant-value strong { font-size: 22px; }
+  .formant-key { font-size: 12px; }
+  .modal { width: calc(100% - 16px); }
+  .modal-card { padding: 16px; border-radius: 19px; }
+  .recording-pitch-guide { grid-template-columns: 1fr; }
+  .recording-pitch-guide .button { width: 100%; }
+}
+@media (max-width: 950px) and (orientation: landscape) {
+  .mobile-stage-anchor { top: 54px; }
+  .mobile-stage-anchor .medical-stage { width: min(100%,calc(100dvh - 138px)); }
+  .mobile-stage-anchor .phonate-button { height: 42px; min-height: 42px; }
+  .control-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .topbar, .panel, .modal-card, .mobile-tabs, .mobile-stage-anchor { background: #f6fbfe; }
+}

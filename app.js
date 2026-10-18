@@ -125,7 +125,7 @@ function renderPitchSelection(){
 }
 function moveHandle(key,x,y){const h=$(`[data-control="${key}"]`); if(!h)return; const circles=h.querySelectorAll('circle');circles.forEach(c=>{c.setAttribute('cx',x);c.setAttribute('cy',y)});const texts=h.querySelectorAll('text');texts.forEach((t,i)=>{if(key==='tongue'){t.setAttribute('x',x+22);t.setAttribute('y',y+(i?12:-7))}else if(key==='jawOpening'){t.setAttribute('x',x+21);t.setAttribute('y',y+5)}else if(key==='lipRounding'){t.setAttribute('x',x-45);t.setAttribute('y',y-27)}else if(key==='velumOpening'){t.setAttribute('x',x+22);t.setAttribute('y',y-5)}else{t.setAttribute('x',x+25);t.setAttribute('y',y+5)}})}
 function setParam(key,value){state[key]=clamp(Number(value));render()}
-async function selectVowel(vowel,{audition=true}={}){
+async function selectVowel(vowel,{audition=false}={}){
   state.currentVowel=vowel;Object.assign(state,vowelPreset(vowel));render();showToast(`已选择 [${vowel}]；继续调舌位仍保持 [${vowel}]`);
   if(!audition||locked)return;
   clearTimeout(auditionTimer);const sequence=++auditionSequence;auditionActive=true;
@@ -234,13 +234,13 @@ async function startPhonation(){
     }
     if(request!==phonationRequest||(!pressing&&!locked&&!auditionActive)||audio.mode==='error')return false;
     if(audio.ctx.state==='suspended')await audio.ctx.resume();
-    state.isPhonating=true;setAudioState('playing',`正在发 [${state.currentVowel}]`);$('#phonateButton').classList.add('is-playing');$('#phonateButton').setAttribute('aria-pressed','true');render();return true;
+    state.isPhonating=true;setAudioState('playing',`正在发 [${state.currentVowel}]`);$('#phonateButton').classList.add('is-playing');render();syncLockUi();return true;
   }catch(err){
     console.error('Voice playback failed.',err);auditionActive=false;pressing=false;locked=false;syncLockUi();state.isPhonating=false;
-    if(audio)audio.mode='error';setAudioState('error','声音无法播放，请刷新后重试');showToast('声音加载失败；请刷新网页后重试');return false;
+    if(audio)audio.mode='error';setAudioState('error','声音无法播放，请刷新后重试');syncLockUi();showToast('声音加载失败；请刷新网页后重试');return false;
   }
 }
-function stopPhonation(){if(locked)return;auditionActive=false;phonationRequest++;state.isPhonating=false;setAudioState(audio?'ready':'','等待发声');$('#phonateButton').classList.remove('is-playing');$('#phonateButton').setAttribute('aria-pressed','false');render()}
+function stopPhonation(){if(locked)return;auditionActive=false;phonationRequest++;state.isPhonating=false;setAudioState(audio?'ready':'','等待发声');$('#phonateButton').classList.remove('is-playing');render();syncLockUi()}
 function setAudioState(cls,text){const el=$('#audioState');el.className=`audio-state ${cls}`;el.lastElementChild.textContent=text}
 function drawSpectrum(){
   if(!audio)return;const canvas=$('#spectrumCanvas'),ctx=canvas.getContext('2d'),data=new Uint8Array(audio.analyser.frequencyBinCount);
@@ -269,13 +269,14 @@ function bindFormantExplainer(){
   });
 }
 function bindPhonation(){
-  const btn=$('#phonateButton');let pressStarted=0;
-  btn.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(locked){toggleLock();return}pressStarted=performance.now();pressing=true;startPhonation()});
-  window.addEventListener('pointerup',()=>{if(!pressing)return;const quickTap=performance.now()-pressStarted<320;pressing=false;if(quickTap){locked=true;syncLockUi()}else stopPhonation()});
-  btn.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();pressing=true;startPhonation()}});btn.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){pressing=false;stopPhonation()}});$('#lockButton').addEventListener('click',toggleLock);
+  $('#phonateButton').addEventListener('click',async()=>{
+    clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;
+    if(locked){locked=false;stopPhonation();return}
+    locked=true;syncLockUi();
+    if(!await startPhonation())syncLockUi();
+  });
 }
-function syncLockUi(){$('#lockButton').classList.toggle('active',locked);$('#lockButton').textContent=`持续发声：${locked?'开':'关'}`;$('#lockButton').setAttribute('aria-pressed',String(locked));$('#phonateButton').setAttribute('aria-pressed',String(locked||state.isPhonating))}
-async function toggleLock(){locked=!locked;syncLockUi();if(locked)await startPhonation();else{phonationRequest++;state.isPhonating=false;$('#phonateButton').classList.remove('is-playing');$('#phonateButton').setAttribute('aria-pressed','false');render();setAudioState(audio?'ready':'','等待发声')}}
+function syncLockUi(){const button=$('#phonateButton');button.classList.toggle('is-playing',state.isPhonating);button.setAttribute('aria-pressed',String(locked));button.setAttribute('aria-label',locked?'停止发声':'开始持续发声');$('#phonateLabel').textContent=state.isPhonating?'发声中':locked?'正在准备':'发声';$('#phonateHint').textContent=locked?'点击停止':'点击开始持续发声'}
 
 function bindSnapshots(){
   $('#savePreset').addEventListener('click',async()=>{const name=$('#presetName').value.trim()||`构形 ${snapshots.length+1}`,a=acousticValues(),snap={id:crypto.randomUUID(),name,createdAt:new Date().toISOString(),voicePack:state.voicePackId,selectedVowel:state.currentVowel,params:Object.fromEntries(Object.keys(DEFAULT_STATE).map(k=>[k,state[k]])),...a};snapshots.unshift(snap);await dbPut('snapshots',snap);$('#presetName').value='';renderSnapshots();showToast(`已保存“${name}”`)});
@@ -305,7 +306,7 @@ function setupVoiceLab(){
   $('#pitchKeyboard').innerHTML=NATURAL_PITCH_MIDIS.map(midi=>{const pitch=pitchFromMidi(midi);return `<button class="pitch-option" type="button" data-midi="${midi}" aria-pressed="${midi===recordingTargetPitch.midi}"><strong>${pitch.solfege}</strong><span>${pitch.note}</span><small>${pitch.hz.toFixed(2)} Hz${pitch.landmark?` · ${pitch.landmark}`:''}</small></button>`}).join('');
   $$('.sample-card input').forEach(input=>input.addEventListener('change',e=>validateSample(e.target.closest('.sample-card').dataset.vowel,e.target.files[0])));$$('.sample-card .record').forEach(btn=>btn.addEventListener('click',()=>recordSample(btn.closest('.sample-card').dataset.vowel,btn)));$$('.sample-card .preview').forEach(btn=>btn.addEventListener('click',()=>playSamplePreview(btn.closest('.sample-card').dataset.vowel,btn)));
   $$('.pitch-option').forEach(button=>button.addEventListener('click',()=>selectRecordingPitch(Number(button.dataset.midi))));
-  $('#openVoiceLab').onclick=()=>openVoiceDialog(false);$('#openPitchPicker').onclick=()=>openVoiceDialog(true);$('#openInfo').onclick=()=>$('#infoDialog').showModal();$('#saveVoicePack').onclick=saveVoicePack;$('#exportCurrentVoice').onclick=exportCurrentVoice;$('#playReferencePitch').onclick=()=>playReferencePitch($('#playReferencePitch'));$('#audioSelfTest').onclick=()=>playReferencePitch($('#audioSelfTest'));
+  $('#openVoiceLab').onclick=()=>openVoiceDialog(false);$('#openPitchPicker').onclick=()=>openVoiceDialog(true);$('#openInfo').onclick=()=>$('#infoDialog').showModal();$('#saveVoicePack').onclick=saveVoicePack;$('#exportCurrentVoice').onclick=exportCurrentVoice;$('#playReferencePitch').onclick=()=>playReferencePitch($('#playReferencePitch'));
   $('#humanOctaveAssist').addEventListener('change',event=>{humanOctaveAssist=event.target.checked;resetPitchDebugForTarget();showToast(humanOctaveAssist?'人声低八度校正已开启':'人声低八度校正已关闭')});
   $('#voiceDialog').addEventListener('close',cancelRecordingSession);
   renderPitchSelection();
@@ -317,7 +318,7 @@ function selectRecordingPitch(midi){
   resetPitchDebugForTarget();$('#recordStatus').textContent=`已选择 ${pitchLabel()}。现在五个元音都只能录制这个音高。`;showToast(`${hadSamples?'已清除之前的样本；':''}目标音高已改为 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}`);
 }
 async function playReferencePitch(button=$('#playReferencePitch')){
-  const originalText=button.id==='audioSelfTest'?'声音测试':'播放钢琴参考音';button.disabled=true;button.textContent=`正在播放 ${recordingTargetPitch.solfege}…`;
+  const originalText='播放钢琴参考音';button.disabled=true;button.textContent=`正在播放 ${recordingTargetPitch.solfege}…`;
   const finishTone=tone=>{if(!tone||tone.finished)return;tone.finished=true;for(const oscillator of tone.oscillators||[]){try{oscillator.stop()}catch{}}releaseMediaChannel(tone.ctx);tone.ctx.close().catch(()=>{});tone.button.disabled=false;tone.button.textContent=tone.originalText;tone.button.dataset.audioState='ready';if(referenceTone===tone)referenceTone=null;if(referenceAudioContext===tone.ctx)referenceAudioContext=null;setAudioState(audio?.mode==='personal'?'ready':'',audio?.mode==='personal'?'我的声线已就绪':'等待发声')};
   try{if(referenceTone)finishTone(referenceTone);const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)throw Error('当前浏览器不支持网页音频');const ctx=new AudioContextClass({latencyHint:'interactive'}),mainGain=ctx.createGain(),tone={ctx,oscillators:[],button,originalText,finished:false};referenceAudioContext=ctx;referenceTone=tone;
   const referenceFrequency=PitchCore.midiToFrequency(recordingTargetPitch.midi),partials=[[1,1],[2.002,.5],[3.006,.26],[4.012,.14],[5.02,.075],[6.03,.04]];for(const [ratio,level] of partials){const oscillator=ctx.createOscillator(),partialGain=ctx.createGain();oscillator.type='sine';oscillator.frequency.setValueAtTime(referenceFrequency*ratio,ctx.currentTime);partialGain.gain.value=level;oscillator.connect(partialGain).connect(mainGain);tone.oscillators.push(oscillator)}await routeToMediaChannel(ctx,mainGain,'声道实验台钢琴参考音');if(tone.finished)return;const now=ctx.currentTime+.03,duration=2.35;

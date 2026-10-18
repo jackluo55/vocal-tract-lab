@@ -26,7 +26,7 @@ const hzToT = hz => (Math.log(hz) - Math.log(MIN_HZ)) / (Math.log(MAX_HZ) - Math
 const tToX = t => (t - 0.5) * SPAN;
 const hzToX = hz => tToX(hzToT(Math.max(MIN_HZ, Math.min(MAX_HZ, hz))));
 
-const C_MINT = new THREE.Color(0x4ce0c1), C_YELLOW = new THREE.Color(0xffd166), C_BLUE = new THREE.Color(0x75bfff);
+const C_MINT = new THREE.Color(0x168fa4), C_YELLOW = new THREE.Color(0xe28b77), C_BLUE = new THREE.Color(0x6598c5);
 function barColor(t) {
   const c = new THREE.Color();
   if (t < 0.5) c.copy(C_MINT).lerp(C_YELLOW, t / 0.5);
@@ -35,26 +35,26 @@ function barColor(t) {
 }
 
 // 灯光
-scene.add(new THREE.HemisphereLight(0xbff3ec, 0x0a1820, 1.05));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9bb8c9, 1.3));
 const key = new THREE.DirectionalLight(0xffffff, 1.1);
 key.position.set(-4, 9, 7);
 scene.add(key);
-const rim = new THREE.DirectionalLight(0x4ce0c1, 0.55);
+const rim = new THREE.DirectionalLight(0xb8dfec, 0.4);
 rim.position.set(5, 3, -6);
 scene.add(rim);
 
 // 地面与网格
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(SPAN + 2, 7),
-  new THREE.MeshStandardMaterial({ color: 0x08151d, roughness: 0.9, metalness: 0.1, transparent: true, opacity: 0.92 })
+  new THREE.MeshStandardMaterial({ color: 0xdcecf4, roughness: 0.92, metalness: 0.02, transparent: true, opacity: 0.94 })
 );
 ground.rotation.x = -Math.PI / 2;
 ground.position.set(0, BASE_Y, 0);
 scene.add(ground);
-const grid = new THREE.GridHelper(SPAN, 32, 0x2c5768, 0x14303d);
+const grid = new THREE.GridHelper(SPAN, 32, 0x95b8c8, 0xc5dce6);
 grid.position.y = BASE_Y + 0.006;
 grid.material.transparent = true;
-grid.material.opacity = 0.45;
+grid.material.opacity = 0.55;
 scene.add(grid);
 
 // 频谱柱（对数刻度，低频在左、高频在右）
@@ -64,7 +64,7 @@ const bars = [];
 for (let i = 0; i < BAR_COUNT; i++) {
   const t = i / (BAR_COUNT - 1), color = barColor(t);
   const mat = new THREE.MeshStandardMaterial({
-    color, emissive: color, emissiveIntensity: 0.3, roughness: 0.42, metalness: 0.15, transparent: true
+    color, emissive: color, emissiveIntensity: 0.06, roughness: 0.55, metalness: 0.06, transparent: true
   });
   const bar = new THREE.Mesh(barGeo, mat);
   bar.position.x = tToX(t);
@@ -80,12 +80,12 @@ function makeFormantMarker(hex) {
   const h = MAX_BAR_H + 0.55;
   const glow = new THREE.Mesh(
     new THREE.BoxGeometry(0.1, h, 0.1),
-    new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.08, depthWrite: false })
   );
   glow.position.y = BASE_Y + h / 2;
   const core = new THREE.Mesh(
     new THREE.BoxGeometry(0.035, h, 0.035),
-    new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.65, depthWrite: false })
   );
   core.position.y = BASE_Y + h / 2;
   const tip = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 18), new THREE.MeshBasicMaterial({ color: hex }));
@@ -95,7 +95,7 @@ function makeFormantMarker(hex) {
   scene.add(group);
   return { group, glow, core, tip };
 }
-const markers = [makeFormantMarker(0x4ce0c1), makeFormantMarker(0xffd166), makeFormantMarker(0x75bfff)];
+const markers = [makeFormantMarker(0x168fa4), makeFormantMarker(0xe28b77), makeFormantMarker(0x6598c5)];
 
 // 空气粒子（发声时随音量上扬）
 const PARTICLES = 90;
@@ -108,7 +108,7 @@ for (let i = 0; i < PARTICLES; i++) {
   pSeed[i] = Math.random();
 }
 pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-const pMat = new THREE.PointsMaterial({ color: 0x4ce0c1, size: 0.055, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false });
+const pMat = new THREE.PointsMaterial({ color: 0x4f9fb3, size: 0.045, transparent: true, opacity: 0.06, depthWrite: false });
 const points = new THREE.Points(pGeo, pMat);
 scene.add(points);
 
@@ -175,10 +175,10 @@ function loop(now) {
     b.mesh.scale.y = h;
     b.mesh.position.y = BASE_Y + h / 2;
     if (idle) {
-      b.mat.emissiveIntensity = 0.42;
+      b.mat.emissiveIntensity = 0.05;
       b.mat.opacity = 0.82;
     } else {
-      b.mat.emissiveIntensity = 0.3 + Math.min(1, bins[i]) * 0.55;
+      b.mat.emissiveIntensity = 0.04 + Math.min(1, bins[i]) * 0.08;
       b.mat.opacity = 0.6 + Math.min(0.4, bins[i] * 1.1);
     }
   }
@@ -194,13 +194,13 @@ function loop(now) {
         m.group.visible = true;
         m.tip.scale.setScalar(0.85 + 0.2 * Math.sin(time * 2.2 + i * 1.2));
         m.core.material.opacity = 0.5 + 0.35 * level;
-        m.glow.material.opacity = 0.13 + 0.22 * level;
+        m.glow.material.opacity = 0.06 + 0.08 * level;
       });
     } catch (e) { /* 模型未就绪时忽略 */ }
   }
 
   // 粒子随音量上浮
-  pMat.opacity = 0.1 + level * 0.55;
+  pMat.opacity = 0.05 + level * 0.12;
   const arr = pGeo.attributes.position.array;
   for (let i = 0; i < PARTICLES; i++) {
     arr[i * 3 + 1] += dt * (0.06 + level * 0.65) * (0.6 + pSeed[i]);

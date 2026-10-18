@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#071018">
+  <meta name="theme-color" content="#eaf2f8">
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261018-2">
   <link rel="stylesheet" href="./mobile.css?v=20261018-2">
+  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-2">
 </head>
 <body>
   <div class="app-shell">
@@ -104,15 +105,12 @@
         </div>
 
         <div class="phonation-dock" id="phonationDock">
-          <button class="phonate-button" id="phonateButton" aria-pressed="false">
+          <button class="phonate-button" id="phonateButton" type="button" aria-label="开始持续发声" aria-pressed="false">
             <span class="phonate-orbit"></span>
             <span class="phonate-icon" aria-hidden="true"></span>
-            <span><strong>点击持续发声</strong><small>再次点击停止 · 也可长按试听</small></span>
+            <span class="phonate-copy"><strong id="phonateLabel">发声</strong><small id="phonateHint">点击开始持续发声</small></span>
           </button>
           <div class="level-meter" aria-label="输出电平"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-          <button class="button lock" id="lockButton" aria-pressed="false">持续发声：关</button>
-          <button class="button audio-test" id="audioSelfTest" type="button">声音测试</button>
-          <p class="media-audio-note" id="mediaAudioNote">手机会优先使用媒体播放通道；请调高“媒体音量”。</p>
         </div>
       </section>
 
@@ -210,7 +208,7 @@
         </div>
 
         <div class="chart-block spectrum-block">
-          <div class="chart-title"><span>实时频谱 · 三维</span><small>0 — 5 kHz · 发光竖线为 F1/F2/F3</small></div>
+          <div class="chart-title"><span>实时频谱 · 三维</span><small>0 — 5 kHz · 竖线标出 F1/F2/F3</small></div>
           <div class="spectrum3d-wrap" id="spectrum3dWrap">
             <canvas id="spectrum3d" aria-label="三维实时频谱图"></canvas>
             <canvas id="spectrumCanvas" width="800" height="260" aria-label="实时频谱图"></canvas>
@@ -287,8 +285,8 @@
     <form method="dialog" class="modal-card info-card">
       <div class="modal-header"><div><p class="eyebrow">METHOD / NOTES</p><h2>如何使用</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
       <ol>
-        <li><b>调整构形</b><span>拖动剖面节点，或使用六个数值滑杆做精细调整。</span></li>
-        <li><b>听辨变化</b><span>按住“发声”试听；双击或打开持续发声锁定音色。</span></li>
+        <li><b>调整构形</b><span>拖动剖面节点，或使用参数滑杆做精细调整。</span></li>
+        <li><b>听辨变化</b><span>点击“发声”持续试听当前元音，再次点击停止；调节参数时声音会连续变化。</span></li>
         <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
         <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
       </ol>
@@ -301,7 +299,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261018-5"></script>
-  <script src="./spectrum3d.js?v=20261015-2"></script>
+  <script src="./app.js?v=20261018-6"></script>
+  <script src="./spectrum3d.js?v=20261018-1"></script>
 </body>
 </html>
