@@ -60,6 +60,12 @@ function vowelWeights(){
 }
 function personalVoiceAnalysis(){return personalVoicePacks.get(state.voicePackId)?.analysis||null}
 function vowelPreset(vowel){return personalVoiceAnalysis()?.vowels?.[vowel]?.params||VOWEL_PRESETS[vowel]}
+function highRoundedVowelAmount(){
+  if(state.currentVowel!=='o'&&state.currentVowel!=='u')return 0;
+  const measured=Number(personalVoiceAnalysis()?.vowels?.[state.currentVowel]?.measuredF0??personalVoiceAnalysis()?.vowels?.[state.currentVowel]?.f0);
+  const hz=Number.isFinite(measured)&&measured>0?measured:recordingTargetPitch.hz;
+  return clamp((hz-350)/300,0,1);
+}
 function comparisonPitchForVowel(vowel){
   const sample=personalVoiceAnalysis()?.vowels?.[vowel];
   const measuredHz=Number(sample?.measuredF0??sample?.f0);
@@ -204,12 +210,13 @@ async function initAudio(){
   if(audio){if(audio.ready)await audio.ready;return audio}
   setAudioState('loading','载入声线…');
   const ctx=new (window.AudioContext||window.webkitAudioContext)();
-  const sum=ctx.createGain(),nasal=ctx.createBiquadFilter(),notch=ctx.createBiquadFilter(),tone=ctx.createBiquadFilter(),rounding=ctx.createBiquadFilter(),body=ctx.createBiquadFilter(),f1Filter=ctx.createBiquadFilter(),f2Filter=ctx.createBiquadFilter(),f3Filter=ctx.createBiquadFilter(),compressor=ctx.createDynamicsCompressor(),master=ctx.createGain(),analyser=ctx.createAnalyser();
+  const sum=ctx.createGain(),inputMeter=ctx.createAnalyser(),nasal=ctx.createBiquadFilter(),notch=ctx.createBiquadFilter(),tone=ctx.createBiquadFilter(),rounding=ctx.createBiquadFilter(),body=ctx.createBiquadFilter(),f1Filter=ctx.createBiquadFilter(),f2Filter=ctx.createBiquadFilter(),f3Filter=ctx.createBiquadFilter(),compressor=ctx.createDynamicsCompressor(),processedMeter=ctx.createAnalyser(),makeup=ctx.createGain(),master=ctx.createGain(),analyser=ctx.createAnalyser();
   nasal.type='peaking';nasal.frequency.value=280;nasal.Q.value=1.2;notch.type='notch';notch.frequency.value=900;notch.Q.value=2;tone.type='highshelf';tone.frequency.value=1800;rounding.type='lowpass';rounding.frequency.value=7600;rounding.Q.value=.72;body.type='lowshelf';body.frequency.value=520;compressor.threshold.value=-16;compressor.knee.value=18;compressor.ratio.value=5;compressor.attack.value=.01;compressor.release.value=.18;master.gain.value=0;analyser.fftSize=2048;analyser.smoothingTimeConstant=.8;
   [f1Filter,f2Filter,f3Filter].forEach((filter,i)=>{filter.type='peaking';filter.Q.value=[4,5,6][i];filter.gain.value=[8,7,5][i]});
-  sum.connect(nasal).connect(notch).connect(tone).connect(rounding).connect(body).connect(f1Filter).connect(f2Filter).connect(f3Filter).connect(compressor).connect(master).connect(analyser);
+  inputMeter.fftSize=1024;processedMeter.fftSize=1024;makeup.gain.value=1;
+  sum.connect(inputMeter).connect(nasal).connect(notch).connect(tone).connect(rounding).connect(body).connect(f1Filter).connect(f2Filter).connect(f3Filter).connect(compressor).connect(processedMeter).connect(makeup).connect(master).connect(analyser);
   let readyResolve;const ready=new Promise(resolve=>{readyResolve=resolve});
-  audio={ctx,sum,nasal,notch,tone,rounding,body,f1Filter,f2Filter,f3Filter,compressor,master,analyser,outputRoute:null,gains:{},sources:[],loopers:{},loopTimer:null,oscillators:[],mode:'samples',raf:null,ready,readyResolve};
+  audio={ctx,sum,inputMeter,nasal,notch,tone,rounding,body,f1Filter,f2Filter,f3Filter,compressor,processedMeter,makeup,master,analyser,inputSamples:new Uint8Array(inputMeter.fftSize),processedSamples:new Uint8Array(processedMeter.fftSize),lastLevelCheck:0,outputRoute:null,gains:{},sources:[],loopers:{},loopTimer:null,oscillators:[],mode:'samples',raf:null,ready,readyResolve};
   audio.outputRoute=await routeToMediaChannel(ctx,analyser,'声道实验台持续发声音频');
   audio.mode='empty';audio.readyResolve();audio.ready=null;setAudioState('ready',personalVoicePacks.has(state.voicePackId)?'正在载入我的声线':'请先创建我的声线');drawSpectrum();render();return audio;
 }
@@ -238,8 +245,11 @@ function updateAudio(a=acousticValues()){
   const anchor=vowelPreset(state.currentVowel);
   const heightDelta=state.tongueHeight-anchor.tongueHeight,frontDelta=state.tongueFrontness-anchor.tongueFrontness,jawDelta=state.jawOpening-anchor.jawOpening,roundDelta=state.lipRounding-anchor.lipRounding;
   audio.nasal.gain.setTargetAtTime(state.velumOpening*.18,now,.07);audio.notch.frequency.setTargetAtTime(680+state.velumOpening*4.2,now,.07);audio.notch.Q.setTargetAtTime(1.2+state.velumOpening*.075,now,.07);
-  audio.tone.gain.setTargetAtTime(frontDelta*.22-roundDelta*.13+(state.larynxHeight-42)*.09+(state.suprahyoidTension-30)*.045,now,.07);
-  audio.rounding?.frequency.setTargetAtTime(clamp(7800-state.lipRounding*52+state.jawOpening*12,2200,9200),now,.07);
+  const highRounded=highRoundedVowelAmount();
+  const toneDb=frontDelta*.22-roundDelta*.13+(state.larynxHeight-42)*.09+(state.suprahyoidTension-30)*.045;
+  audio.tone.gain.setTargetAtTime(highRounded?clamp(toneDb,-14+7*highRounded,12):toneDb,now,.07);
+  audio.rounding?.frequency.setTargetAtTime(clamp(7800-state.lipRounding*52+state.jawOpening*12,2200+3000*highRounded,9200),now,.07);
+  if(!state.isPhonating||!highRounded)audio.makeup.gain.setTargetAtTime(1,now,.2);
   audio.body?.gain.setTargetAtTime(clamp(jawDelta*.11-heightDelta*.055-(state.larynxHeight-42)*.07,-10,10),now,.07);
   audio.f1Filter?.frequency.setTargetAtTime(a.f1,now,.07);audio.f2Filter?.frequency.setTargetAtTime(a.f2,now,.07);audio.f3Filter?.frequency.setTargetAtTime(a.f3,now,.07);
   audio.f1Filter?.gain.setTargetAtTime(clamp(7+Math.abs(jawDelta-heightDelta*.5)*.075,7,13),now,.07);audio.f2Filter?.gain.setTargetAtTime(clamp(6+Math.abs(frontDelta-roundDelta*.4)*.065,6,12),now,.07);audio.f3Filter?.gain.setTargetAtTime(clamp(4+(state.suprahyoidTension+state.thyrohyoidTension-65)*.055,3,10),now,.07);
@@ -266,9 +276,22 @@ async function startPhonation(){
 }
 function stopPhonation(){if(locked)return;auditionActive=false;phonationRequest++;state.isPhonating=false;setAudioState(audio?'ready':'','等待发声');$('#phonateButton').classList.remove('is-playing');render();syncLockUi()}
 function setAudioState(cls,text){const el=$('#audioState');el.className=`audio-state ${cls}`;el.lastElementChild.textContent=text}
+function sampleRms(samples){let power=0;for(const sample of samples){const value=(sample-128)/128;power+=value*value}return Math.sqrt(power/samples.length)}
+function balanceHighRoundedVowel(currentAudio,frameTime){
+  if(frameTime-currentAudio.lastLevelCheck<140)return;
+  currentAudio.lastLevelCheck=frameTime;
+  const amount=highRoundedVowelAmount();
+  if(!state.isPhonating||!amount)return;
+  currentAudio.inputMeter.getByteTimeDomainData(currentAudio.inputSamples);
+  currentAudio.processedMeter.getByteTimeDomainData(currentAudio.processedSamples);
+  const sourceLevel=sampleRms(currentAudio.inputSamples),processedLevel=sampleRms(currentAudio.processedSamples);
+  if(sourceLevel<.008||processedLevel<.006)return;
+  const ratio=clamp(sourceLevel/processedLevel,.85,1.5);
+  currentAudio.makeup.gain.setTargetAtTime(1+(ratio-1)*amount,currentAudio.ctx.currentTime,.28);
+}
 function drawSpectrum(){
-  if(!audio)return;const canvas=$('#spectrumCanvas'),ctx=canvas.getContext('2d'),data=new Uint8Array(audio.analyser.frequencyBinCount);
-  const draw=()=>{audio.raf=requestAnimationFrame(draw);const dpr=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth*dpr,h=canvas.clientHeight*dpr;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}audio.analyser.getByteFrequencyData(data);ctx.clearRect(0,0,w,h);ctx.strokeStyle='#183542';ctx.lineWidth=1;for(let i=1;i<5;i++){ctx.beginPath();ctx.moveTo(0,h*i/5);ctx.lineTo(w,h*i/5);ctx.stroke()}const bins=Math.min(data.length,Math.floor(5000/(audio.ctx.sampleRate/2)*data.length));ctx.beginPath();for(let i=0;i<bins;i++){const x=i/(bins-1)*w,y=h-(data[i]/255)*(h*.92);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle='#4ce0c1';ctx.lineWidth=2*dpr;ctx.stroke();const level=data.slice(0,bins).reduce((n,v)=>n+v,0)/(bins*255);$$('.level-meter span').forEach((el,i)=>{const active=i/8<level*1.7;el.style.height=`${20+Math.max(0,level*110-i*7)}%`;el.style.background=active?(i>6?'#ff7f8f':i>4?'#ffd166':'#4ce0c1'):'#203945'})};draw();
+  if(!audio)return;const currentAudio=audio,canvas=$('#spectrumCanvas'),ctx=canvas.getContext('2d'),data=new Uint8Array(currentAudio.analyser.frequencyBinCount);
+  const draw=frameTime=>{if(audio!==currentAudio)return;currentAudio.raf=requestAnimationFrame(draw);balanceHighRoundedVowel(currentAudio,frameTime);const dpr=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth*dpr,h=canvas.clientHeight*dpr;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}currentAudio.analyser.getByteFrequencyData(data);ctx.clearRect(0,0,w,h);ctx.strokeStyle='#183542';ctx.lineWidth=1;for(let i=1;i<5;i++){ctx.beginPath();ctx.moveTo(0,h*i/5);ctx.lineTo(w,h*i/5);ctx.stroke()}const bins=Math.min(data.length,Math.floor(5000/(currentAudio.ctx.sampleRate/2)*data.length));ctx.beginPath();for(let i=0;i<bins;i++){const x=i/(bins-1)*w,y=h-(data[i]/255)*(h*.92);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle='#4ce0c1';ctx.lineWidth=2*dpr;ctx.stroke();const level=data.slice(0,bins).reduce((n,v)=>n+v,0)/(bins*255);$$('.level-meter span').forEach((el,i)=>{const active=i/8<level*1.7;el.style.height=`${20+Math.max(0,level*110-i*7)}%`;el.style.background=active?(i>6?'#ff7f8f':i>4?'#ffd166':'#4ce0c1'):'#203945'})};draw(performance.now());
 }
 
 function bindControls(){
