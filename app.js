@@ -60,6 +60,14 @@ function vowelWeights(){
 }
 function personalVoiceAnalysis(){return personalVoicePacks.get(state.voicePackId)?.analysis||null}
 function vowelPreset(vowel){return personalVoiceAnalysis()?.vowels?.[vowel]?.params||VOWEL_PRESETS[vowel]}
+function comparisonPitchForVowel(vowel){
+  const sample=personalVoiceAnalysis()?.vowels?.[vowel];
+  const measuredHz=Number(sample?.measuredF0??sample?.f0);
+  if(Number.isFinite(measuredHz)&&measuredHz>0){
+    return {pitch:pitchFromHz(measuredHz),hz:measuredHz,source:'sample'};
+  }
+  return {pitch:recordingTargetPitch,hz:recordingTargetPitch.hz,source:'target'};
+}
 function acousticValues(){
   const personal=personalVoiceAnalysis(),measured=personal?.vowels?.[state.currentVowel];
   const profile={f0:personal?.f0||recordingTargetPitch.hz,formantScale:1};
@@ -106,8 +114,9 @@ function renderCalibration(){
 }
 function renderComparison(){
   const rows=$('#comparisonRows');if(!rows)return;
-  const target=tenorPresetAtPitch(state.currentVowel),voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','').replace(' · 请先录制','')||'我的声线';
-  $('#comparisonCurrentName').textContent=voiceName;$('#comparisonVowel').textContent=`[${state.currentVowel}]`;$('#comparisonPitch').textContent=pitchLabel();$('#comparisonTenorName').textContent=`经典男高音 ${recordingTargetPitch.note}`;
+  const comparison=comparisonPitchForVowel(state.currentVowel),target=tenorPresetAtPitch(state.currentVowel,comparison.hz),voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','').replace(' · 请先录制','')||'我的声线';
+  $('#comparisonCurrentName').textContent=voiceName;$('#comparisonVowel').textContent=`[${state.currentVowel}]`;$('#comparisonPitch').textContent=`${comparison.pitch.note} · ${comparison.hz.toFixed(2)} Hz${comparison.source==='sample'?' · 录音标注':' · 录音目标'}`;$('#comparisonTenorName').textContent=`经典男高音 ${comparison.pitch.note} · 教学推算`;
+  $('#comparisonDescription').textContent=comparison.source==='sample'?'左侧是当前滑杆值，右侧是按该元音录音标注音高推算的教学参考；不是男高音实测数据。切换元音时右侧随其标注音高更新，不改变你的录音和左侧参数。':'当前声线缺少该元音音高分析值，暂按手动选择的录音目标音高推算右侧教学参考；不是男高音实测数据，也不会改变录音。';
   rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>{const current=Math.round(state[key]),reference=Math.round(target[key]),difference=current-reference,differenceText=difference===0?'相同':`${difference>0?'+':''}${difference}`;return `<div class="comparison-row"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span style="width:${current}%"></span><b>${current}</b></div><div class="comparison-value tenor-value"><span style="width:${reference}%"></span><b>${reference}</b></div></div><small class="${difference===0?'same':''}">${differenceText}</small></div>`}).join('');
 }
 function pitchLabel(){return `${recordingTargetPitch.solfege} · ${recordingTargetPitch.note}${recordingTargetPitch.landmark?`（${recordingTargetPitch.landmark}）`:''} · ${recordingTargetPitch.hz.toFixed(2)} Hz`}
@@ -118,7 +127,7 @@ function runPitchCoreTests(){
   landmarks.forEach(test=>{const fromMidi=PitchCore.midiToPitch(test.midi),fromFrequency=PitchCore.frequencyToPitch(test.hz);results.push({name:`MIDI ${test.midi} → ${test.note}`,pass:fromMidi.note===test.note});results.push({name:`${test.note} → ${test.hz} Hz`,pass:Math.abs(fromMidi.hz-test.hz)<.0001});results.push({name:`${test.hz} Hz → ${test.note}`,pass:fromFrequency.note===test.note&&fromFrequency.midi===test.midi})});
   const passed=results.filter(result=>result.pass).length,status=$('#pitchTestStatus');if(status){status.textContent=`科学音高自动测试：${passed}/${results.length} ${passed===results.length?'全部通过':'存在失败'}`;status.dataset.state=passed===results.length?'passed':'failed'}console.table(results);return {passed,total:results.length,results};
 }
-function tenorPresetAtPitch(vowel){const semitones=12*Math.log2(recordingTargetPitch.hz/261.63),base=TENOR_VOWEL_PRESETS[vowel],rise=Math.max(-12,Math.min(12,semitones));return {...base,jawOpening:clamp(base.jawOpening+Math.max(0,rise)*1.25+Math.min(0,rise)*.35),tongueHeight:clamp(base.tongueHeight-rise*.55),tongueFrontness:clamp(base.tongueFrontness-rise*.35),suprahyoidTension:clamp(base.suprahyoidTension+rise*.35),thyrohyoidTension:clamp(base.thyrohyoidTension+rise*.45),larynxHeight:clamp(base.larynxHeight+rise*.35)}}
+function tenorPresetAtPitch(vowel,pitchHz=recordingTargetPitch.hz){const semitones=12*Math.log2(pitchHz/261.63),base=TENOR_VOWEL_PRESETS[vowel],rise=Math.max(-24,Math.min(24,semitones));return {...base,jawOpening:clamp(base.jawOpening+Math.max(0,rise)*1.25+Math.min(0,rise)*.35),tongueHeight:clamp(base.tongueHeight-rise*.55),tongueFrontness:clamp(base.tongueFrontness-rise*.35),suprahyoidTension:clamp(base.suprahyoidTension+rise*.35),thyrohyoidTension:clamp(base.thyrohyoidTension+rise*.45),larynxHeight:clamp(base.larynxHeight+rise*.35)}}
 function renderPitchSelection(){
   const label=pitchLabel();if($('#activePitchLabel'))$('#activePitchLabel').textContent=label;if($('#recordingPitchLabel'))$('#recordingPitchLabel').textContent=label;
   const sample=personalVoiceAnalysis()?.vowels?.[state.currentVowel],sampleF0=Number(sample?.measuredF0??sample?.f0),status=$('#voicePitchStatus');
@@ -157,8 +166,9 @@ async function switchVoice(id,{announce=true}={}){
 function applyTenorPreset(){
   clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;
   const phonateButton=$('#phonateButton'),vowel=state.currentVowel,voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','')||'我的声线';phonateButton.classList.remove('is-playing');syncLockUi();
-  Object.assign(state,tenorPresetAtPitch(vowel));
-  render();if(audio?.mode!=='error')setAudioState('ready',`${voiceName} · [${vowel}] ${recordingTargetPitch.note} 参数已载入`);showToast(`已将 [${vowel}] 的 ${recordingTargetPitch.note}（${recordingTargetPitch.hz.toFixed(2)} Hz）男高音估算构形应用到${voiceName}；声线未切换`);
+  const comparison=comparisonPitchForVowel(vowel);
+  Object.assign(state,tenorPresetAtPitch(vowel,comparison.hz));
+  render();if(audio?.mode!=='error')setAudioState('ready',`${voiceName} · [${vowel}] ${comparison.pitch.note} 参数已载入`);showToast(`已将 [${vowel}] 的 ${comparison.pitch.note}（${comparison.hz.toFixed(2)} Hz）男高音教学估算构形应用到${voiceName}；声线未切换`);
 }
 
 async function routeToMediaChannel(ctx,node,label='声道实验台音频'){

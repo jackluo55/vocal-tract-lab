@@ -125,16 +125,16 @@
           <button class="text-button" id="resetButton">复位</button>
         </div>
         <div class="pitch-reference-banner" role="note">
-          <span>录音目标与参数比较音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音录制时须使用同一目标音高；选择目标不会自动移调现有声线。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
+          <span>新录音的目标音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音录制时须使用同一目标音高；已有录音的参数对比会优先按当前元音的音高标注自动匹配，不会移调声音。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
           <p class="voice-pitch-status" id="voicePitchStatus" aria-live="polite">正在读取当前声线原音高…</p>
         </div>
         <div class="tenor-preset">
-          <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>按当前元音和目标音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
+          <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>优先按当前元音录音标注的音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
           <button class="button tenor-button" id="applyTenorPreset">载入参数（静音）</button>
           <details class="tenor-provenance">
             <summary>这些参数从哪里来？</summary>
             <div>
-              <p><b>数值来源：</b>本项目先用五个元音的教学锚点，人工设定 C4 下的 0–100 构形数值；选择其他音高时，再按程序中的有限幅度规则推算。它们<b>不是</b>帕瓦罗蒂或某位男高音的测量数据，也不是论文给出的标准比例。</p>
+              <p><b>数值来源：</b>本项目先用五个元音的教学锚点，人工设定 C4 下的 0–100 构形数值；当前元音有录音音高标注时，按该音高作有限幅度的教学推算；没有标注时才用手动录音目标音高。它们<b>不是</b>帕瓦罗蒂或某位男高音的测量数据，也不是论文给出的标准比例。</p>
               <p><b>研究能支持什么：</b>舌、颌、唇与声道形状会影响共振峰；训练歌者会随音高调整元音和声道构形。研究支持方向和机制，不能把某一套 0–100 数值规定为所有人的正确答案。</p>
               <p class="source-links"><a href="https://www.csc.kth.se/utbildning/kth/kurser/DT2212/Singing%20Sundberg.pdf" target="_blank" rel="noopener noreferrer">Sundberg，1974：歌唱共振峰</a><a href="https://pubmed.ncbi.nlm.nih.gov/28029556/" target="_blank" rel="noopener noreferrer">Titze 等，2016：歌者共振峰范围</a></p>
             </div>
@@ -156,10 +156,10 @@
         </div>
 
         <section class="parameter-comparison" aria-labelledby="comparisonTitle">
-          <div class="comparison-heading"><div><span class="preset-kicker">TARGET-PITCH COMPARISON</span><strong id="comparisonTitle">同目标音高·参数对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz</b> · <b id="comparisonVowel">[a]</b></span></div>
+          <div class="comparison-heading"><div><span class="preset-kicker">SAMPLE-PITCH COMPARISON</span><strong id="comparisonTitle">同音高·参数对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz · 录音目标</b> · <b id="comparisonVowel">[a]</b></span></div>
           <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">经典男高音</b></span></div>
           <div class="comparison-rows" id="comparisonRows"></div>
-          <p>左侧是当前滑杆值，右侧是按目标音高推算的教学参考。此图不表示两段录音实测于同一音高；选择目标不会自动移调当前声线。</p>
+          <p id="comparisonDescription">左侧是当前滑杆值，右侧是按当前元音音高推算的教学参考；不是男高音实测数据，也不会改变录音。</p>
         </section>
 
         <div class="preset-section">
@@ -313,7 +313,7 @@
         <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
       </ol>
       <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增的声线只保存在自己的浏览器，不上传服务器；可在切换声线处删除。两套内置录音会随公开网页提供。</p></div>
-      <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；选择其他音高时，页面会根据音程作小幅教学估算。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
+      <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；页面优先依据当前元音录音标注的音高作小幅教学估算，没有标注时才用手动目标。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
       <div class="license-note"><b>个人声线分析</b><p>导入五个持续元音后，程序会在浏览器本机估计基准音高与前三个共振峰，并把结果换算成五个专属构形点。该结果用于声乐教学、听辨和个体比较，不等同于实验室 LPC 校准或医学检查。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
     </form>
@@ -321,7 +321,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261018-8"></script>
+  <script src="./app.js?v=20261018-11"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
 </body>
 </html>
