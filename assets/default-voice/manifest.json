@@ -92,7 +92,7 @@
   },
   "vowels": {
     "a": {
-      "audioPath": "./assets/default-voice/a.webm",
+      "audioPath": "./assets/default-voice/a.wav",
       "duration": 6,
       "analysis": {
         "f0": 129,
@@ -102,7 +102,7 @@
       }
     },
     "e": {
-      "audioPath": "./assets/default-voice/e.webm",
+      "audioPath": "./assets/default-voice/e.wav",
       "duration": 6,
       "analysis": {
         "f0": 128,
@@ -112,7 +112,7 @@
       }
     },
     "i": {
-      "audioPath": "./assets/default-voice/i.webm",
+      "audioPath": "./assets/default-voice/i.wav",
       "duration": 6,
       "analysis": {
         "f0": 129,
@@ -122,7 +122,7 @@
       }
     },
     "o": {
-      "audioPath": "./assets/default-voice/o.webm",
+      "audioPath": "./assets/default-voice/o.wav",
       "duration": 6,
       "analysis": {
         "f0": 132,
@@ -132,7 +132,7 @@
       }
     },
     "u": {
-      "audioPath": "./assets/default-voice/u.webm",
+      "audioPath": "./assets/default-voice/u.wav",
       "duration": 6,
       "analysis": {
         "f0": 130,
