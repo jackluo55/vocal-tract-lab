@@ -1,0 +1,256 @@
+{
+  "id": "personal-1792314371779",
+  "name": "我的声线 · 第二条",
+  "source": "bundled",
+  "protected": true,
+  "createdAt": "2026-10-18T09:06:11.779Z",
+  "f0": 788.08,
+  "analysis": {
+    "f0": 788.08,
+    "targetPitch": {
+      "midi": 79,
+      "note": "G5",
+      "noteName": "G",
+      "octave": 5,
+      "solfege": "Sol",
+      "hz": 783.9908719634985,
+      "landmark": ""
+    },
+    "vowels": {
+      "a": {
+        "f0": 796.85,
+        "rawFrequency": 398.42,
+        "correctedFrequency": 796.85,
+        "mcleodFrequency": 398.41,
+        "yinFrequency": 398.42,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.972,
+        "pitchFrames": 3,
+        "sampleRate": 48000,
+        "f1": 1080,
+        "f2": 1200,
+        "f3": 3170,
+        "referencePitchCents": 28,
+        "targetMidi": 79,
+        "params": {
+          "tongueHeight": 0,
+          "tongueFrontness": 52,
+          "suprahyoidTension": 30,
+          "thyrohyoidTension": 35,
+          "jawOpening": 100,
+          "lipRounding": 22,
+          "larynxHeight": 68.8,
+          "velumOpening": 8
+        }
+      },
+      "e": {
+        "f0": 788.08,
+        "rawFrequency": 394.04,
+        "correctedFrequency": 788.08,
+        "mcleodFrequency": 394.02,
+        "yinFrequency": 394.04,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.946,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 450,
+        "f2": 1550,
+        "f3": 3550,
+        "referencePitchCents": 9,
+        "targetMidi": 79,
+        "params": {
+          "tongueHeight": 68,
+          "tongueFrontness": 51,
+          "suprahyoidTension": 34,
+          "thyrohyoidTension": 35,
+          "jawOpening": 42,
+          "lipRounding": 29.642857142857142,
+          "larynxHeight": 74,
+          "velumOpening": 7
+        }
+      },
+      "i": {
+        "f0": 791.31,
+        "rawFrequency": 395.66,
+        "correctedFrequency": 791.31,
+        "mcleodFrequency": 395.64,
+        "yinFrequency": 395.66,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.91,
+        "pitchFrames": 3,
+        "sampleRate": 48000,
+        "f1": 300,
+        "f2": 3070,
+        "f3": 3000,
+        "referencePitchCents": 16,
+        "targetMidi": 79,
+        "params": {
+          "tongueHeight": 88,
+          "tongueFrontness": 100,
+          "suprahyoidTension": 38,
+          "thyrohyoidTension": 35,
+          "jawOpening": 24,
+          "lipRounding": 0,
+          "larynxHeight": 46,
+          "velumOpening": 6
+        }
+      },
+      "o": {
+        "f0": 777.49,
+        "rawFrequency": 388.74,
+        "correctedFrequency": 777.49,
+        "mcleodFrequency": 388.74,
+        "yinFrequency": 388.74,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.973,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 970,
+        "f2": 3030,
+        "f3": 3800,
+        "referencePitchCents": -14,
+        "targetMidi": 79,
+        "params": {
+          "tongueHeight": 0,
+          "tongueFrontness": 100,
+          "suprahyoidTension": 31,
+          "thyrohyoidTension": 37,
+          "jawOpening": 100,
+          "lipRounding": 0,
+          "larynxHeight": 94,
+          "velumOpening": 8
+        }
+      },
+      "u": {
+        "f0": 781.27,
+        "rawFrequency": 390.64,
+        "correctedFrequency": 781.27,
+        "mcleodFrequency": 390.61,
+        "yinFrequency": 390.64,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.976,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 980,
+        "f2": 3040,
+        "f3": 3490,
+        "referencePitchCents": -6,
+        "targetMidi": 79,
+        "params": {
+          "tongueHeight": 0,
+          "tongueFrontness": 100,
+          "suprahyoidTension": 36,
+          "thyrohyoidTension": 39,
+          "jawOpening": 100,
+          "lipRounding": 8.42857142857143,
+          "larynxHeight": 87.6,
+          "velumOpening": 6
+        }
+      }
+    },
+    "method": "McLeod MPM + YIN + 奇偶谐波频谱证据 + 可见的目标八度辅助；浏览器 LPC 教学估计",
+    "pitchAlgorithm": "mcleod-yin-octave-assist-v8"
+  },
+  "vowels": {
+    "a": {
+      "audioPath": "./assets/second-a.wav",
+      "duration": 6,
+      "analysis": {
+        "f0": 796.85,
+        "rawFrequency": 398.42,
+        "correctedFrequency": 796.85,
+        "mcleodFrequency": 398.41,
+        "yinFrequency": 398.42,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.972,
+        "pitchFrames": 3,
+        "sampleRate": 48000,
+        "f1": 1080,
+        "f2": 1200,
+        "f3": 3170,
+        "referencePitchCents": 28,
+        "targetMidi": 79
+      }
+    },
+    "e": {
+      "audioPath": "./assets/second-e.wav",
+      "duration": 6,
+      "analysis": {
+        "f0": 788.08,
+        "rawFrequency": 394.04,
+        "correctedFrequency": 788.08,
+        "mcleodFrequency": 394.02,
+        "yinFrequency": 394.04,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.946,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 450,
+        "f2": 1550,
+        "f3": 3550,
+        "referencePitchCents": 9,
+        "targetMidi": 79
+      }
+    },
+    "i": {
+      "audioPath": "./assets/second-i.wav",
+      "duration": 6,
+      "analysis": {
+        "f0": 791.31,
+        "rawFrequency": 395.66,
+        "correctedFrequency": 791.31,
+        "mcleodFrequency": 395.64,
+        "yinFrequency": 395.66,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.91,
+        "pitchFrames": 3,
+        "sampleRate": 48000,
+        "f1": 300,
+        "f2": 3070,
+        "f3": 3000,
+        "referencePitchCents": 16,
+        "targetMidi": 79
+      }
+    },
+    "o": {
+      "audioPath": "./assets/second-o.wav",
+      "duration": 6,
+      "analysis": {
+        "f0": 777.49,
+        "rawFrequency": 388.74,
+        "correctedFrequency": 777.49,
+        "mcleodFrequency": 388.74,
+        "yinFrequency": 388.74,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.973,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 970,
+        "f2": 3030,
+        "f3": 3800,
+        "referencePitchCents": -14,
+        "targetMidi": 79
+      }
+    },
+    "u": {
+      "audioPath": "./assets/second-u.wav",
+      "duration": 6,
+      "analysis": {
+        "f0": 781.27,
+        "rawFrequency": 390.64,
+        "correctedFrequency": 781.27,
+        "mcleodFrequency": 390.61,
+        "yinFrequency": 390.64,
+        "octaveCorrection": "target-octave-assist+1",
+        "pitchConfidence": 0.976,
+        "pitchFrames": 5,
+        "sampleRate": 48000,
+        "f1": 980,
+        "f2": 3040,
+        "f3": 3490,
+        "referencePitchCents": -6,
+        "targetMidi": 79
+      }
+    }
+  }
+}
