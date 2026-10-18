@@ -36,7 +36,7 @@ const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',sup
 const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='default-personal';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
 const state={...DEFAULT_STATE,currentVowel:'a',isPhonating:false,voicePackId:DEFAULT_VOICE_ID};
-let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null;
+let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null;
 const mediaOutputRoutes=new WeakMap();
 const personalSamples={a:null,e:null,i:null,o:null,u:null};
 const previewSamples={a:null,e:null,i:null,o:null,u:null};
@@ -122,17 +122,20 @@ function setParam(key,value){state[key]=clamp(Number(value));render()}
 async function selectVowel(vowel,{audition=true}={}){
   state.currentVowel=vowel;Object.assign(state,vowelPreset(vowel));render();showToast(`已选择 [${vowel}]；继续调舌位仍保持 [${vowel}]`);
   if(!audition||locked)return;
-  clearTimeout(auditionTimer);pressing=true;await startPhonation();auditionTimer=setTimeout(()=>{pressing=false;stopPhonation()},1400);
+  clearTimeout(auditionTimer);const sequence=++auditionSequence;auditionActive=true;
+  const started=await startPhonation();
+  if(sequence!==auditionSequence||!started)return;
+  auditionTimer=setTimeout(()=>{if(sequence!==auditionSequence)return;auditionActive=false;stopPhonation()},2200);
 }
 async function switchVoice(id,{announce=true}={}){
-  clearTimeout(auditionTimer);pressing=false;locked=false;phonationRequest++;state.isPhonating=false;syncLockUi();
+  clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;syncLockUi();
   state.voicePackId=id;$('#voiceSelect').value=id;stopAndClearAudio();
   audio=await initAudio();if(personalVoicePacks.has(id))await loadVoicePack(id);
   Object.assign(state,vowelPreset(state.currentVowel));
   if(announce)showToast('已载入我的声线及五个专属元音参数点');render();
 }
 function applyTenorPreset(){
-  clearTimeout(auditionTimer);pressing=false;locked=false;phonationRequest++;state.isPhonating=false;
+  clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;
   const phonateButton=$('#phonateButton'),vowel=state.currentVowel,voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','')||'我的声线';phonateButton.classList.remove('is-playing');syncLockUi();
   Object.assign(state,tenorPresetAtPitch(vowel));
   render();if(audio?.mode!=='error')setAudioState('ready',`${voiceName} · [${vowel}] ${recordingTargetPitch.note} 参数已载入`);showToast(`已将 [${vowel}] 的 ${recordingTargetPitch.note}（${recordingTargetPitch.hz.toFixed(2)} Hz）男高音估算构形应用到${voiceName}；声线未切换`);
@@ -212,8 +215,21 @@ function updateAudio(a=acousticValues()){
   audio.f1Filter?.gain.setTargetAtTime(clamp(7+Math.abs(jawDelta-heightDelta*.5)*.075,7,13),now,.07);audio.f2Filter?.gain.setTargetAtTime(clamp(6+Math.abs(frontDelta-roundDelta*.4)*.065,6,12),now,.07);audio.f3Filter?.gain.setTargetAtTime(clamp(4+(state.suprahyoidTension+state.thyrohyoidTension-65)*.055,3,10),now,.07);
   audio.master.gain.setTargetAtTime(state.isPhonating&&audio.mode!=='error'?.72:0,now,.035);
 }
-async function startPhonation(){if(!personalVoicePacks.has(state.voicePackId)){pressing=false;locked=false;syncLockUi();$('#voiceDialog').showModal();showToast('请先录制或导入五个元音，创建“我的声线”');return}const request=++phonationRequest;await initAudio();await resumeMediaChannel(audio.ctx);if(audio.mode==='empty')await loadVoicePack(state.voicePackId);if(request!==phonationRequest||(!pressing&&!locked)||audio.mode==='error')return;if(audio.ctx.state==='suspended')await audio.ctx.resume();state.isPhonating=true;setAudioState('playing',`正在发 [${state.currentVowel}]`);$('#phonateButton').classList.add('is-playing');$('#phonateButton').setAttribute('aria-pressed','true');render()}
-function stopPhonation(){if(locked)return;phonationRequest++;state.isPhonating=false;setAudioState(audio?'ready':'','等待发声');$('#phonateButton').classList.remove('is-playing');$('#phonateButton').setAttribute('aria-pressed','false');render()}
+async function startPhonation(){
+  if(!personalVoicePacks.has(state.voicePackId)){pressing=false;auditionActive=false;locked=false;syncLockUi();$('#voiceDialog').showModal();showToast('请先录制或导入五个元音，创建“我的声线”');return false}
+  const request=++phonationRequest;
+  try{
+    await initAudio();await resumeMediaChannel(audio.ctx);
+    if(audio.mode==='empty'){setAudioState('loading','正在载入五个元音…');await loadVoicePack(state.voicePackId)}
+    if(request!==phonationRequest||(!pressing&&!locked&&!auditionActive)||audio.mode==='error')return false;
+    if(audio.ctx.state==='suspended')await audio.ctx.resume();
+    state.isPhonating=true;setAudioState('playing',`正在发 [${state.currentVowel}]`);$('#phonateButton').classList.add('is-playing');$('#phonateButton').setAttribute('aria-pressed','true');render();return true;
+  }catch(err){
+    console.error('Voice playback failed.',err);auditionActive=false;pressing=false;locked=false;syncLockUi();state.isPhonating=false;
+    if(audio)audio.mode='error';setAudioState('error','声音无法播放，请刷新后重试');showToast('声音加载失败；请刷新网页后重试');return false;
+  }
+}
+function stopPhonation(){if(locked)return;auditionActive=false;phonationRequest++;state.isPhonating=false;setAudioState(audio?'ready':'','等待发声');$('#phonateButton').classList.remove('is-playing');$('#phonateButton').setAttribute('aria-pressed','false');render()}
 function setAudioState(cls,text){const el=$('#audioState');el.className=`audio-state ${cls}`;el.lastElementChild.textContent=text}
 function drawSpectrum(){
   if(!audio)return;const canvas=$('#spectrumCanvas'),ctx=canvas.getContext('2d'),data=new Uint8Array(audio.analyser.frequencyBinCount);
