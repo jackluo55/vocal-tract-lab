@@ -106,7 +106,11 @@ button:active { transform: translateY(1px) scale(.985); }
   background: rgba(238,247,251,.68); border: 1px solid rgba(121,164,189,.25); border-radius: 17px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
 }
-.pitch-reference-banner { gap: 4px 12px; padding: 14px 15px; margin-bottom: 12px; }
+.pitch-reference-banner { grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 14px 15px; margin-bottom: 12px; }
+.pitch-reference-banner span { grid-column: 1 / -1; grid-row: 1; white-space: normal; }
+.pitch-reference-banner strong { grid-column: 1; grid-row: 2; min-width: 0; }
+.pitch-reference-banner .button { grid-column: 2; grid-row: 2; white-space: nowrap; }
+.pitch-reference-banner small { grid-column: 1 / -1; grid-row: 3; white-space: normal; }
 .pitch-reference-banner span, .recording-pitch-guide span { color: #5e8291; font-size: 11px; }
 .pitch-reference-banner strong, .recording-pitch-guide strong { color: #c7605d; font-size: 17px; }
 .pitch-reference-banner small, .recording-pitch-guide small { color: #617a89; font-size: 11px; line-height: 1.5; }
@@ -267,9 +271,10 @@ button:active { transform: translateY(1px) scale(.985); }
   .mobile-stage-anchor .medical-stage { width: min(100%,38dvh); }
   .phonate-icon { width: 23px; height: 23px; }
   .pitch-reference-banner { grid-template-columns: minmax(0,1fr) auto; }
-  .pitch-reference-banner strong { grid-column: 1/-1; grid-row: auto; font-size: 16px; }
+  .pitch-reference-banner span { grid-column: 1; grid-row: 1; }
+  .pitch-reference-banner strong { grid-column: 1/-1; grid-row: 2; font-size: 16px; }
   .pitch-reference-banner .button { grid-column: 2; grid-row: 1; padding: 7px 9px; font-size: 12px; }
-  .pitch-reference-banner small { grid-column: 1/-1; }
+  .pitch-reference-banner small { grid-column: 1/-1; grid-row: 3; }
   .tenor-preset { grid-template-columns: 1fr; }
   .tenor-button { width: 100%; }
   .acoustics-panel .formant-grid { gap: 8px; }
