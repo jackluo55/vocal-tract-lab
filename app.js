@@ -92,7 +92,7 @@ function render(){
   const a=acousticValues();
   $('#nearestVowel').textContent=`[${a.nearest}]`; $('#vowelDescription').textContent=VOWELS[a.nearest].label;
   ['f0','f1','f2','f3'].forEach(k=>$(`#${k}Value`).textContent=a[k]);
-  $$('.vowel-anchor').forEach(el=>el.classList.toggle('active',el.dataset.vowel===a.nearest));
+  $$('.vowel-anchor').forEach(el=>{const active=el.dataset.vowel===a.nearest;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active))});
   $$('.vowel-button').forEach(el=>{const active=el.dataset.vowelSelect===a.nearest;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active))});
   $('#vowelCursor').setAttribute('transform',`translate(${95+a.pos.x*290} ${220-a.pos.y*185})`);
   const th=state.tongueHeight,tf=state.tongueFrontness,sh=state.suprahyoidTension,thy=state.thyrohyoidTension,jo=state.jawOpening,lr=state.lipRounding,lh=state.larynxHeight,vo=state.velumOpening;
@@ -253,7 +253,11 @@ function renderComparison(){
   const comparison=comparisonPitchForVowel(state.currentVowel),reference=reportReference(state.currentVowel,comparison.hz),target=comparison.source==='target'&&['recorded','cohort','data'].includes(reference.kind)?null:reference.params,voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','').replace(' · 请先录制','')||'我的声线';
   $('#comparisonCurrentName').textContent=voiceName;$('#comparisonVowel').textContent=`[${state.currentVowel}]`;$('#comparisonPitch').textContent=`${comparison.pitch.note} · ${comparison.hz.toFixed(2)} Hz${comparison.source==='sample'?' · 录音标注':' · 录音目标'}`;$('#comparisonTenorName').textContent=reference.label;
   $('#comparisonDescription').textContent=reference.kind==='model'?'右侧为人工设定的男高音教学滑杆，不是歌者实测值或声部标准。':reference.kind==='data'?'外部 CSV 只有 F0–F3 数值，没有真实器官位置；滑杆对比留空，请查看下方文字报告。':reference.kind==='cohort'&&comparison.source!=='sample'?'当前元音缺少录音，右侧暂不显示参考组差值。':reference.kind==='cohort'&&!reference.eligible?`参考组当前仅有 ${reference.count} 条同元音、相近音高且质量可用的声线；至少需 3 条。`:reference.kind==='cohort'?'右侧为本机声部参考组的教学滑杆中位数，不是器官实测位置或通用标准。':reference.kind==='recorded'&&comparison.source!=='sample'?'当前元音缺少个人录音，右侧暂不显示差值。':reference.kind==='recorded'&&reference.samePitch?'右侧是另一条同元音、近似同音高录音经算法映射的教学滑杆，不是实测器官位置。':reference.kind==='recorded'?'参考声线与当前录音音高不同；为避免误导，右侧不显示参数差值。':'请在“元音教学报告”中选择可对比的参考声线。';
-  rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>{const current=Math.round(state[key]),value=Number(target?.[key]),available=Number.isFinite(value),referenceValue=available?Math.round(value):0,difference=current-referenceValue,differenceText=!available?'—':difference===0?'相同':`${difference>0?'+':''}${difference}`;return `<div class="comparison-row"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span style="width:${current}%"></span><b>${current}</b></div><div class="comparison-value tenor-value"><span style="width:${referenceValue}%"></span><b>${available?referenceValue:'—'}</b></div></div><small class="${!available||difference===0?'same':''}">${differenceText}</small></div>`}).join('');
+  if(!rows.firstElementChild)rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>`<div class="comparison-row" data-comparison-key="${key}"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span></span><b></b><input class="comparison-slider" type="range" min="0" max="100" step="1" data-key="${key}" aria-label="对比图调节${PARAMETER_LABELS[key]}"></div><div class="comparison-value tenor-value"><span></span><b></b></div></div><small></small></div>`).join('');
+  for(const row of rows.children){const key=row.dataset.comparisonKey,current=Math.round(state[key]),value=Number(target?.[key]),available=Number.isFinite(value),referenceValue=available?Math.round(value):0,difference=current-referenceValue;
+    row.querySelector('.current-value span').style.width=`${current}%`;row.querySelector('.current-value b').textContent=current;const input=row.querySelector('input');input.value=current;input.setAttribute('aria-valuetext',`${current} / 100`);
+    row.querySelector('.tenor-value span').style.width=`${referenceValue}%`;row.querySelector('.tenor-value b').textContent=available?referenceValue:'—';row.querySelector('small').textContent=!available?'—':difference===0?'相同':`${difference>0?'+':''}${difference}`;row.querySelector('small').classList.toggle('same',!available||difference===0);
+  }
 }
 function pitchLabel(){return `${recordingTargetPitch.solfege} · ${recordingTargetPitch.note}${recordingTargetPitch.landmark?`（${recordingTargetPitch.landmark}）`:''} · ${recordingTargetPitch.hz.toFixed(2)} Hz`}
 function updatePitchDebug({rawFrequency,correctedFrequency,confidence,source='真人录音',sampleRate,duration,detector='MPM + YIN'}={}){const corrected=Number(correctedFrequency),pitch=Number.isFinite(corrected)&&corrected>0?PitchCore.frequencyToPitch(corrected):null;if($('#pitchDebugSource'))$('#pitchDebugSource').textContent=source;if($('#debugRawFrequency'))$('#debugRawFrequency').textContent=Number.isFinite(Number(rawFrequency))?`${Number(rawFrequency).toFixed(2)} Hz`:'—';if($('#debugCorrectedFrequency'))$('#debugCorrectedFrequency').textContent=pitch?`${corrected.toFixed(2)} Hz`:'—';if($('#debugPitchConfidence'))$('#debugPitchConfidence').textContent=Number.isFinite(Number(confidence))?Number(confidence).toFixed(3):'—';if($('#debugMidi'))$('#debugMidi').textContent=pitch?String(pitch.midi):'—';if($('#debugNote'))$('#debugNote').textContent=pitch?pitch.noteName:'—';if($('#debugOctave'))$('#debugOctave').textContent=pitch?String(pitch.octave):'—';if($('#debugSampleRate'))$('#debugSampleRate').textContent=Number.isFinite(Number(sampleRate))?`${Number(sampleRate)} Hz`:'—';if($('#debugDuration'))$('#debugDuration').textContent=Number.isFinite(Number(duration))?`${Number(duration).toFixed(2)} s`:'—';if($('#debugDetector'))$('#debugDetector').textContent=detector}
@@ -425,8 +429,13 @@ function drawSpectrum(){
 }
 
 function bindControls(){
+  $('#comparisonRows').addEventListener('input',event=>{if(event.target.matches('.comparison-slider'))setParam(event.target.dataset.key,event.target.value)});
   $$('.control-row input').forEach(input=>input.addEventListener('input',e=>setParam(e.target.closest('.control-row').dataset.key,e.target.value)));
   $$('.vowel-button').forEach(button=>button.addEventListener('click',()=>selectVowel(button.dataset.vowelSelect)));
+  $$('.vowel-anchor').forEach(anchor=>{
+    anchor.addEventListener('click',()=>selectVowel(anchor.dataset.vowel));
+    anchor.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectVowel(anchor.dataset.vowel)}});
+  });
   $('#applyTenorPreset').addEventListener('click',applyTenorPreset);
   $('#resetButton').addEventListener('click',()=>{Object.assign(state,DEFAULT_STATE);state.currentVowel='a';render();showToast('已恢复默认构形')});
   const svg=$('#tractSvg');

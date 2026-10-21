@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./styles.css?v=20261018-report-2">
   <link rel="stylesheet" href="./mobile.css?v=20261021-practice-1">
   <link rel="stylesheet" href="./liquid-glass.css?v=20261018-report-5">
+  <link rel="stylesheet" href="./interaction-controls.css?v=20261022-1">
   <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
 </head>
 <body>
@@ -132,7 +133,6 @@
         </div>
         <div class="tenor-preset">
           <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>优先按当前元音录音标注的音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
-          <button class="button tenor-button" id="applyTenorPreset">载入参数（静音）</button>
           <details class="tenor-provenance">
             <summary>这些参数从哪里来？</summary>
             <div>
@@ -158,8 +158,9 @@
         </div>
 
         <section class="parameter-comparison" aria-labelledby="comparisonTitle">
-          <div class="comparison-heading"><div><span class="preset-kicker">SAMPLE-PITCH COMPARISON</span><strong id="comparisonTitle">同音高·参数对比</strong></div><span><b id="comparisonPitch">C4 · 261.63 Hz · 录音目标</b> · <b id="comparisonVowel">[a]</b></span></div>
+          <div class="comparison-heading"><div><span class="preset-kicker">SAMPLE-PITCH COMPARISON</span><strong id="comparisonTitle">同音高·参数对比</strong></div><button class="button comparison-preset-button" id="applyTenorPreset" type="button" title="载入当前元音、对应音高的教学模型参数，不改变录音原音高">载入教学参数</button><span><b id="comparisonPitch">C4 · 261.63 Hz · 录音目标</b> · <b id="comparisonVowel">[a]</b></span></div>
           <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">经典男高音</b></span></div>
+          <p class="comparison-adjust-hint">拖动左侧蓝色条调参数；右侧为教学参考。</p>
           <div class="comparison-rows" id="comparisonRows"></div>
           <p id="comparisonDescription">左侧是当前滑杆值，右侧是按当前元音音高推算的教学参考；不是男高音实测数据，也不会改变录音。</p>
         </section>
@@ -197,16 +198,24 @@
 
         <div class="chart-block">
           <div class="chart-title"><span>IPA 元音空间</span><small>F2 ← / F1 ↓</small></div>
-          <svg id="vowelChart" viewBox="0 0 420 260" role="img" aria-label="IPA 元音空间图">
+          <svg id="vowelChart" viewBox="0 0 420 260" role="group" aria-label="IPA 元音空间图，点击元音切换">
             <path class="vowel-frame" d="M55 35H345L385 220H95Z"/>
             <g class="chart-grid"><path d="M69 97h290M82 159h290M153 35l-20 185M249 35l52 185"/></g>
-            <g class="vowel-anchor" data-vowel="i" transform="translate(334 49)"><circle r="13"/><text y="5">i</text></g>
-            <g class="vowel-anchor" data-vowel="e" transform="translate(292 92)"><circle r="13"/><text y="5">e</text></g>
-            <g class="vowel-anchor" data-vowel="a" transform="translate(233 205)"><circle r="13"/><text y="5">a</text></g>
-            <g class="vowel-anchor" data-vowel="o" transform="translate(142 130)"><circle r="13"/><text y="5">o</text></g>
-            <g class="vowel-anchor" data-vowel="u" transform="translate(101 55)"><circle r="13"/><text y="5">u</text></g>
+            <g class="vowel-anchor" data-vowel="i" role="button" tabindex="0" aria-label="切换元音 [i]" aria-pressed="false" transform="translate(334 49)"><circle class="vowel-hit-area" r="30"/><circle r="13"/><text y="5">i</text></g>
+            <g class="vowel-anchor" data-vowel="e" role="button" tabindex="0" aria-label="切换元音 [e]" aria-pressed="false" transform="translate(292 92)"><circle class="vowel-hit-area" r="30"/><circle r="13"/><text y="5">e</text></g>
+            <g class="vowel-anchor" data-vowel="a" role="button" tabindex="0" aria-label="切换元音 [a]" aria-pressed="true" transform="translate(233 205)"><circle class="vowel-hit-area" r="30"/><circle r="13"/><text y="5">a</text></g>
+            <g class="vowel-anchor" data-vowel="o" role="button" tabindex="0" aria-label="切换元音 [o]" aria-pressed="false" transform="translate(142 130)"><circle class="vowel-hit-area" r="30"/><circle r="13"/><text y="5">o</text></g>
+            <g class="vowel-anchor" data-vowel="u" role="button" tabindex="0" aria-label="切换元音 [u]" aria-pressed="false" transform="translate(101 55)"><circle class="vowel-hit-area" r="30"/><circle r="13"/><text y="5">u</text></g>
             <g id="vowelCursor" transform="translate(233 205)"><circle class="cursor-glow" r="17"/><circle class="cursor-core" r="6"/></g>
           </svg>
+          <div class="chart-vowel-buttons" role="group" aria-label="元音空间发声选择">
+            <button type="button" class="vowel-button active" data-vowel-select="a" aria-pressed="true">[a]</button>
+            <button type="button" class="vowel-button" data-vowel-select="e" aria-pressed="false">[e]</button>
+            <button type="button" class="vowel-button" data-vowel-select="i" aria-pressed="false">[i]</button>
+            <button type="button" class="vowel-button" data-vowel-select="o" aria-pressed="false">[o]</button>
+            <button type="button" class="vowel-button" data-vowel-select="u" aria-pressed="false">[u]</button>
+          </div>
+          <p class="model-note">点击按钮或图中元音切换；发声中可直接听到变化。</p>
         </div>
 
         <div class="chart-block spectrum-block">
@@ -315,7 +324,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261022-founder-only-1"></script>
+  <script src="./app.js?v=20261022-vowel-chart-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261021-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
