@@ -37,10 +37,10 @@ const VOICE_PARTS={unspecified:'暂不指定',soprano:'女高音',mezzo:'女中�
 const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='default-personal';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
 const FORMANT_EXPLANATIONS={
-  f0:'<b>F0 · 基频</b>：这里显示当前元音录音素材的基频估计，不是麦克风实时测音，也不是上方选择的录制目标音高。选择目标不会自动改变现有录音的音高。',
-  f1:'<b>F1 · 第一共振峰</b>：主要反映开口程度、下颌开度与舌位高低。一般来说，嘴张得越开、舌位越低，F1 越高。',
-  f2:'<b>F2 · 第二共振峰</b>：主要反映舌位前后与唇部圆展。舌位越靠前，F2 通常越高；圆唇、后缩会让 F2 降低。',
-  f3:'<b>F3 · 第三共振峰</b>：更多影响声音的明亮度与个性，也会受到声道长度、喉位与咽腔形状影响。它是教学观察值，不单独决定一个元音。'
+  f0:'<b>F0 · 基频（音高：唱得高还是低）</b><br>数值越高，唱出的音越高。例如中央 C 约为 261.63 Hz，高一个八度约为 523.25 Hz。这里显示当前元音录音的基频估计；选择录制目标不会自动改变现有录音的音高。',
+  f1:'<b>F1 · 第一共振峰（元音开闭：主要与舌位高低、开口有关）</b><br>通常舌位越低、元音越开，F1 越高，如 [a]；舌位越高、元音越闭，F1 越低，如 [i]、[u]。这里的开闭主要指舌头与上腭之间的空间，不能直接换算成嘴巴张多大。本页随滑杆变化的数值为教学模型估计。',
+  f2:'<b>F2 · 第二共振峰（元音前后：主要与舌位前后、圆唇有关）</b><br>舌体隆起的位置靠前时，F2 通常较高，如 [i]；靠后并圆唇时通常较低，如 [u]。[i] 和 [u] 的 F1 都较低，但 F2 差别较大，是区分它们的重要线索。这里说的是舌体隆起的位置，不只是舌尖位置。本页随滑杆变化的数值为教学模型估计。',
+  f3:'<b>F3 · 第三共振峰（音色特征：与声道整体形状有关）</b><br>表示第三处主要共鸣区域所在的频率。保持同一个音高和元音，改变声道形状，声音的色彩仍可能变化；F3 是观察这种变化的线索之一。数值高低不代表音量大小，也不能单独判断声音更亮或更暗、唱得好坏或共鸣位置高低。本页随滑杆变化的数值为教学模型估计。'
 };
 const state={...DEFAULT_STATE,currentVowel:'a',isPhonating:false,voicePackId:DEFAULT_VOICE_ID};
 let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,toastTimer=null,auditionTimer=null,organHighlightTimer=null;
@@ -440,6 +440,7 @@ function showFormantExplanation(key){
 }
 function bindFormantExplainer(){
   $$('.formant-cell').forEach(cell=>{
+    cell.title=FORMANT_EXPLANATIONS[cell.dataset.formant].replace(/<br>/g,' ').replace(/<[^>]*>/g,'');
     const select=()=>showFormantExplanation(cell.dataset.formant);
     cell.addEventListener('click',select);
     cell.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select()}});

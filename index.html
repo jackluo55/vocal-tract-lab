@@ -175,25 +175,25 @@
           <div class="formant-cell" data-formant="f0" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F0 基频（Fundamental Frequency）：此处为当前元音录音素材的基频分析估计，不是上方选择的录制目标。">
             <div class="formant-head"><span class="formant-tag">F0</span><span class="formant-name">基频</span></div>
             <div class="formant-value"><strong id="f0Value">220</strong><small>Hz</small></div>
-            <p class="formant-desc">样本基频估计</p>
+            <p class="formant-desc">音高（唱得高还是低）</p>
           </div>
           <div class="formant-cell" data-formant="f1" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F1 第一共振峰（First Formant）：声道共鸣频率之一，主要受舌位高低与下颌开度影响，开口越大 F1 越高。">
             <div class="formant-head"><span class="formant-tag">F1</span><span class="formant-name">第一共振峰</span></div>
             <div class="formant-value"><strong id="f1Value">800</strong><small>Hz</small></div>
-            <p class="formant-desc">舌高 · 开口</p>
+            <p class="formant-desc">元音开闭（舌高 · 开口）</p>
           </div>
           <div class="formant-cell" data-formant="f2" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F2 第二共振峰（Second Formant）：主要受舌位前后与唇部圆展影响，决定元音的前后色彩，如 [i] 高、[u] 低。">
             <div class="formant-head"><span class="formant-tag">F2</span><span class="formant-name">第二共振峰</span></div>
             <div class="formant-value"><strong id="f2Value">1200</strong><small>Hz</small></div>
-            <p class="formant-desc">舌位前后 · 唇形</p>
+            <p class="formant-desc">元音前后（舌位 · 圆唇）</p>
           </div>
-          <div class="formant-cell" data-formant="f3" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F3 第三共振峰（Third Formant）：主要影响音色的明亮度与个性，歌唱训练中与高位共鸣、歌手共振峰相关。">
+          <div class="formant-cell" data-formant="f3" role="button" tabindex="0" aria-pressed="false" aria-controls="formantExplanation" title="F3 第三共振峰（音色特征）：与声道整体形状有关。数值高低不代表音量大小，不能单独判断明暗、共鸣位置或唱得好坏。">
             <div class="formant-head"><span class="formant-tag">F3</span><span class="formant-name">第三共振峰</span></div>
             <div class="formant-value"><strong id="f3Value">2500</strong><small>Hz</small></div>
-            <p class="formant-desc">音色 · 明亮度</p>
+            <p class="formant-desc">音色特征（声道整体形状）</p>
           </div>
         </div>
-        <p class="formant-key" id="formantExplanation" aria-live="polite"><b>F</b> 是 Formant（共振峰）的缩写：<b>F0</b> 是基频（你唱的音高）；<b>F1/F2/F3</b> 是声道放大的三个共鸣频率，共同决定元音音色。点击任意一张卡片，在这里查看解释。</p>
+        <p class="formant-key" id="formantExplanation" aria-live="polite"><b>F0 看音高，F1 看元音开闭，F2 看元音前后，F3 辅助观察音色特征。</b><br>F1–F3 是共振峰；F0 是基频。数值都以 Hz 表示，高低不代表好坏。点击任意一张卡片，在这里查看解释和例子。F0 为录音分析估计，随滑杆变化的 F1–F3 为教学模型估计。</p>
 
         <div class="chart-block">
           <div class="chart-title"><span>IPA 元音空间</span><small>F2 ← / F1 ↓</small></div>
@@ -315,7 +315,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261022-local-save-1"></script>
+  <script src="./app.js?v=20261022-formant-guide-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261021-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
