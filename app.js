@@ -33,7 +33,8 @@ function pitchFromHz(hz){return PitchCore.frequencyToPitch(hz)}
 let recordingTargetPitch=pitchFromMidi(60);
 let humanOctaveAssist=true;
 const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',suprahyoidTension:'舌骨上肌群',thyrohyoidTension:'甲状舌骨肌',jawOpening:'下颌开度',lipRounding:'唇部圆展',larynxHeight:'喉位',velumOpening:'软腭开度'};
-const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='personal-1792314371779';
+const VOICE_PARTS={unspecified:'暂不指定',soprano:'女高音',mezzo:'女中音',alto:'女低音',tenor:'男高音',baritone:'男中音',bass:'男低音'};
+const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='default-personal';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
 const FORMANT_EXPLANATIONS={
   f0:'<b>F0 · 基频</b>：这里显示当前元音录音素材的基频估计，不是麦克风实时测音，也不是上方选择的录制目标音高。选择目标不会自动改变现有录音的音高。',
@@ -42,12 +43,14 @@ const FORMANT_EXPLANATIONS={
   f3:'<b>F3 · 第三共振峰</b>：更多影响声音的明亮度与个性，也会受到声道长度、喉位与咽腔形状影响。它是教学观察值，不单独决定一个元音。'
 };
 const state={...DEFAULT_STATE,currentVowel:'a',isPhonating:false,voicePackId:DEFAULT_VOICE_ID};
-let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,snapshots=[],slots={A:null,B:null},toastTimer=null,auditionTimer=null,organHighlightTimer=null;
+let audio=null,referenceAudioContext=null,referenceTone=null,locked=false,pressing=false,auditionActive=false,auditionSequence=0,phonationRequest=0,dragControl=null,toastTimer=null,auditionTimer=null,organHighlightTimer=null;
 const mediaOutputRoutes=new WeakMap();
 const personalSamples={a:null,e:null,i:null,o:null,u:null};
 const previewSamples={a:null,e:null,i:null,o:null,u:null};
 let previewAudio=null;
 const personalVoicePacks=new Map();
+const researchDatasets=new Map();
+let selectedReferenceId='tenor-model',voicePartOverrides={},latestTeachingReport='';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 
 function clamp(v,min=0,max=100){return Math.max(min,Math.min(max,v))}
@@ -118,12 +121,139 @@ function renderCalibration(){
   $('#calibrationSource').textContent=item?(pack?.source==='bundled'?'网站内置声线 · 作者授权':'浏览器本机分析 · 不上传'):'请创建个人声线';
   card.classList.add('personal');
 }
+function voicePartOf(pack){const value=voicePartOverrides[pack?.id]||pack?.voicePart||'unspecified';return value==='tenor'?'tenor':'unspecified'}
+function voiceOptionLabel(pack){const part=voicePartOf(pack),partText=part==='unspecified'?'':` · ${VOICE_PARTS[part]}`;return `${pack.name}${partText}${pack.source==='bundled'?'':' · 本机'}`}
+function usableFormants(sample){const f1=Number(sample?.f1),f2=Number(sample?.f2),f3=Number(sample?.f3);return sample?.formantQuality!=='uncertain'&&Number.isFinite(f1)&&Number.isFinite(f2)&&Number.isFinite(f3)&&f1>0&&f1<f2&&f2<f3&&f2-f1>=80}
+function verifiedFormants(sample){return sample?.formantQuality==='stable'&&usableFormants(sample)}
+function cohortMembers(part,vowel,hz){
+  const seen=new Set();return [...personalVoicePacks.values()].filter(pack=>pack.id!==state.voicePackId&&voicePartOf(pack)===part).map(pack=>{const sample=pack.analysis?.vowels?.[vowel],frequency=Number(sample?.measuredF0??sample?.f0),cents=Number.isFinite(frequency)&&frequency>0&&hz>0?Math.round(1200*Math.log2(frequency/hz)):null;return {pack,sample,frequency,cents}}).filter(row=>{if(!row.sample||row.cents===null||Math.abs(row.cents)>50||!verifiedFormants(row.sample))return false;const fingerprint=row.sample.audioChecksum||row.pack.vowels?.[vowel]?.checksum;if(fingerprint){if(seen.has(fingerprint))return false;seen.add(fingerprint)}return true})
+}
+function researchRows(dataset,part,vowel,hz){
+  const closest=new Map();for(const row of dataset?.rows||[]){if(row.voicePart!==part||row.vowel!==vowel||!usableFormants(row)||!Number.isFinite(row.f0)||row.f0<=0||hz<=0)continue;const cents=Math.round(1200*Math.log2(row.f0/hz));if(Math.abs(cents)>50)continue;const key=`${row.source}\u0000${row.singerId}`,previous=closest.get(key);if(!previous||Math.abs(cents)<Math.abs(previous.cents))closest.set(key,{...row,cents})}return [...closest.values()]
+}
+function reportReference(vowel,hz){
+  if(selectedReferenceId==='none')return {kind:'none',label:'未选择参考',params:null};
+  if(selectedReferenceId==='tenor-model')return {kind:'model',label:'经典男高音教学模型（非实录）',params:tenorPresetAtPitch(vowel,hz)};
+  if(selectedReferenceId.startsWith('data:')){const [id,part]=selectedReferenceId.slice(5).split(':'),dataset=researchDatasets.get(id);if(!dataset||!Object.hasOwn(VOICE_PARTS,part))return {kind:'none',label:'研究数据不可用',params:null};const rows=researchRows(dataset,part,vowel,hz),count=rows.length,eligible=count>=3;return {kind:'data',label:`${dataset.name} · ${VOICE_PARTS[part]}数据组`,dataset,part,rows,count,eligible,params:null,f1:count?median(rows.map(row=>row.f1)):null,f2:count?median(rows.map(row=>row.f2)):null,f3:count?median(rows.map(row=>row.f3)):null}}
+  if(selectedReferenceId.startsWith('cohort:')){
+    const part=selectedReferenceId.slice(7),members=cohortMembers(part,vowel,hz),count=members.length,minimum=3,eligible=count>=minimum,keys=Object.keys(DEFAULT_STATE),hasCompleteParams=eligible&&members.every(row=>keys.every(key=>Number.isFinite(Number(row.sample.params?.[key])))),params=hasCompleteParams?Object.fromEntries(keys.map(key=>[key,median(members.map(row=>Number(row.sample.params[key])))])):null;
+    return {kind:'cohort',label:`${VOICE_PARTS[part]||'未知声部'} · 本机参考组`,part,members,count,minimum,eligible,params,f1:eligible?median(members.map(row=>Number(row.sample.f1))):null,f2:eligible?median(members.map(row=>Number(row.sample.f2))):null,f3:eligible?median(members.map(row=>Number(row.sample.f3))):null,hasPitchAssist:members.some(row=>row.sample.octaveCorrection==='target-octave-assist+1')};
+  }
+  const pack=personalVoicePacks.get(selectedReferenceId);
+  if(!pack||pack.id===state.voicePackId)return {kind:'none',label:'参考声线不可用',params:null};
+  const sample=pack.analysis?.vowels?.[vowel],referenceHz=Number(sample?.measuredF0??sample?.f0);
+  const cents=Number.isFinite(referenceHz)&&referenceHz>0?Math.round(1200*Math.log2(hz/referenceHz)):null;
+  return {kind:'recorded',label:pack.name,pack,sample,referenceHz,cents,samePitch:cents!==null&&Math.abs(cents)<=50,params:cents!==null&&Math.abs(cents)<=50?sample?.params:null};
+}
+let referenceOptionsKey='';
+function renderReferenceOptions(){
+  const select=$('#referenceVoiceSelect');if(!select)return;
+  const choices=[['tenor-model','经典男高音 · 教学模型（非实录）'],['none','只看当前录音'],...[...personalVoicePacks.values()].filter(pack=>pack.id!==state.voicePackId).map(pack=>[pack.id,`录音对比 · ${pack.name}`])];
+  const key=JSON.stringify(choices);
+  if(key!==referenceOptionsKey){select.replaceChildren(...choices.map(([id,label])=>{const option=document.createElement('option');option.value=id;option.textContent=label;return option}));referenceOptionsKey=key}
+  if(!choices.some(([id])=>id===selectedReferenceId))selectedReferenceId='tenor-model';
+  select.value=selectedReferenceId;
+  $('#deleteResearchDataset').hidden=!selectedReferenceId.startsWith('data:');
+}
+function reportBlock(container,title,lines){const section=document.createElement('section'),heading=document.createElement('h4');section.className='report-block';heading.textContent=title;section.append(heading);lines.forEach(line=>{const p=document.createElement('p');p.textContent=line;section.append(p)});container.append(section)}
+function renderTeachingReport(){
+  const body=$('#teachingReportBody');if(!body)return;
+  const pack=personalVoicePacks.get(state.voicePackId),vowel=state.currentVowel,sample=pack?.analysis?.vowels?.[vowel];
+  renderReferenceOptions();body.replaceChildren();
+  const hz=Number(sample?.measuredF0??sample?.f0),hasPitch=Number.isFinite(hz)&&hz>0,pitch=hasPitch?pitchFromHz(hz):recordingTargetPitch;
+  const reference=reportReference(vowel,hasPitch?hz:recordingTargetPitch.hz),sections=[],add=(title,...lines)=>sections.push({title,lines});
+  $('#downloadTeachingReport').disabled=!sample;
+  $('#applyReportReference').disabled=!reference.params||reference.kind==='recorded'&&!sample;
+  if(!sample){
+    add('当前元音',`[${vowel}] 尚无录音分析。可以先试听当前声线，或录制五个元音后查看个人结果。`);
+  }else{
+    add('这段声音',`${pack.name} · [${vowel}] · 音高标注 ${hasPitch?`${pitch.note}（${hz.toFixed(1)} Hz）`:'未记录'}。${Number.isFinite(Number(sample.pitchStdCents))?`中段音高波动约 ${Math.round(sample.pitchStdCents)} 音分。`:''}`);
+    if(verifiedFormants(sample))add('音色观察',`录音估计 F1 ${Math.round(sample.f1)}、F2 ${Math.round(sample.f2)}、F3 ${Math.round(sample.f3)} Hz。它们描述声音的共振，不是舌头或喉部位置的测量。`);
+    else add('音色观察','这段录音的共振峰还没有通过稳定性检查；先听原声，不根据 F1–F3 判断动作。');
+  }
+  if(reference.kind==='model'){
+    const keys=['tongueHeight','tongueFrontness','jawOpening','lipRounding','larynxHeight'],changes=keys.map(key=>({key,current:Math.round(state[key]),target:Math.round(reference.params[key])})).sort((a,b)=>Math.abs(b.current-b.target)-Math.abs(a.current-a.target)),focus=changes[0];
+    add('男高音教学参考',`这是人工设定的构形模型，不是帕瓦罗蒂或其他歌者的实测参数。${focus&&Math.abs(focus.current-focus.target)>=10?`差异最大的是${PARAMETER_LABELS[focus.key]}：当前 ${focus.current}，模型 ${focus.target}。可以只小幅调这一项，再听元音是否更清晰、发声是否舒适。`:'当前主要滑杆与模型接近；不必为了复制数字而改变发声。'}`);
+  }else if(reference.kind==='recorded'){
+    if(!sample||!reference.sample||!reference.samePitch)add('录音对比',`参考“${reference.label}”与当前 [${vowel}] 缺少同音高的有效样本；暂不比较参数。`);
+    else if(verifiedFormants(sample)&&verifiedFormants(reference.sample)&&hz<500&&reference.referenceHz<500&&sample.octaveCorrection!=='target-octave-assist+1'&&reference.sample.octaveCorrection!=='target-octave-assist+1'){
+      const d1=Math.round(sample.f1-reference.sample.f1),d2=Math.round(sample.f2-reference.sample.f2),exercise=Math.abs(d1)>=100?`若想试听接近参考的 F1，可在模型里小幅${d1>0?'减小下颌开度或提高舌高':'增大下颌开度或降低舌高'}。`:Math.abs(d2)>=180?`若想试听接近参考的 F2，可在模型里小幅${d2>0?'后移舌位或增加圆唇':'前移舌位或减少圆唇'}。`:'两段录音的主要共振峰差异不大，可先听辨元音清晰度。';
+      add('同音高录音对比',`与“${reference.label}”的 [${vowel}] 相比：F1 ${d1>=0?'+':''}${d1} Hz，F2 ${d2>=0?'+':''}${d2} Hz。${exercise}这只是音色实验，不说明真实器官位置有误。`);
+    }else add('录音对比',`两段 [${vowel}] 的音高标注接近，可直接听辨差别；目前不依据共振峰给出身体动作建议。`);
+  }else add('下一步','可以继续调节一个参数并试听；如果想比对另一位歌者，可导入其五元音声线。');
+  add('使用边界','仅供声乐教学与听辨参考，不用于声部鉴定或医学诊断。');
+  sections.forEach(section=>reportBlock(body,section.title,section.lines));
+  latestTeachingReport=`声道实验台 · [${vowel}] 简明教学报告\n生成时间：${new Date().toLocaleString('zh-CN')}\n\n`+sections.map(section=>`${section.title}\n${section.lines.join('\n')}`).join('\n\n');
+}
+function renderLegacyTeachingReport(){
+  const body=$('#teachingReportBody');if(!body)return;
+  const pack=personalVoicePacks.get(state.voicePackId),part=voicePartOf(pack),vowel=state.currentVowel,item=pack?.analysis?.vowels?.[vowel];
+  $('#voicePartSelect').value=part;renderReferenceOptions();body.replaceChildren();
+  const sections=[],add=(title,...lines)=>sections.push({title,lines});
+  const hz=Number(item?.measuredF0??item?.f0),hasHz=Number.isFinite(hz)&&hz>0,pitch=hasHz?pitchFromHz(hz):recordingTargetPitch;
+  const reference=reportReference(vowel,hasHz?hz:recordingTargetPitch.hz);
+  $('#applyReportReference').disabled=!reference.params||reference.kind==='recorded'&&!item||reference.kind==='model'&&!['tenor','unspecified'].includes(part);
+  $('#downloadTeachingReport').disabled=!item;
+  add('对象与录音',`声线：${pack?.name||'尚未创建'}；声部：${VOICE_PARTS[part]}（由使用者标注，不由这一段录音自动判定）；元音：[${vowel}]。`,item&&hasHz?`当前元音录音的 F0 标注约 ${hz.toFixed(2)} Hz（${pitch.note}）；录制目标：${pack.analysis?.targetPitch?.note||'旧录音未记录'}。`:item?'当前元音已有录音，但 F0 标注缺失；暂不能做同音高对比。':'尚无该元音录音。请先添加五元音声线，再查看个体声音分析。',`素材来源：${pack?.source==='bundled'?'网站内置、作者授权录音':pack?.importedFrom?`本机导入「${pack.importedFrom}」`:'本机录制或导入'}；原始资料许可：${pack?.originalLicense||'未填写'}。`);
+  if(pack?.analysis?.vowels){const overview=['a','e','i','o','u'].map(v=>{const sample=pack.analysis.vowels[v],value=Number(sample?.measuredF0??sample?.f0),formant=key=>Number.isFinite(Number(sample?.[key]))&&Number(sample[key])>0?Math.round(Number(sample[key])):'未记录',quality=sample?.formantQuality==='stable'?'多帧稳定':sample?.formantQuality==='uncertain'?'本次不稳定':'旧版未核验';return sample&&Number.isFinite(value)&&value>0?`[${v}] ${value.toFixed(1)} Hz（${pitchFromHz(value).note}）；F1 ${formant('f1')}、F2 ${formant('f2')}、F3 ${formant('f3')} Hz（${quality}）。`:`[${v}] 未录制或音高未记录。`});add('五元音录音概览',...overview)}
+  if(item){
+    const f1=Number(item.f1),f2=Number(item.f2),f3=Number(item.f3),validFormants=verifiedFormants(item);
+    const correction=item.octaveCorrection==='target-octave-assist+1';
+    add('录音声学估计',`F1 ${Number.isFinite(f1)?Math.round(f1):'未记录'} Hz · F2 ${Number.isFinite(f2)?Math.round(f2):'未记录'} Hz · F3 ${Number.isFinite(f3)?Math.round(f3):'未记录'} Hz。F0 是本次录音的音高标注；F1–F3 是录音片段的算法估计，不是器官位置。`,Number.isFinite(Number(item.pitchStdCents))?`中段 ${item.pitchFrames||'少量'} 个取样帧的音高标准差约 ${Math.round(item.pitchStdCents)} 音分；不代表整段录音的最大偏差。`:'音高波动未记录；现有分析不能据此评价整段稳定度。',item.formantQuality==='uncertain'?'多帧共振峰轨迹不稳定，本次仅显示观察值，不据此给出元音调节建议。':!item.formantQuality?'这条声线使用旧版分析，未做多帧稳定性核验；如需声学对比，请重新导入原录音。':!validFormants?'F1–F3 次序或数值不可靠，本次不据此给出元音调节建议。':hz>=500?'此音高较高，泛音间隔大；F1–F3 的误差可能明显增大，请优先听辨原声。':'这些数值适合观察相对差异，不是个人发声的合格线。');
+    if(reference.kind==='recorded'){
+      const r=reference.sample,r1=Number(r?.f1),r2=Number(r?.f2),r3=Number(r?.f3),refValid=verifiedFormants(r);
+      if(!r||!Number.isFinite(reference.referenceHz))add('参考对比',`“${reference.label}”缺少 [${vowel}] 的有效录音标注，暂不能对比。`);
+      else if(!reference.samePitch)add('参考对比',`参考“${reference.label}”的 [${vowel}] 标注约 ${reference.referenceHz.toFixed(2)} Hz（${pitchFromHz(reference.referenceHz).note}），与当前录音相差 ${Math.abs(reference.cents)} 音分；不同音高的共振峰不宜直接当作声部标准比较。可录制同一音高的参考样本。`);
+      else if(correction||r.octaveCorrection==='target-octave-assist+1')add('当前音高参考对比',`当前与参考“${reference.label}”的 [${vowel}] 音高标注相差约 ${Math.abs(reference.cents)} 音分。${validFormants&&refValid?`录音估计的 F1 相差 ${Math.abs(Math.round(f1-r1))} Hz，F2 相差 ${Math.abs(Math.round(f2-r2))} Hz；这是声学观察，不是器官位置测量。`:'至少一段录音的共振峰估计不够可靠，暂不比较 F1–F3。'}可对照原声听辨元音清晰度与音色；仅凭这两段录音，暂不给舌位、口型或喉位的定向建议。`);
+      else if(!validFormants||!refValid)add('参考对比',`参考“${reference.label}”与当前样本音高接近，但至少一段录音的 F1–F3 估计不可靠；暂只进行原声听辨，不据此推断器官动作。`);
+      else if(hz>=500||reference.referenceHz>=500)add('高音参考对比',`参考“${reference.label}”与当前 [${vowel}] 的 F0 标注接近。高音时泛音间隔较大，现有短窗 LPC 共振峰估计不适合据此给出舌位、口型或喉位的定向建议；请优先原声听辨。`);
+      else{
+        const d1=Math.round(f1-r1),d2=Math.round(f2-r2),d3=Math.round(f3-r3),direction=d=>d>0?'高':'低';
+        add('同元音·同音高实录对比',`参考：${reference.label}（${VOICE_PARTS[voicePartOf(reference.pack)]}）；两段 F0 标注相差约 ${Math.abs(reference.cents)} 音分。F1 相差 ${Math.abs(d1)} Hz（当前较${direction(d1)}），F2 相差 ${Math.abs(d2)} Hz（当前较${direction(d2)}），F3 相差 ${Math.abs(d3)} Hz（当前较${direction(d3)}）。这些是两条录音的差异，不代表哪条更正确。`,Math.abs(d1)>=100?`若希望接近参考的 F1，可在模型中小幅试验${d1>0?'减小下颌开度或提高舌高':'增大下颌开度或降低舌高'}，试听音色变化；录音本身不能证明下颌或舌头实际处于何处。`:'F1 差异较小，先保持舒适发声并听辨元音清晰度。',Math.abs(d2)>=180?`若希望接近参考的 F2，可小幅试验${d2>0?'舌位后移或增加圆唇':'舌位前移或减少圆唇'}；仅作模型实验，不以数值相同为训练目标。`:'F2 差异较小；不必为了追求相同数值而改变自然发声。',`F3 差异不能单独推断喉位高低；不要仅凭本报告要求压低或抬高喉部。`);
+      }
+      if(part!=='unspecified'&&voicePartOf(reference.pack)!=='unspecified'&&part!==voicePartOf(reference.pack))add('声部标注',`当前标注为${VOICE_PARTS[part]}，参考标注为${VOICE_PARTS[voicePartOf(reference.pack)]}；跨声部比较只能作为听觉探索，不能作为本声部标准。`);
+    }else if(reference.kind==='cohort'||reference.kind==='data'){
+      const isResearch=reference.kind==='data',names=isResearch?reference.rows.map(row=>row.singerId).join('、'):reference.members.map(row=>row.pack.name).join('、'),sourceText=isResearch?`来源字段：${[...new Set(reference.dataset.rows.map(row=>row.source))].join('、')}；许可字段：${[...new Set(reference.dataset.rows.map(row=>row.license))].join('、')}。这些是导入文件的自述信息，本站未验证机构、许可或测量方法。`:'此组来自本机导入或已授权声线，不是机构发布的正常范围，也不能证明每条声线来自不同歌者。';
+      add(isResearch?'外部数值参考组':'同声部参考组',`筛选条件：[${vowel}]、${VOICE_PARTS[reference.part]}标注、F0 标注与当前相差不超过 50 音分、共振峰次序有效。目前找到 ${reference.count} 位可比成员；至少 3 位才形成组内中位数。${reference.count?`当前成员：${names}。`:''}`,sourceText);
+      if(part!=='unspecified'&&part!==reference.part)add('声部标注',`当前标注为${VOICE_PARTS[part]}，所选参考组为${VOICE_PARTS[reference.part]}；跨声部只适合探索，不应把另一声部的数值当作训练目标。`);
+      if(reference.eligible){
+        add('同音高录音组的声学描述',`参考组 F1 中位数约 ${Math.round(reference.f1)} Hz、F2 约 ${Math.round(reference.f2)} Hz、F3 约 ${Math.round(reference.f3)} Hz。${validFormants?`当前录音相对组中位数：F1 ${Math.round(f1-reference.f1)>=0?'+':''}${Math.round(f1-reference.f1)} Hz，F2 ${Math.round(f2-reference.f2)>=0?'+':''}${Math.round(f2-reference.f2)} Hz，F3 ${Math.round(f3-reference.f3)>=0?'+':''}${Math.round(f3-reference.f3)} Hz。`:'当前录音的共振峰次序不可靠，暂不计算方向差。'}这些是样本差异，不是“发声正确度”评分。`);
+        if(!validFormants||hz>=500||reference.hasPitchAssist||correction)add('教学使用建议',isResearch?'可把当前录音与数值资料作描述性比较；外部表格没有可试听原声，且测量方法未由本站核验，不据此建议真实器官位置。':'可先听辨同元音在相同目标音高下的清晰度、稳定感和音色差别。当前测量条件不足以根据数值建议真实器官位置；不要仅凭报告改变喉位或肌肉用力。');
+        else{
+          const d1=Math.round(f1-reference.f1),d2=Math.round(f2-reference.f2),experiments=[];
+          if(Math.abs(d1)>=100)experiments.push(`如果想试听接近该组 F1 的模型效果，可小幅试验${d1>0?'减小下颌开度或提高舌高':'增大下颌开度或降低舌高'}，观察元音是否仍清楚、发声是否舒适。`);
+          if(Math.abs(d2)>=180)experiments.push(`如果想试听接近该组 F2 的模型效果，可小幅试验${d2>0?'舌位后移或增加圆唇':'舌位前移或减少圆唇'}。`);
+          add('可试听的构形实验',...(experiments.length?experiments:['F1/F2 与本机参考组的中位数相近；无需追逐相同数字。']),'这些只是交互模型里的音色实验，不代表身体部位的实测位置；喉位不能由 F3 单独反推。');
+        }
+      }else if(isResearch&&reference.count){add('个案数据的声学差异',`目前仅有 ${reference.count} 位歌者的可比记录，不构成声部标准。${validFormants?`当前录音相对这些记录的描述值：F1 ${Math.round(f1-reference.f1)>=0?'+':''}${Math.round(f1-reference.f1)} Hz、F2 ${Math.round(f2-reference.f2)>=0?'+':''}${Math.round(f2-reference.f2)} Hz、F3 ${Math.round(f3-reference.f3)>=0?'+':''}${Math.round(f3-reference.f3)} Hz。`:'当前录音的共振峰次序不可靠，暂不计算方向差。'}仅凭个案数值不建议改变真实喉位、舌位或肌肉用力。`,'如需组内中位数，请补充至少三位不同歌者、同元音且相近音高的有效记录。')}
+      else add('参考组尚不足',isResearch?'请导入至少一位同元音、相近音高的有效记录；三位及以上才形成参考组中位数。':'请再导入同一声部、同一元音、相近音高的独立录音。现阶段不会凭少量样本生成“标准比例”或个体动作建议。');
+    }else if(reference.kind==='model'){
+      add('教学模型对比',`“${reference.label}”只是一组人工设定的 0–100 滑杆构形，没有该音高的男高音实录声学数值，不能把它称为男高音标准或名师参数。${part!=='tenor'&&part!=='unspecified'?`当前标注是${VOICE_PARTS[part]}，不建议按男高音模型载入构形。`:''}`);
+      if(part==='tenor'||part==='unspecified'){
+        const keys=['tongueHeight','tongueFrontness','jawOpening','lipRounding','larynxHeight'],diffs=keys.map(key=>({key,diff:Math.round(state[key]-reference.params[key])})).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));
+        const experiments=diffs.filter(row=>Math.abs(row.diff)>=10).slice(0,2).map(row=>`${PARAMETER_LABELS[row.key]}滑杆：当前 ${Math.round(state[row.key])}、模型 ${Math.round(reference.params[row.key])}。可试验向模型值小幅移动并听辨；这不说明你的真实${PARAMETER_LABELS[row.key]}位置有误。`);
+        add('可试听的模型实验',...(experiments.length?experiments:['当前主要可调滑杆与教学模型接近；不必为了复制数字而改变发声。']),`尤其不能从 F3 或滑杆数值推断“应该压低喉位”或要求特定肌肉用力。`);
+      }
+    }
+    else add('参考对比','尚未选用实录参考。可以导入经授权的五元音声线，选择相同元音及相近音高后再比较。');
+    if(reference.params&&reference.kind==='recorded'&&reference.samePitch&&!correction&&reference.sample?.octaveCorrection!=='target-octave-assist+1'){const keys=['tongueHeight','tongueFrontness','jawOpening','lipRounding','larynxHeight'],differences=keys.map(key=>({key,diff:Math.round(state[key]-reference.params[key])})).filter(row=>Number.isFinite(row.diff)).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));add('界面构形滑杆',differences.slice(0,3).map(row=>`${PARAMETER_LABELS[row.key]}：当前 ${Math.round(state[row.key])}、参考映射 ${Math.round(reference.params[row.key])}，差 ${row.diff>0?'+':''}${row.diff}。`).join(' '),'参考滑杆同样由录音声学估计映射，并非声带、舌骨或喉部的实测位置；可试听小幅调节的效果，不应模仿肌肉用力。')}
+  }else add('参考与建议','这条声线尚无当前元音的录音分析；已有滑杆和图示只能作为教学模型，不能生成个人声学结论。');
+  if(reference.kind==='recorded'&&pack?.analysis?.vowels){
+    const overview=['a','e','i','o','u'].map(v=>{const own=pack.analysis.vowels[v],other=reference.pack.analysis?.vowels?.[v],ownHz=Number(own?.measuredF0??own?.f0),otherHz=Number(other?.measuredF0??other?.f0);if(!own||!other||!Number.isFinite(ownHz)||!Number.isFinite(otherHz)||ownHz<=0||otherHz<=0)return `[${v}] 缺少有效的双边样本。`;const cents=Math.round(1200*Math.log2(ownHz/otherHz));if(Math.abs(cents)>50)return `[${v}] 两段音高标注相差 ${Math.abs(cents)} 音分，暂不直接比较。`;if(own.octaveCorrection==='target-octave-assist+1'||other.octaveCorrection==='target-octave-assist+1')return `[${v}] 两段有相近的目标音高标注，可听辨原声；暂不据此做定向调整。`;if(ownHz>=500||otherHz>=500)return `[${v}] 音高相近；高音共振峰仅供观察，不给定向调整结论。`;if(!verifiedFormants(own)||!verifiedFormants(other))return `[${v}] 音高相近，但至少一段共振峰估计尚未通过多帧稳定性检查；仅供听辨。`;const f1=Number(own.f1)-Number(other.f1),f2=Number(own.f2)-Number(other.f2);return `[${v}] 音高相近；相对参考 F1 ${f1>=0?'+':''}${Math.round(f1)} Hz、F2 ${f2>=0?'+':''}${Math.round(f2)} Hz（仅描述录音差异）。`});
+    add('五元音参考可比性',...overview);
+  }
+  if(['cohort','data'].includes(reference.kind)&&pack?.analysis?.vowels){const overview=['a','e','i','o','u'].map(v=>{const own=pack.analysis.vowels[v],ownHz=Number(own?.measuredF0??own?.f0);if(!own||!Number.isFinite(ownHz)||ownHz<=0)return `[${v}] 当前声线尚无有效录音标注。`;const count=(reference.kind==='data'?researchRows(reference.dataset,reference.part,v,ownHz):cohortMembers(reference.part,v,ownHz)).length;return `[${v}] 同声部、相近音高且共振峰次序有效的参考成员 ${count} 位${count<3?'；未形成参考组。':'；可查看该元音的组内中位数。'}`});add('五元音参考组覆盖情况',...overview)}
+  add('方法依据','声部标签与五元音持续音的采集设计参考 VocalSet（Wilkins 等，ISMIR 2018）：https://pseeth.github.io/public/papers/wilkins_seetharaman_ismir18.pdf 。该研究不是本程序的声部滑杆数值来源。','固定音高下比较歌唱声音谱的研究示例：https://pmc.ncbi.nlm.nih.gov/articles/PMC2671792/ 。本程序没有复制论文原始录音或把其结果当作个人标准。','LPC 共振峰估计的局限参考 Praat 官方说明：https://praat.org/manual/FAQ__Formant_analysis.html 。');
+  add('使用边界','本报告仅供声乐教学与听辨参考，不构成声部鉴定、医学诊断或一套人人适用的正确发声比例。声部需结合舒适音区、音色、换声区及教师长期观察。');
+  sections.forEach(section=>reportBlock(body,section.title,section.lines));
+  latestTeachingReport=`声道实验台 · 元音教学报告\n生成时间：${new Date().toLocaleString('zh-CN')}\n\n`+sections.map(section=>`${section.title}\n${section.lines.join('\n')}`).join('\n\n');
+}
 function renderComparison(){
   const rows=$('#comparisonRows');if(!rows)return;
-  const comparison=comparisonPitchForVowel(state.currentVowel),target=tenorPresetAtPitch(state.currentVowel,comparison.hz),voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','').replace(' · 请先录制','')||'我的声线';
-  $('#comparisonCurrentName').textContent=voiceName;$('#comparisonVowel').textContent=`[${state.currentVowel}]`;$('#comparisonPitch').textContent=`${comparison.pitch.note} · ${comparison.hz.toFixed(2)} Hz${comparison.source==='sample'?' · 录音标注':' · 录音目标'}`;$('#comparisonTenorName').textContent=`经典男高音 ${comparison.pitch.note} · 教学推算`;
-  $('#comparisonDescription').textContent=comparison.source==='sample'?'左侧是当前滑杆值，右侧是按该元音录音标注音高推算的教学参考；不是男高音实测数据。切换元音时右侧随其标注音高更新，不改变你的录音和左侧参数。':'当前声线缺少该元音音高分析值，暂按手动选择的录音目标音高推算右侧教学参考；不是男高音实测数据，也不会改变录音。';
-  rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>{const current=Math.round(state[key]),reference=Math.round(target[key]),difference=current-reference,differenceText=difference===0?'相同':`${difference>0?'+':''}${difference}`;return `<div class="comparison-row"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span style="width:${current}%"></span><b>${current}</b></div><div class="comparison-value tenor-value"><span style="width:${reference}%"></span><b>${reference}</b></div></div><small class="${difference===0?'same':''}">${differenceText}</small></div>`}).join('');
+  const comparison=comparisonPitchForVowel(state.currentVowel),reference=reportReference(state.currentVowel,comparison.hz),target=comparison.source==='target'&&['recorded','cohort','data'].includes(reference.kind)?null:reference.params,voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','').replace(' · 请先录制','')||'我的声线';
+  $('#comparisonCurrentName').textContent=voiceName;$('#comparisonVowel').textContent=`[${state.currentVowel}]`;$('#comparisonPitch').textContent=`${comparison.pitch.note} · ${comparison.hz.toFixed(2)} Hz${comparison.source==='sample'?' · 录音标注':' · 录音目标'}`;$('#comparisonTenorName').textContent=reference.label;
+  $('#comparisonDescription').textContent=reference.kind==='model'?'右侧为人工设定的男高音教学滑杆，不是歌者实测值或声部标准。':reference.kind==='data'?'外部 CSV 只有 F0–F3 数值，没有真实器官位置；滑杆对比留空，请查看下方文字报告。':reference.kind==='cohort'&&comparison.source!=='sample'?'当前元音缺少录音，右侧暂不显示参考组差值。':reference.kind==='cohort'&&!reference.eligible?`参考组当前仅有 ${reference.count} 条同元音、相近音高且质量可用的声线；至少需 3 条。`:reference.kind==='cohort'?'右侧为本机声部参考组的教学滑杆中位数，不是器官实测位置或通用标准。':reference.kind==='recorded'&&comparison.source!=='sample'?'当前元音缺少个人录音，右侧暂不显示差值。':reference.kind==='recorded'&&reference.samePitch?'右侧是另一条同元音、近似同音高录音经算法映射的教学滑杆，不是实测器官位置。':reference.kind==='recorded'?'参考声线与当前录音音高不同；为避免误导，右侧不显示参数差值。':'请在“元音教学报告”中选择可对比的参考声线。';
+  rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>{const current=Math.round(state[key]),value=Number(target?.[key]),available=Number.isFinite(value),referenceValue=available?Math.round(value):0,difference=current-referenceValue,differenceText=!available?'—':difference===0?'相同':`${difference>0?'+':''}${difference}`;return `<div class="comparison-row"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span style="width:${current}%"></span><b>${current}</b></div><div class="comparison-value tenor-value"><span style="width:${referenceValue}%"></span><b>${available?referenceValue:'—'}</b></div></div><small class="${!available||difference===0?'same':''}">${differenceText}</small></div>`}).join('');
 }
 function pitchLabel(){return `${recordingTargetPitch.solfege} · ${recordingTargetPitch.note}${recordingTargetPitch.landmark?`（${recordingTargetPitch.landmark}）`:''} · ${recordingTargetPitch.hz.toFixed(2)} Hz`}
 function updatePitchDebug({rawFrequency,correctedFrequency,confidence,source='真人录音',sampleRate,duration,detector='MPM + YIN'}={}){const corrected=Number(correctedFrequency),pitch=Number.isFinite(corrected)&&corrected>0?PitchCore.frequencyToPitch(corrected):null;if($('#pitchDebugSource'))$('#pitchDebugSource').textContent=source;if($('#debugRawFrequency'))$('#debugRawFrequency').textContent=Number.isFinite(Number(rawFrequency))?`${Number(rawFrequency).toFixed(2)} Hz`:'—';if($('#debugCorrectedFrequency'))$('#debugCorrectedFrequency').textContent=pitch?`${corrected.toFixed(2)} Hz`:'—';if($('#debugPitchConfidence'))$('#debugPitchConfidence').textContent=Number.isFinite(Number(confidence))?Number(confidence).toFixed(3):'—';if($('#debugMidi'))$('#debugMidi').textContent=pitch?String(pitch.midi):'—';if($('#debugNote'))$('#debugNote').textContent=pitch?pitch.noteName:'—';if($('#debugOctave'))$('#debugOctave').textContent=pitch?String(pitch.octave):'—';if($('#debugSampleRate'))$('#debugSampleRate').textContent=Number.isFinite(Number(sampleRate))?`${Number(sampleRate)} Hz`:'—';if($('#debugDuration'))$('#debugDuration').textContent=Number.isFinite(Number(duration))?`${Number(duration).toFixed(2)} s`:'—';if($('#debugDetector'))$('#debugDetector').textContent=detector}
@@ -325,21 +455,6 @@ function bindPhonation(){
 }
 function syncLockUi(){const button=$('#phonateButton');button.classList.toggle('is-playing',state.isPhonating);button.setAttribute('aria-pressed',String(locked));button.setAttribute('aria-label',locked?'停止发声':'开始持续发声');$('#phonateLabel').textContent=state.isPhonating?'发声中':locked?'正在准备':'发声';$('#phonateHint').textContent=locked?'点击停止':'点击开始持续发声'}
 
-function bindSnapshots(){
-  $('#savePreset').addEventListener('click',async()=>{const name=$('#presetName').value.trim()||`构形 ${snapshots.length+1}`,a=acousticValues(),snap={id:crypto.randomUUID(),name,createdAt:new Date().toISOString(),voicePack:state.voicePackId,selectedVowel:state.currentVowel,params:Object.fromEntries(Object.keys(DEFAULT_STATE).map(k=>[k,state[k]])),...a};snapshots.unshift(snap);await dbPut('snapshots',snap);$('#presetName').value='';renderSnapshots();showToast(`已保存“${name}”`)});
-  $('#swapAB').addEventListener('click',()=>{[slots.A,slots.B]=[slots.B,slots.A];saveSlots();renderSnapshots()});
-  $$('.ab-slot').forEach(el=>el.addEventListener('click',()=>{const snap=snapshots.find(s=>s.id===slots[el.dataset.slot]);if(snap){loadSnapshot(snap);$$('.ab-slot').forEach(x=>x.classList.remove('active'));el.classList.add('active')}else showToast(`请先将一个构形设为 ${el.dataset.slot}`)}));
-  $('#exportCsv').addEventListener('click',exportCsv);
-}
-function renderSnapshots(){
-  $('#snapshotCount').textContent=`${snapshots.length} 个快照`;['A','B'].forEach(k=>{const el=$(`#slot${k}`),snap=snapshots.find(s=>s.id===slots[k]);el.querySelector('strong').textContent=snap?snap.name:'未设置';el.querySelector('small').textContent=snap?`[${snap.nearest}] · F2 ${snap.f2}`:'点击载入'});
-  const list=$('#snapshotList');if(!snapshots.length){list.innerHTML='<p class="empty-state">保存一个构形，开始 A/B 比较。</p>';return}list.innerHTML=snapshots.map(s=>`<div class="snapshot-item" data-id="${s.id}"><span><strong>${escapeHtml(s.name)}</strong><small>[${s.nearest}] · ${new Date(s.createdAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</small></span><button class="mini-button load">载入</button><button class="mini-button set-a">设 A</button><button class="mini-button set-b">设 B</button><button class="mini-button delete">×</button></div>`).join('');
-  $$('.snapshot-item').forEach(row=>{const snap=snapshots.find(s=>s.id===row.dataset.id);row.querySelector('.load').onclick=()=>loadSnapshot(snap);row.querySelector('.set-a').onclick=()=>{slots.A=snap.id;saveSlots();renderSnapshots()};row.querySelector('.set-b').onclick=()=>{slots.B=snap.id;saveSlots();renderSnapshots()};row.querySelector('.delete').onclick=async()=>{snapshots=snapshots.filter(s=>s.id!==snap.id);if(slots.A===snap.id)slots.A=null;if(slots.B===snap.id)slots.B=null;await dbDelete('snapshots',snap.id);saveSlots();renderSnapshots()}});
-}
-function loadSnapshot(s){Object.entries(s.params).forEach(([k,v])=>state[k]=v);state.currentVowel=s.selectedVowel||s.nearest||'a';render();showToast(`已载入“${s.name}”`)}
-function saveSlots(){localStorage.setItem('vocalLabSlots',JSON.stringify(slots))}
-function exportCsv(){if(!snapshots.length){showToast('请先保存至少一个构形');return}const cols=['timestamp','preset','voicePack','tongueHeight','tongueFrontness','suprahyoidTension','thyrohyoidTension','jawOpening','lipRounding','larynxHeight','velumOpening','nearestVowel','f0','f1','f2','f3'];const lines=[cols.join(','),...snapshots.map(s=>[s.createdAt,quote(s.name),s.voicePack,...Object.keys(DEFAULT_STATE).map(k=>s.params[k]),s.nearest,s.f0,s.f1,s.f2,s.f3].join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));a.download=`声道实验记录_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);showToast('CSV 已导出')}
-function quote(v){return `"${String(v).replaceAll('"','""')}"`}
 
 function discardUnsavedVoiceSamples({refreshStatus=true}={}){
   stopSamplePreview();
@@ -348,6 +463,29 @@ function discardUnsavedVoiceSamples({refreshStatus=true}={}){
   if(refreshStatus)updateVoiceSave();
 }
 
+let voiceDraftReady=Promise.resolve(),voiceDraftQueue=Promise.resolve(),restoringVoiceDraft=false;
+function voiceDraftTransaction(value){return new Promise((resolve,reject)=>{
+  const request=indexedDB.open('VocalTractLabDrafts',1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('drafts');
+  request.onerror=()=>reject(request.error);
+  request.onsuccess=()=>{const db=request.result,tx=db.transaction('drafts',value===undefined?'readonly':'readwrite'),store=tx.objectStore('drafts');let result;
+    const operation=value===undefined?store.get('current'):value===null?store.delete('current'):store.put(value,'current');
+    operation.onsuccess=()=>{result=operation.result};tx.oncomplete=()=>{db.close();resolve(result)};tx.onabort=tx.onerror=()=>{db.close();reject(tx.error||Error('草稿存储失败'))};
+  };
+})}
+function persistVoiceDraft(){
+  if(restoringVoiceDraft)return voiceDraftQueue;
+  const samples={};for(const [vowel,preview] of Object.entries(previewSamples))if(preview){const sample=personalSamples[vowel],card=$(`.sample-card[data-vowel="${vowel}"]`);samples[vowel]={blob:preview.blob,duration:sample?.duration,peak:sample?.peak,rms:sample?.rms,analysis:sample?.analysis,accepted:Boolean(sample),message:card.querySelector('small').textContent,error:card.classList.contains('error')}}
+  const draft=Object.keys(samples).length?{samples,targetMidi:recordingTargetPitch.midi,name:$('#packName').value,voicePart:$('#newVoicePart').value}:null;
+  voiceDraftQueue=voiceDraftQueue.catch(()=>{}).then(()=>voiceDraftTransaction(draft)).catch(err=>{console.warn('Voice draft unavailable.',err);$('#voiceDraftStatus').textContent='临时进度保留在当前页面；本机草稿写入失败，请不要刷新或关闭网页。'});return voiceDraftQueue;
+}
+async function restoreVoiceDraft(){
+  try{const draft=await voiceDraftTransaction();if(!draft?.samples)return;restoringVoiceDraft=true;
+    recordingTargetPitch=pitchFromMidi(draft.targetMidi);$('#packName').value=draft.name||'我的声线';$('#newVoicePart').value=draft.voicePart||'unspecified';
+    for(const [vowel,sample] of Object.entries(draft.samples)){if(!Object.hasOwn(personalSamples,vowel)||!sample.blob)continue;setPreviewSample(vowel,sample.blob);personalSamples[vowel]=sample.accepted?{blob:sample.blob,duration:sample.duration,peak:sample.peak,rms:sample.rms,analysis:sample.analysis}:null;const card=$(`.sample-card[data-vowel="${vowel}"]`);card.classList.toggle('ready',Boolean(sample.accepted));card.classList.toggle('error',Boolean(sample.error));card.querySelector('small').textContent=sample.message||'已恢复本次录音，可试听或重新录制'}
+    renderPitchSelection();updateVoiceSave();$('#voiceDraftStatus').textContent='已恢复本机录音草稿，可继续录制剩余元音。草稿不会上传。';
+  }catch(err){console.warn('Voice draft restore failed.',err)}finally{restoringVoiceDraft=false}
+}
 function setupVoiceLab(){
   const grid=$('#sampleGrid');grid.innerHTML=['a','e','i','o','u'].map(v=>`<div class="sample-card" data-vowel="${v}"><strong>[${v}]</strong><small>等待样本</small><div class="sample-actions"><button type="button" class="preview" disabled>试听</button><label>导入<input type="file" accept="audio/wav,.wav,audio/*"></label><button type="button" class="record">录制</button></div></div>`).join('');
   $('#pitchKeyboard').innerHTML=NATURAL_PITCH_MIDIS.map(midi=>{const pitch=pitchFromMidi(midi);return `<button class="pitch-option" type="button" data-midi="${midi}" aria-pressed="${midi===recordingTargetPitch.midi}"><strong>${pitch.solfege}</strong><span>${pitch.note}</span><small>${pitch.hz.toFixed(2)} Hz${pitch.landmark?` · ${pitch.landmark}`:''}</small></button>`}).join('');
@@ -356,13 +494,75 @@ function setupVoiceLab(){
   $('#openVoiceLab').onclick=()=>openVoiceDialog(false);$('#openPitchPicker').onclick=()=>openVoiceDialog(true);$('#openInfo').onclick=()=>$('#infoDialog').showModal();$('#saveVoicePack').onclick=saveVoicePack;$('#exportCurrentVoice').onclick=exportCurrentVoice;$('#playReferencePitch').onclick=()=>playReferencePitch($('#playReferencePitch'));
   $('#deleteVoiceButton').onclick=promptDeleteVoice;$('#cancelDeleteVoice').onclick=()=>$('#deleteVoiceDialog').close();$('#confirmDeleteVoice').onclick=confirmDeleteVoice;
   $('#humanOctaveAssist').addEventListener('change',event=>{humanOctaveAssist=event.target.checked;resetPitchDebugForTarget();showToast(humanOctaveAssist?'人声低八度校正已开启':'人声低八度校正已关闭')});
-  $('#voiceDialog').addEventListener('close',cancelRecordingSession);
+  $('#voiceDialog').addEventListener('close',()=>{cancelRecordingSession();stopSamplePreview();persistVoiceDraft()});
+  $('#packName').addEventListener('input',persistVoiceDraft);
+  $('#newVoicePart').addEventListener('change',persistVoiceDraft);
+  $('#clearVoiceDraft').onclick=async()=>{if(recordingPhase==='processing'){showToast('正在分析本段录音，请稍候再清空');return}if(!confirm('清空这次未保存的录音草稿？已保存的声线不会受影响。'))return;cancelRecordingSession();discardUnsavedVoiceSamples();await persistVoiceDraft();$('#voiceDraftStatus').textContent='已清空临时录音，可以重新开始。'};
+  voiceDraftReady=restoreVoiceDraft();
   renderPitchSelection();
 }
-function openVoiceDialog(focusPitch){const dialog=$('#voiceDialog');dialog.showModal();if(!Object.values(personalSamples).some(Boolean)&&!Object.values(previewSamples).some(Boolean))resetPitchDebugForTarget();if(focusPitch)setTimeout(()=>{$('#pitchPicker').scrollIntoView({block:'center',behavior:'smooth'});$('.pitch-option.active')?.focus()},80)}
+function setupTeachingReport(){
+  $('#voicePartSelect').addEventListener('change',async event=>{
+    const pack=personalVoicePacks.get(state.voicePackId);if(!pack)return;
+    const part=VOICE_PARTS[event.target.value]?event.target.value:'unspecified';voicePartOverrides[pack.id]=part;pack.voicePart=part;
+    try{localStorage.setItem('vocalLabVoiceParts',JSON.stringify(voicePartOverrides));if(pack.source!=='bundled')await dbPut('voicePacks',pack)}catch(err){console.warn('Voice-part label could not be persisted.',err);showToast('声部已更新，但本机存储未成功；刷新后可能恢复')}
+    if(selectedReferenceId==='tenor-model'&&part!=='tenor'&&part!=='unspecified')selectedReferenceId='none';
+    referenceOptionsKey='';const option=$('#voiceSelect').selectedOptions[0];if(option)option.textContent=voiceOptionLabel(pack);render();
+  });
+  $('#referenceVoiceSelect').addEventListener('change',event=>{selectedReferenceId=event.target.value;try{localStorage.setItem('vocalLabReference',selectedReferenceId)}catch{}render()});
+  $('#importReferencePack').addEventListener('change',async event=>{const file=event.target.files?.[0];event.target.value='';if(file)await importReferencePack(file)});
+  $('#importResearchCsv').addEventListener('change',async event=>{const file=event.target.files?.[0];event.target.value='';if(file)await importResearchCsv(file)});
+  $('#downloadResearchTemplate').addEventListener('click',()=>{const csv='\ufeffsource,license,singerId,voicePart,vowel,f0,f1,f2,f3\r\n',url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download='声部参考数据_空白模板.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+  $('#deleteResearchDataset').addEventListener('click',async()=>{if(!selectedReferenceId.startsWith('data:'))return;const id=selectedReferenceId.slice(5).split(':')[0],dataset=researchDatasets.get(id);if(!dataset||!confirm(`删除本机研究数据“${dataset.name}”的 ${dataset.rows.length} 行？该操作不会删除录音声线。`))return;try{await dbDelete('referenceDatasets',id);researchDatasets.delete(id);selectedReferenceId='none';localStorage.setItem('vocalLabReference','none');referenceOptionsKey='';render();showToast('已删除本机研究参考数据')}catch(err){console.error('Research data deletion failed.',err);showToast('删除失败，请检查本机存储')}});
+  $('#downloadTeachingReport').addEventListener('click',()=>{if(!latestTeachingReport)return;const url=URL.createObjectURL(new Blob(['\ufeff'+latestTeachingReport],{type:'text/plain;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download=`元音教学报告_${state.currentVowel}_${new Date().toISOString().slice(0,10)}.txt`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+  $('#applyReportReference').addEventListener('click',()=>{const comparison=comparisonPitchForVowel(state.currentVowel),reference=reportReference(state.currentVowel,comparison.hz),part=voicePartOf(personalVoicePacks.get(state.voicePackId));if(!reference.params||reference.kind==='recorded'&&comparison.source!=='sample'||reference.kind==='model'&&!['tenor','unspecified'].includes(part))return;clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;syncLockUi();Object.assign(state,reference.params);render();showToast(`已载入“${reference.label}”教学构形；声线不变、当前静音`)});
+}
+function parseCsvMatrix(input){
+  const rows=[];let row=[],field='',quoted=false;for(let i=0;i<input.length;i++){const char=input[i];if(quoted){if(char==='"'&&input[i+1]==='"'){field+='"';i++}else if(char==='"')quoted=false;else field+=char}else if(char==='"'){if(field.trim())throw Error('CSV 引号位置不正确');quoted=true}else if(char===','){row.push(field.trim());field=''}else if(char==='\n'){row.push(field.trim());if(row.some(Boolean))rows.push(row);row=[];field=''}else if(char!=='\r')field+=char}if(quoted)throw Error('CSV 有未闭合的引号');row.push(field.trim());if(row.some(Boolean))rows.push(row);return rows
+}
+function parseResearchCsv(text){
+  const matrix=parseCsvMatrix(text.replace(/^\uFEFF/,'')),header=matrix.shift()?.map(value=>value.toLowerCase());if(!header)throw Error('CSV 文件为空');const required=['source','license','singerid','voicepart','vowel','f0','f1','f2','f3'];if(required.some(key=>!header.includes(key))||new Set(header).size!==header.length)throw Error('表头必须包含 source,license,singerId,voicePart,vowel,f0,f1,f2,f3 且不可重复');if(matrix.length<1||matrix.length>5000)throw Error('CSV 需要 1–5000 行数据');
+  return matrix.map((fields,index)=>{if(fields.length!==header.length)throw Error(`第 ${index+2} 行列数与表头不一致`);const item=Object.fromEntries(header.map((key,i)=>[key,fields[i]])),source=item.source.slice(0,160),license=item.license.slice(0,80),singerId=item.singerid.slice(0,80),voicePart=item.voicepart.toLowerCase(),vowel=item.vowel.toLowerCase();if(!source||!license||!singerId)throw Error(`第 ${index+2} 行须填写来源、许可和歌者标识`);if(!Object.hasOwn(VOICE_PARTS,voicePart)||voicePart==='unspecified')throw Error(`第 ${index+2} 行声部无效；请用 soprano、mezzo、alto、tenor、baritone 或 bass`);if(!['a','e','i','o','u'].includes(vowel))throw Error(`第 ${index+2} 行元音无效；请用 a/e/i/o/u`);const values={};for(const key of ['f0','f1','f2','f3']){if(!/^(?:\d+\.?\d*|\.\d+)$/.test(item[key]))throw Error(`第 ${index+2} 行 ${key.toUpperCase()} 不是有效 Hz 数值`);values[key]=Number(item[key])}if(values.f0<50||values.f0>1300||values.f1<100||values.f1>1700||values.f2<=values.f1+80||values.f2>4500||values.f3<=values.f2+80||values.f3>6000)throw Error(`第 ${index+2} 行音高或共振峰范围/次序不合理，请核对单位为 Hz`);return {source,license,singerId,voicePart,vowel,...values}})
+}
+async function importResearchCsv(file){
+  const status=$('#reportImportStatus');status.textContent='正在检查研究参考数据…';try{if(file.size>2*1024*1024)throw Error('CSV 文件超过 2 MB');const bytes=new Uint8Array(await file.arrayBuffer()),rows=parseResearchCsv(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),checksum=await audioFingerprint(bytes),existing=[...researchDatasets.values()].find(dataset=>dataset.checksum===checksum);if(existing){status.textContent=`“${existing.name}”已导入过，无需重复添加。`;return}const id=`research-${crypto.randomUUID()}`,name=file.name.replace(/\.csv$/i,'').trim().slice(0,50)||'研究参考数据',dataset={id,name,checksum,createdAt:new Date().toISOString(),rows};await dbPut('referenceDatasets',dataset);researchDatasets.set(id,dataset);const firstPart=rows[0].voicePart;selectedReferenceId=`data:${id}:${firstPart}`;try{localStorage.setItem('vocalLabReference',selectedReferenceId)}catch{}referenceOptionsKey='';render();status.textContent=`已导入“${name}”：${rows.length} 行、${new Set(rows.map(row=>`${row.source}\u0000${row.singerId}`)).size} 位歌者标识；仅保存在本机，来源信息未经本站核验。`;showToast('研究参考数据已导入，可进行同元音、相近音高比较')}catch(err){console.error('Research data import failed.',err);status.textContent=`导入失败：${err.message||'请检查 CSV 编码和字段'}`}
+}
+async function audioFingerprint(bytes){
+  if(globalThis.crypto?.subtle){const digest=await crypto.subtle.digest('SHA-256',bytes);return 'sha256:'+Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('')}
+  let first=2166136261,second=2246822519;for(const byte of bytes){first=Math.imul(first^byte,16777619);second=Math.imul(second+byte,3266489917)}return `content:${bytes.length}:${(first>>>0).toString(16)}:${(second>>>0).toString(16)}`
+}
+async function importReferencePack(file){
+  const status=$('#reportImportStatus');status.textContent='正在读取并检查参考声线…';
+  if(file.size>32*1024*1024){status.textContent='文件超过 32 MB；请导入本站导出的五元音声线文件。';return}
+  let ctx;
+  try{
+    const payload=JSON.parse(await file.text()),vowels=['a','e','i','o','u'];
+    if(payload.format!=='vocal-tract-lab-voice-pack'||payload.version!==1||!Array.isArray(payload.samples)||payload.samples.length!==5)throw Error('格式不符；请选择本站导出的 .vocalpack.json 文件');
+    const byVowel=new Map(payload.samples.map(sample=>[sample.vowel,sample]));if(byVowel.size!==5||vowels.some(v=>!byVowel.has(v)))throw Error('参考声线必须含 [a e i o u] 五段独立元音');
+    const targetMidi=Number(payload.pack?.analysis?.targetPitch?.midi),targetPitch=Number.isInteger(targetMidi)&&targetMidi>=24&&targetMidi<=108?pitchFromMidi(targetMidi):null;
+    ctx=new (window.AudioContext||window.webkitAudioContext)();const id=`personal-${crypto.randomUUID()}`,prepared={},records=[];
+    for(const vowel of vowels){
+      const item=byVowel.get(vowel);if(typeof item.data!=='string'||!/^data:audio\/[\w.+-]+;base64,/.test(item.data)||item.data.length>10*1024*1024)throw Error(`[${vowel}] 音频数据缺失或过大`);
+      const encoded=item.data.slice(item.data.indexOf(',')+1),binary=atob(encoded),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      const type=typeof item.type==='string'&&item.type.startsWith('audio/')?item.type:'audio/wav',blob=new Blob([bytes],{type}),buffer=await ctx.decodeAudioData(bytes.buffer.slice(0));
+      if(buffer.duration<2.5||buffer.duration>7)throw Error(`[${vowel}] 长度需为 3–6 秒`);
+      const data=buffer.getChannelData(0);let peak=0,sum=0;for(let i=0;i<data.length;i+=8){peak=Math.max(peak,Math.abs(data[i]));sum+=data[i]*data[i]}const rms=Math.sqrt(sum/Math.ceil(data.length/8));if(peak>.995||rms<.015)throw Error(`[${vowel}] 存在削波或音量过低，请使用更清晰的原始录音`);
+      const analysis=analyzeVoiceSample(buffer,vowel,targetPitch?.hz??null);analysis.audioChecksum=await audioFingerprint(bytes);prepared[vowel]={analysis};records.push({id:`${id}-${vowel}`,packId:id,vowel,blob,duration:buffer.duration,analysis});
+    }
+    const inferredPitch=targetPitch||pitchFromHz(median(records.map(record=>record.analysis.f0))),analysis=buildPersonalAnalysis(prepared,inferredPitch),chosen=$('#importVoicePart').value,part=chosen!=='unspecified'&&VOICE_PARTS[chosen]?chosen:VOICE_PARTS[payload.pack?.voicePart]?payload.pack.voicePart:'unspecified',name=String(payload.pack?.name||file.name.replace(/\.vocalpack\.json$/i,'')).trim().slice(0,30)||'导入的参考声线';
+    const manifest={id,name,voicePart:part,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',importedFrom:String(payload.pack?.name||'外部文件').slice(0,60),originalSource:String(payload.pack?.originalSource||payload.pack?.attribution||'').slice(0,160),originalLicense:String(payload.pack?.originalLicense||payload.pack?.license||'').slice(0,80),analysis,vowels:{}};
+    records.forEach(record=>{manifest.vowels[record.vowel]={duration:record.duration,type:record.blob.type,size:record.blob.size,analysis:record.analysis}});
+    await dbSaveVoicePack(manifest,records);addVoiceOption(manifest);selectedReferenceId=id;try{localStorage.setItem('vocalLabReference',id)}catch{}referenceOptionsKey='';render();status.textContent=`已导入“${name}”的五个元音；仅保存在本机。`;showToast('参考声线已导入，可在同音高下比较');
+  }catch(err){console.error('Reference voice import failed.',err);status.textContent=`导入失败：${err.message||'请检查文件及浏览器音频格式支持'}`}
+  finally{if(ctx)ctx.close().catch(()=>{})}
+}
+async function openVoiceDialog(focusPitch){await voiceDraftReady;const dialog=$('#voiceDialog');if(!dialog.open)dialog.showModal();if(!Object.values(personalSamples).some(Boolean)&&!Object.values(previewSamples).some(Boolean))resetPitchDebugForTarget();if(focusPitch)setTimeout(()=>{$('#pitchPicker').scrollIntoView({block:'center',behavior:'smooth'});$('.pitch-option.active')?.focus()},80)}
 function selectRecordingPitch(midi){
-  if(midi===recordingTargetPitch.midi){resetPitchDebugForTarget();return}recordingTargetPitch=pitchFromMidi(midi);
-  const hadSamples=Object.values(personalSamples).some(Boolean)||Object.values(previewSamples).some(Boolean);discardUnsavedVoiceSamples();render();
+  if(recordingPhase!=='idle'){showToast('请先结束当前录音再切换音高');return}
+  if(midi===recordingTargetPitch.midi){resetPitchDebugForTarget();return}
+  if(Object.values(previewSamples).some(Boolean)&&!confirm('切换目标音高需要清空这次录音草稿，是否继续？'))return;
+  recordingTargetPitch=pitchFromMidi(midi);
+  const hadSamples=Object.values(personalSamples).some(Boolean)||Object.values(previewSamples).some(Boolean);discardUnsavedVoiceSamples();persistVoiceDraft();render();
   resetPitchDebugForTarget();$('#recordStatus').textContent=`已选择 ${pitchLabel()}。现在五个元音都只能录制这个音高。`;showToast(`${hadSamples?'已清除之前的样本；':''}目标音高已改为 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}`);
 }
 async function playReferencePitch(button=$('#playReferencePitch')){
@@ -394,7 +594,7 @@ function estimateFramePitch(frame,sampleRate,minLag,maxLag,minFrequency,maxFrequ
 function estimateF0(data,sampleRate,expectedFrequency=null){
   const frameSize=Math.min(4096,2**Math.floor(Math.log2(Math.max(2048,data.length/6)))),minFrequency=65,maxFrequency=1200,minLag=Math.max(2,Math.floor(sampleRate/maxFrequency)),maxLag=Math.min(frameSize>>1,Math.ceil(sampleRate/minFrequency)),frames=[];
   for(const position of [.28,.39,.5,.61,.72]){const start=Math.max(0,Math.min(data.length-frameSize,Math.floor(data.length*position-frameSize/2))),frame=new Float32Array(frameSize);let mean=0;for(let i=0;i<frameSize;i++)mean+=data[start+i]||0;mean/=frameSize;for(let i=0;i<frameSize;i++)frame[i]=(data[start+i]||0)-mean;const result=estimateFramePitch(frame,sampleRate,minLag,maxLag,minFrequency,maxFrequency,expectedFrequency);if(result)frames.push(result)}
-  if(frames.length<3)throw Error('未识别到稳定音高，请保持一个清晰、单一的持续元音');const provisional=median(frames.map(frame=>frame.frequency)),stable=frames.filter(frame=>Math.abs(1200*Math.log2(frame.frequency/provisional))<70);if(stable.length<3)throw Error('音高波动较大，请保持一个稳定长音');return {rawFrequency:median(stable.map(frame=>frame.rawFrequency)),frequency:median(stable.map(frame=>frame.frequency)),confidence:stable.reduce((sum,frame)=>sum+frame.confidence,0)/stable.length,frameCount:stable.length,mcleodFrequency:median(stable.map(frame=>frame.mcleodFrequency)),yinFrequency:median(stable.map(frame=>frame.yinFrequency)),octaveCorrection:stable.find(frame=>frame.octaveCorrection!=='none')?.octaveCorrection||'none'};
+  if(frames.length<3)throw Error('未识别到稳定音高，请保持一个清晰、单一的持续元音');const provisional=median(frames.map(frame=>frame.frequency)),stable=frames.filter(frame=>Math.abs(1200*Math.log2(frame.frequency/provisional))<70);if(stable.length<3)throw Error('音高波动较大，请保持一个稳定长音');const center=median(stable.map(frame=>frame.frequency)),cents=stable.map(frame=>1200*Math.log2(frame.frequency/center)),pitchStdCents=Math.sqrt(cents.reduce((sum,value)=>sum+value*value,0)/cents.length);return {rawFrequency:median(stable.map(frame=>frame.rawFrequency)),frequency:center,confidence:stable.reduce((sum,frame)=>sum+frame.confidence,0)/stable.length,frameCount:stable.length,pitchStdCents,mcleodFrequency:median(stable.map(frame=>frame.mcleodFrequency)),yinFrequency:median(stable.map(frame=>frame.yinFrequency)),octaveCorrection:stable.find(frame=>frame.octaveCorrection!=='none')?.octaveCorrection||'none'};
 }
 function runPitchDetectionSelfTests(coreResult=runPitchCoreTests()){
   const results=[],synthesize=(frequency,sampleRate,weights)=>{const length=Math.floor(sampleRate*.9),signal=new Float32Array(length);for(let i=0;i<length;i++){const time=i/sampleRate,envelope=Math.min(1,i/(sampleRate*.03),(length-i)/(sampleRate*.03));signal[i]=envelope*weights.reduce((sum,weight,index)=>sum+weight*Math.sin(2*Math.PI*frequency*(index+1)*time),0)}return signal},test=(name,midi,sampleRate,weights,targetMidi=midi)=>{const expected=PitchCore.midiToPitch(midi),signal=synthesize(expected.hz,sampleRate,weights),detected=estimateF0(signal,sampleRate,PitchCore.midiToFrequency(targetMidi)),cents=1200*Math.log2(detected.frequency/expected.hz);results.push({name,pass:Math.abs(cents)<25,expected:expected.hz,detected:detected.frequency,cents:Number(cents.toFixed(1)),mcleod:detected.mcleodFrequency,yin:detected.yinFrequency})};
@@ -421,10 +621,25 @@ function estimateFormants(data,sampleRate,vowel,f0){
   const f1=choose(expected.f1*scale,180,1150,180),f2=choose(expected.f2*scale,Math.max(500,f1+260),3100,340,f1+260),f3=choose(expected.f3*scale,Math.max(1500,f2+300),3900,440,f2+300);
   return {f1:Math.round(f1),f2:Math.round(f2),f3:Math.round(f3)};
 }
+function lowpassFrame(data,sampleRate,targetRate,centerFraction,length){
+  const result=new Float64Array(length),cutoff=Math.min(1,targetRate/sampleRate),radius=18,center=data.length*centerFraction;
+  for(let j=0;j<length;j++){const position=center+(j-(length-1)/2)*sampleRate/targetRate,start=Math.ceil(position-radius);let sum=0,weightSum=0;for(let index=start;index<=position+radius;index++){if(index<0||index>=data.length)continue;const distance=index-position,scaled=Math.PI*cutoff*distance,sinc=Math.abs(scaled)<1e-10?1:Math.sin(scaled)/scaled,window=.5+.5*Math.cos(Math.PI*distance/radius),weight=cutoff*sinc*window;sum+=data[index]*weight;weightSum+=weight}result[j]=weightSum?sum/weightSum:0}return result
+}
+function lpcPoleFrequencies(coefficients,sampleRate,ceiling){
+  const count=coefficients.length-1,roots=Array.from({length:count},(_,index)=>{const angle=2*Math.PI*(index+.11)/count;return {re:.91*Math.cos(angle),im:.91*Math.sin(angle)}});
+  for(let iteration=0;iteration<80;iteration++){const next=[],previous=roots.map(root=>({...root}));let largest=0;for(let index=0;index<count;index++){const z=previous[index];let numerator={re:1,im:0};for(let k=1;k<=count;k++)numerator={re:numerator.re*z.re-numerator.im*z.im+coefficients[k],im:numerator.re*z.im+numerator.im*z.re};let denominator={re:1,im:0};for(let other=0;other<count;other++){if(other===index)continue;const deltaRe=z.re-previous[other].re,deltaIm=z.im-previous[other].im;denominator={re:denominator.re*deltaRe-denominator.im*deltaIm,im:denominator.re*deltaIm+denominator.im*deltaRe}}const scale=denominator.re**2+denominator.im**2;if(scale<1e-18){next.push(z);continue}const changeRe=(numerator.re*denominator.re+numerator.im*denominator.im)/scale,changeIm=(numerator.im*denominator.re-numerator.re*denominator.im)/scale;largest=Math.max(largest,Math.hypot(changeRe,changeIm));next.push({re:z.re-changeRe,im:z.im-changeIm})}roots.splice(0,count,...next);if(largest<1e-8)break}
+  return roots.map(root=>{const magnitude=Math.hypot(root.re,root.im),frequency=Math.atan2(root.im,root.re)*sampleRate/(2*Math.PI),bandwidth=-sampleRate/Math.PI*Math.log(Math.max(magnitude,1e-12));return {frequency,bandwidth}}).filter(pole=>pole.frequency>100&&pole.frequency<ceiling-50&&pole.bandwidth>0&&pole.bandwidth<600).sort((a,b)=>a.frequency-b.frequency)
+}
+function estimateResampledFormants(data,sampleRate,vowel,f0){
+  const ceiling=vowel==='o'||vowel==='u'?4500:5000,targetRate=ceiling*2,order=vowel==='o'||vowel==='u'?10:12,length=Math.round(.05*targetRate),alpha=Math.exp(-2*Math.PI*50/targetRate),tracks=[];
+  if(sampleRate<targetRate)return {...estimateFormants(data,sampleRate,vowel,f0),formantQuality:'uncertain',formantMethod:'录音采样率不足以支持当前共振峰分析',formantFrames:0};
+  for(const position of [.30,.40,.50,.60,.70]){const sampled=lowpassFrame(data,sampleRate,targetRate,position,length),frame=new Float64Array(length);let previous=0;for(let index=0;index<length;index++){const emphasized=sampled[index]-alpha*previous;previous=sampled[index];frame[index]=emphasized*(.54-.46*Math.cos(2*Math.PI*index/(length-1)))}try{const poles=lpcPoleFrequencies(lpcCoefficients(frame,order),targetRate,ceiling);if(poles.length>=3&&poles[0].frequency+80<poles[1].frequency&&poles[1].frequency+80<poles[2].frequency)tracks.push(poles.slice(0,3).map(pole=>pole.frequency))}catch(err){console.warn('Formant frame rejected.',err)}}
+  if(tracks.length<3)return {...estimateFormants(data,sampleRate,vowel,f0),formantQuality:'uncertain',formantMethod:'LPC 多帧未形成稳定轨迹',formantFrames:tracks.length};const centers=[0,1,2].map(index=>median(tracks.map(track=>track[index]))),spreads=centers.map((center,index)=>Math.sqrt(tracks.reduce((sum,track)=>sum+(track[index]-center)**2,0)/tracks.length)),stable=spreads[0]<120&&spreads[1]<180&&spreads[2]<250&&centers[0]<1200&&centers[1]-centers[0]>=80&&f0<500;return {f1:Math.round(centers[0]),f2:Math.round(centers[1]),f3:Math.round(centers[2]),formantStdHz:spreads.map(value=>Math.round(value)),formantQuality:stable?'stable':'uncertain',formantMethod:'降采样、预加重、5 帧 LPC 极点教学估计',formantFrames:tracks.length}
+}
 function applyHumanOctaveAssist(frequency,expectedFrequency,enabled=humanOctaveAssist){const raised=frequency*2,cents=1200*Math.log2(raised/expectedFrequency),applied=enabled&&Math.abs(cents)<=90;return {frequency:applied?raised:frequency,applied,cents}}
-function analyzeVoiceSample(buffer,vowel,expectedFrequency=recordingTargetPitch.hz){const data=buffer.getChannelData(0),pitch=estimateF0(data,buffer.sampleRate,expectedFrequency),assist=applyHumanOctaveAssist(pitch.frequency,expectedFrequency),f0=assist.frequency,formants=estimateFormants(data,buffer.sampleRate,vowel,f0),octaveCorrection=assist.applied?'target-octave-assist+1':pitch.octaveCorrection;return {f0:Number(f0.toFixed(2)),rawFrequency:Number(pitch.frequency.toFixed(2)),correctedFrequency:Number(f0.toFixed(2)),mcleodFrequency:Number(pitch.mcleodFrequency.toFixed(2)),yinFrequency:Number(pitch.yinFrequency.toFixed(2)),octaveCorrection,pitchConfidence:Number(pitch.confidence.toFixed(3)),pitchFrames:pitch.frameCount,sampleRate:buffer.sampleRate,...formants}}
+function analyzeVoiceSample(buffer,vowel,expectedFrequency=recordingTargetPitch.hz){const data=buffer.getChannelData(0),pitch=estimateF0(data,buffer.sampleRate,expectedFrequency),assist=applyHumanOctaveAssist(pitch.frequency,expectedFrequency),f0=assist.frequency,formants=estimateResampledFormants(data,buffer.sampleRate,vowel,f0),octaveCorrection=assist.applied?'target-octave-assist+1':pitch.octaveCorrection;return {f0:Number(f0.toFixed(2)),rawFrequency:Number(pitch.frequency.toFixed(2)),correctedFrequency:Number(f0.toFixed(2)),mcleodFrequency:Number(pitch.mcleodFrequency.toFixed(2)),yinFrequency:Number(pitch.yinFrequency.toFixed(2)),octaveCorrection,pitchConfidence:Number(pitch.confidence.toFixed(3)),pitchFrames:pitch.frameCount,pitchStdCents:Number(pitch.pitchStdCents.toFixed(1)),sampleRate:buffer.sampleRate,...formants}}
 function buildPersonalAnalysis(samples,targetPitch=recordingTargetPitch){
-  const vowels={};for(const [v,sample] of Object.entries(samples)){const measured=sample.analysis,base=VOWELS[v],preset=VOWEL_PRESETS[v],f1Delta=measured.f1-base.f1,f2Delta=measured.f2-base.f2,f3Delta=measured.f3-base.f3;vowels[v]={...measured,params:{...preset,tongueHeight:clamp(preset.tongueHeight-f1Delta/6),jawOpening:clamp(preset.jawOpening+f1Delta/8),tongueFrontness:clamp(preset.tongueFrontness+f2Delta/22),lipRounding:clamp(preset.lipRounding-f2Delta/28),larynxHeight:clamp(preset.larynxHeight+f3Delta/25)}}}return {f0:Number(median(Object.values(vowels).map(v=>v.f0)).toFixed(2)),targetPitch:{...targetPitch},vowels,method:'McLeod MPM + YIN + 奇偶谐波频谱证据 + 可见的目标八度辅助；浏览器 LPC 教学估计',pitchAlgorithm:'mcleod-yin-octave-assist-v8'};
+  const vowels={};for(const [v,sample] of Object.entries(samples)){const measured=sample.analysis,base=VOWELS[v],preset=VOWEL_PRESETS[v],f1Delta=measured.f1-base.f1,f2Delta=measured.f2-base.f2,f3Delta=measured.f3-base.f3,params=usableFormants(measured)?{...preset,tongueHeight:clamp(preset.tongueHeight-f1Delta/6),jawOpening:clamp(preset.jawOpening+f1Delta/8),tongueFrontness:clamp(preset.tongueFrontness+f2Delta/22),lipRounding:clamp(preset.lipRounding-f2Delta/28),larynxHeight:clamp(preset.larynxHeight+f3Delta/25)}:{...preset};vowels[v]={...measured,params}}return {f0:Number(median(Object.values(vowels).map(v=>v.f0)).toFixed(2)),targetPitch:{...targetPitch},vowels,method:'McLeod MPM + YIN + 奇偶谐波频谱证据 + 目标音高辅助；降采样多帧 LPC 共振峰教学估计',pitchAlgorithm:'mcleod-yin-octave-assist-v8'};
 }
 function stopSamplePreview(){if(!previewAudio)return;const {element,button}=previewAudio;try{element.pause();element.src=''}catch{}if(button){button.textContent='试听';button.classList.remove('playing')}previewAudio=null}
 function setPreviewSample(vowel,file){stopSamplePreview();const previous=previewSamples[vowel];if(previous?.url)URL.revokeObjectURL(previous.url);const url=URL.createObjectURL(file);previewSamples[vowel]={blob:file,url};const button=$(`.sample-card[data-vowel="${vowel}"] .preview`);if(button){button.disabled=false;button.textContent='试听'}}
@@ -434,7 +649,7 @@ async function playSamplePreview(vowel,button){
 function clearPreviewSample(vowel){const sample=previewSamples[vowel];if(sample?.url)URL.revokeObjectURL(sample.url);previewSamples[vowel]=null;const button=$(`.sample-card[data-vowel="${vowel}"] .preview`);if(button){button.disabled=true;button.textContent='试听'}}
 async function validateSample(vowel,file){
   const card=$(`.sample-card[data-vowel="${vowel}"]`),msg=card.querySelector('small');card.classList.remove('ready','error');if(!file)return;
-  personalSamples[vowel]=null;setPreviewSample(vowel,file);
+  personalSamples[vowel]=null;setPreviewSample(vowel,file);persistVoiceDraft();
   try{const ownsContext=!audio?.ctx,ctx=audio?.ctx||new (window.AudioContext||window.webkitAudioContext)(),buffer=await ctx.decodeAudioData(await file.arrayBuffer()),duration=buffer.duration,data=buffer.getChannelData(0);let peak=0,rms=0;for(let i=0;i<data.length;i+=8){peak=Math.max(peak,Math.abs(data[i]));rms+=data[i]*data[i]}rms=Math.sqrt(rms/(data.length/8));if(duration<2.5||duration>7)throw Error(`时长 ${duration.toFixed(1)} 秒，请保持 3–6 秒后重新录制`);if(peak>.995)throw Error('检测到削波，请降低录音音量后重新录制');if(rms<.015)throw Error('音量过低或背景过静，请靠近麦克风重新录制');msg.textContent='正在用 MPM + YIN 分析真实音高与共振峰…';await new Promise(resolve=>setTimeout(resolve));const analysis=analyzeVoiceSample(buffer,vowel,recordingTargetPitch.hz),pitchCents=Math.round(1200*Math.log2(analysis.f0/recordingTargetPitch.hz)),detected=PitchCore.frequencyToPitch(analysis.f0),correction=analysis.octaveCorrection==='target-octave-assist+1'?' · 已按所选目标校正 +1 八度':analysis.octaveCorrection!=='none'?` · 八度证据 ${analysis.octaveCorrection}`:'';updatePitchDebug({rawFrequency:analysis.rawFrequency,correctedFrequency:analysis.correctedFrequency,confidence:analysis.pitchConfidence,source:`真人录音 [${vowel}] · ${analysis.pitchFrames} 个稳定帧`,sampleRate:analysis.sampleRate,duration,detector:`MPM ${analysis.mcleodFrequency.toFixed(2)} Hz + YIN ${analysis.yinFrequency.toFixed(2)} Hz${correction}`});if(Math.abs(pitchCents)>50){const octaves=Math.round(pitchCents/1200),octaveHint=Math.abs(octaves)===1?`，即${octaves>0?'高':'低'}一个八度`:'';throw Error(`实际检测为 ${detected.note}（${analysis.f0.toFixed(2)} Hz），与所选 ${recordingTargetPitch.note} 相差 ${pitchCents>0?'+':''}${pitchCents} 音分${octaveHint}`)}analysis.referencePitchCents=pitchCents;analysis.targetMidi=recordingTargetPitch.midi;personalSamples[vowel]={blob:file,buffer,duration,peak,rms,analysis};if(ownsContext)ctx.close().catch(()=>{});card.classList.add('ready');msg.textContent=`${duration.toFixed(1)} 秒 · 检测 ${detected.note} ${analysis.f0.toFixed(2)} Hz · 置信度 ${analysis.pitchConfidence.toFixed(2)} · 偏差 ${pitchCents>0?'+':''}${pitchCents} 音分 · F1 ${analysis.f1} · F2 ${analysis.f2}`;updateVoiceSave()}catch(err){personalSamples[vowel]=null;card.classList.add('error');msg.textContent=`${err.message}；本段仍可试听，重新录制或导入会替换`;updateVoiceSave()}
 }
 let recorder=null,recordChunks=[],recordTimer=null,recordClock=null,recordingStartedAt=0,recordStream=null,recordButton=null,recordingPhase='idle',recordingToken=0,discardRecording=false,recordingMeter=null;
@@ -474,6 +689,7 @@ async function recordSample(vowel,button){
   }catch(err){console.error('Microphone recording failed.',err);cleanupRecordingMedia();resetRecordingUi();setRecordingMonitor('error','无法开始录音','00:00.0','请检查麦克风权限');$('#recordStatus').textContent=`无法使用麦克风：${err.message||'请检查浏览器权限，或改用文件导入。'}`}
 }
 function updateVoiceSave(){
+  persistVoiceDraft();
   const ready=Object.entries(personalSamples).filter(([,sample])=>Boolean(sample)).map(([vowel])=>vowel),missing=Object.keys(personalSamples).filter(vowel=>!personalSamples[vowel]),button=$('#saveVoicePack');
   button.disabled=ready.length!==5;
   if(recordingPhase!=='idle')return;
@@ -482,13 +698,13 @@ function updateVoiceSave(){
 async function saveVoicePack(){
   const button=$('#saveVoicePack'),missing=Object.keys(personalSamples).filter(v=>!personalSamples[v]);
   if(missing.length){$('#recordStatus').textContent=`还缺少：${missing.map(v=>`[${v}]`).join(' ')}`;return}
-  const id=`personal-${Date.now()}`,name=$('#packName').value.trim()||`我的声线 ${personalVoicePacks.size+1}`,analysis=buildPersonalAnalysis(personalSamples),manifest={id,name,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',analysis,vowels:{}},records=[];
+  const id=`personal-${Date.now()}`,name=$('#packName').value.trim()||`我的声线 ${personalVoicePacks.size+1}`,analysis=buildPersonalAnalysis(personalSamples),voicePart=VOICE_PARTS[$('#newVoicePart').value]?$('#newVoicePart').value:'unspecified',manifest={id,name,voicePart,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',analysis,vowels:{}},records=[];
   for(const [v,s] of Object.entries(personalSamples)){manifest.vowels[v]={duration:s.duration,type:s.blob.type||'audio/wav',size:s.blob.size,analysis:s.analysis};records.push({id:`${id}-${v}`,packId:id,vowel:v,blob:s.blob,duration:s.duration,analysis:s.analysis})}
   button.disabled=true;button.textContent='正在保存…';$('#recordStatus').textContent='正在保存到这台设备，请稍候…';
   try{await dbSaveVoicePack(manifest,records)}catch(err){console.error('Voice pack save failed.',err);button.textContent='保存声线';button.disabled=false;$('#recordStatus').textContent='保存失败：浏览器未能写入本机存储。请确认没有使用无痕模式，并为此页面允许站点数据。';showToast('个人声线保存失败，录音仍保留在当前窗口');return}
-  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；可以在切换声线处选择或删除`);
+  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));render();button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；可以在切换声线处选择或删除`);
   if(audio){try{stopAndClearAudio();await loadVoicePack(id)}catch(err){console.warn('Saved voice pack could not be loaded immediately.',err);setAudioState('error','声线已保存 · 载入失败');showToast('声线已保存；重新选择该声线即可再次载入')}}
-  discardUnsavedVoiceSamples();$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;
+  discardUnsavedVoiceSamples();$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;$('#newVoicePart').value='unspecified';
   if($('#offerVoiceSubmission')?.checked){$('#offerVoiceSubmission').checked=false;window.VocalVoiceCloud?.open()}
 }
 window.getVoiceCloudSubmission=async()=>{
@@ -500,11 +716,11 @@ window.getVoiceCloudSubmission=async()=>{
   return {pack,samples};
 };
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob)})}
-async function exportCurrentVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack){showToast('当前还没有可导出的个人声线');return}if(pack.source==='bundled'){showToast('创始人的声线已经随网站提供，无需再次导出');return}const button=$('#exportCurrentVoice');button.disabled=true;button.textContent='正在导出…';try{const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);if(records.length!==5)throw Error('当前声线的五个元音样本不完整');const samples=[];for(const record of records)samples.push({id:record.id,packId:record.packId,vowel:record.vowel,duration:record.duration,analysis:record.analysis,type:record.blob.type||'audio/webm',data:await blobToDataUrl(record.blob)});const payload={format:'vocal-tract-lab-voice-pack',version:1,exportedAt:new Date().toISOString(),pack,samples},link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));link.download=`${pack.name.replace(/[\\/:*?"<>|]/g,'_')}.vocalpack.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast(`已导出“${pack.name}”的五个元音`)}catch(err){console.error('Voice export failed.',err);showToast(`导出失败：${err.message}`)}finally{button.disabled=false;button.textContent='导出当前声线'}}
+async function exportCurrentVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack){showToast('当前还没有可导出的个人声线');return}if(pack.source==='bundled'){showToast('初始声线已经随网站提供，无需再次导出');return}const button=$('#exportCurrentVoice');button.disabled=true;button.textContent='正在导出…';try{const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);if(records.length!==5)throw Error('当前声线的五个元音样本不完整');const samples=[];for(const record of records)samples.push({id:record.id,packId:record.packId,vowel:record.vowel,duration:record.duration,analysis:record.analysis,type:record.blob.type||'audio/webm',data:await blobToDataUrl(record.blob)});const payload={format:'vocal-tract-lab-voice-pack',version:1,exportedAt:new Date().toISOString(),pack,samples},link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));link.download=`${pack.name.replace(/[\\/:*?"<>|]/g,'_')}.vocalpack.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast(`已导出“${pack.name}”的五个元音`)}catch(err){console.error('Voice export failed.',err);showToast(`导出失败：${err.message}`)}finally{button.disabled=false;button.textContent='导出当前声线'}}
 async function loadVoicePack(id){
   const pack=personalVoicePacks.get(id);if(!pack)throw Error('找不到所选声线');if(!audio)await initAudio();clearAudioVoices();
   if(pack.source==='bundled'){
-    for(const [vowel,item] of Object.entries(pack.vowels)){let encoded;if(item.audioPath.startsWith('data:')){const base64=item.audioPath.slice(item.audioPath.indexOf(',')+1),binary=atob(base64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);encoded=bytes.buffer}else{const response=await fetch(item.audioPath);if(!response.ok)throw Error(`内置声线 [${vowel}] 加载失败`);encoded=await response.arrayBuffer()}const buffer=await audio.ctx.decodeAudioData(encoded);createLoopSource(vowel,buffer)}
+    for(const [vowel,item] of Object.entries(pack.vowels)){let encoded;if(item.audioPath.startsWith('data:')){const base64=item.audioPath.slice(item.audioPath.indexOf(',')+1),binary=atob(base64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);encoded=bytes.buffer}else{const response=await fetch(item.audioPath);if(!response.ok)throw Error(`初始声线 [${vowel}] 加载失败`);encoded=await response.arrayBuffer()}const buffer=await audio.ctx.decodeAudioData(encoded);createLoopSource(vowel,buffer)}
   }else{
     const records=(await dbAll('voiceSamples')).filter(r=>r.packId===id);if(records.length!==5)throw Error('个人声线样本不完整');const needsPitchUpgrade=pack.analysis?.pitchAlgorithm!=='mcleod-yin-octave-assist-v8',targetPitch=pack.analysis?.targetPitch||pitchFromMidi(60),recalibrated={};let upgradeFailed=false;
     for(const r of records){const buffer=await audio.ctx.decodeAudioData(await r.blob.arrayBuffer());if(needsPitchUpgrade&&!upgradeFailed){try{r.analysis=analyzeVoiceSample(buffer,r.vowel,targetPitch.hz);recalibrated[r.vowel]={analysis:r.analysis}}catch(err){upgradeFailed=true;console.warn('Existing voice pitch recalibration was skipped.',err)}}createLoopSource(r.vowel,buffer)}
@@ -516,11 +732,11 @@ function clearAudioVoices(){
   if(!audio)return;clearInterval(audio.loopTimer);audio.loopTimer=null;audio.sources.forEach(source=>{try{source.stop()}catch{}});audio.oscillators.forEach(source=>{try{source.stop()}catch{}});audio.sources=[];audio.loopers={};audio.gains={};audio.oscillators=[];
 }
 function stopAndClearAudio(){if(!audio)return;cancelAnimationFrame(audio.raf);clearAudioVoices();const ctx=audio.ctx;releaseMediaChannel(ctx);try{ctx.close()}catch{}audio=null}
-function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=voiceSelect.querySelector(`option[value="${pack.id}"]`);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=pack.source==='bundled'?pack.name:`${pack.name} · 本机`;voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}updateVoiceDeleteButton()}
+function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=[...voiceSelect.options].find(option=>option.value===pack.id);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=voiceOptionLabel(pack);voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}referenceOptionsKey='';updateVoiceDeleteButton()}
 function updateVoiceDeleteButton(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#deleteVoiceButton');button.hidden=!pack||pack.source==='bundled';button.disabled=!pack||pack.source==='bundled'}
-function promptDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack||pack.source==='bundled')return;$('#deleteVoiceMessage').textContent=`“${pack.name}”保存在这台设备的五段录音和分析结果将被删除，无法撤销。删除前可在“添加声线”中导出备份。创始人的声线不会受影响。`;$('#deleteVoiceDialog').showModal()}
-async function confirmDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#confirmDeleteVoice');if(!pack||pack.source==='bundled'){$('#deleteVoiceDialog').close();return}button.disabled=true;try{await dbDeleteVoicePack(pack.id);personalVoicePacks.delete(pack.id);$('#voiceSelect').querySelector(`option[value="${pack.id}"]`)?.remove();$('#deleteVoiceDialog').close();const fallback=personalVoicePacks.has(DEFAULT_VOICE_ID)?DEFAULT_VOICE_ID:personalVoicePacks.keys().next().value;await switchVoice(fallback,{announce:false});showToast(`已删除“${pack.name}”的本机录音`)}catch(err){console.error('Voice deletion failed.',err);showToast('删除失败，请检查浏览器存储空间后重试')}finally{button.disabled=false}}
-async function loadVoicePacks(){try{const response=await fetch('./assets/second-voice.json?v=20261021-founder-1',{cache:'no-cache'});if(!response.ok)throw Error(`内置声线清单 ${response.status}`);const pack=await response.json();addVoiceOption({...pack,name:'创始人的声线'},{select:true})}catch(err){console.warn('Bundled voice unavailable.',err);$('#voiceSelect').querySelector(`option[value="${DEFAULT_VOICE_ID}"]`)?.remove()}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>{if(pack.id!=='default-personal'&&!personalVoicePacks.has(pack.id))addVoiceOption(pack)})}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size)$('#voiceSelect').disabled=true;else if(!personalVoicePacks.has(state.voicePackId)){state.voicePackId=personalVoicePacks.keys().next().value;$('#voiceSelect').value=state.voicePackId}$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value));updateVoiceDeleteButton()}
+function promptDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack||pack.source==='bundled')return;$('#deleteVoiceMessage').textContent=`“${pack.name}”保存在这台设备的五段录音和分析结果将被删除，无法撤销。删除前可在“添加声线”中导出备份。两条网站内置声线不会受影响。`;$('#deleteVoiceDialog').showModal()}
+async function confirmDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#confirmDeleteVoice');if(!pack||pack.source==='bundled'){$('#deleteVoiceDialog').close();return}button.disabled=true;try{await dbDeleteVoicePack(pack.id);personalVoicePacks.delete(pack.id);[...$('#voiceSelect').options].find(option=>option.value===pack.id)?.remove();if(selectedReferenceId===pack.id)selectedReferenceId='none';referenceOptionsKey='';$('#deleteVoiceDialog').close();const fallback=personalVoicePacks.has(DEFAULT_VOICE_ID)?DEFAULT_VOICE_ID:personalVoicePacks.keys().next().value;await switchVoice(fallback,{announce:false});showToast(`已删除“${pack.name}”的本机录音`)}catch(err){console.error('Voice deletion failed.',err);showToast('删除失败，请检查浏览器存储空间后重试')}finally{button.disabled=false}}
+async function loadVoicePacks(){for(const path of ['./assets/default-voice/manifest.json','./assets/second-voice.json']){try{const response=await fetch(path,{cache:'no-cache'});if(!response.ok)throw Error(`内置声线清单 ${response.status}`);addVoiceOption(await response.json(),{select:path.includes('default-voice')})}catch(err){console.warn('Bundled voice unavailable.',path,err)}}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>{if(!personalVoicePacks.has(pack.id))addVoiceOption(pack)})}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size)$('#voiceSelect').disabled=true;$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value));updateVoiceDeleteButton()}
 
 function bindMobileTabs(){
   const layout=$('#mobileLayout'),anchor=$('#mobileStageAnchor'),stage=$('#anatomyStage'),dock=$('#phonationDock'),anatomyPanel=$('[data-panel="anatomy"]'),vowels=$('.vowel-switcher');
@@ -537,7 +753,7 @@ function bindMobileTabs(){
       $('[data-panel="controls"]').dataset.controlView='sliders';
       $$('.mobile-control-modes button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.controlView==='sliders')));
     }
-    if(mobileQuery.matches&&window.matchMedia('(orientation: portrait)').matches){const collapsed=name==='acoustics';layout.classList.toggle('stage-collapsed',collapsed);const toggle=$('#toggleMobileStage');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.textContent=collapsed?'展开图':'收起图'}
+    if(mobileQuery.matches){layout.classList.remove('stage-collapsed');const toggle=$('#toggleMobileStage');toggle.setAttribute('aria-expanded','true');toggle.textContent='收起图'}
   };
   $$('.mobile-tabs [data-tab]').forEach(button=>button.addEventListener('click',()=>{
     selectTab(button.dataset.tab);
@@ -562,7 +778,7 @@ function showToast(text){const el=$('#toast');el.textContent=text;el.classList.a
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 
 let dbPromise;
-function getDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('VocalTractLab',1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('snapshots'))db.createObjectStore('snapshots',{keyPath:'id'});if(!db.objectStoreNames.contains('voicePacks'))db.createObjectStore('voicePacks',{keyPath:'id'});if(!db.objectStoreNames.contains('voiceSamples'))db.createObjectStore('voiceSamples',{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});return dbPromise}
+function getDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('VocalTractLab',2);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('snapshots'))db.createObjectStore('snapshots',{keyPath:'id'});if(!db.objectStoreNames.contains('voicePacks'))db.createObjectStore('voicePacks',{keyPath:'id'});if(!db.objectStoreNames.contains('voiceSamples'))db.createObjectStore('voiceSamples',{keyPath:'id'});if(!db.objectStoreNames.contains('referenceDatasets'))db.createObjectStore('referenceDatasets',{keyPath:'id'})};req.onblocked=()=>{const message='本机数据升级正在等待其他旧版页面关闭；请关闭同站点的其他标签页，本页会自动继续。';if($('#reportImportStatus'))$('#reportImportStatus').textContent=message;showToast(message)};req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>db.close();resolve(db)};req.onerror=()=>{dbPromise=null;reject(req.error)}});return dbPromise}
 async function dbPut(store,value){const db=await getDb();return new Promise((res,rej)=>{const r=db.transaction(store,'readwrite').objectStore(store).put(value);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 async function dbSaveVoicePack(manifest,records){const db=await getDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['voicePacks','voiceSamples'],'readwrite'),packs=tx.objectStore('voicePacks'),samples=tx.objectStore('voiceSamples');packs.put(manifest);records.forEach(record=>samples.put(record));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error('本机存储写入失败'));tx.onabort=()=>reject(tx.error||Error('本机存储事务已取消'))})}
 async function dbDeleteVoicePack(id){const db=await getDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['voicePacks','voiceSamples'],'readwrite'),packs=tx.objectStore('voicePacks'),samples=tx.objectStore('voiceSamples');packs.delete(id);const request=samples.getAll();request.onsuccess=()=>request.result.filter(record=>record.packId===id).forEach(record=>samples.delete(record.id));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error('本机声线删除失败'));tx.onabort=()=>reject(tx.error||Error('本机声线删除已取消'))})}
@@ -571,7 +787,5 @@ async function dbDelete(store,id){const db=await getDb();return new Promise((res
 
 window.__vocalLab={get audio(){return audio},get state(){return state},acousticValues,PitchCore,estimateF0,runPitchCoreTests,runPitchDetectionSelfTests};
 
-async function init(){bindControls();bindFormantExplainer();bindPhonation();bindSnapshots();bindMobileTabs();setupVoiceLab();const pitchCoreResult=runPitchCoreTests();if(new URLSearchParams(location.search).get('test')==='pitch-core')setTimeout(()=>runPitchDetectionSelfTests(pitchCoreResult));try{slots={...slots,...JSON.parse(localStorage.getItem('vocalLabSlots')||'{}')}}catch(err){console.warn('Local settings unavailable.',err)}try{snapshots=(await dbAll('snapshots')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}catch(err){console.warn('Snapshot storage unavailable.',err)}await loadVoicePacks();renderSnapshots();render();if(!personalVoicePacks.size)setAudioState('','请先创建我的声线')}
+async function init(){bindControls();bindFormantExplainer();bindPhonation();bindMobileTabs();setupVoiceLab();const pitchCoreResult=runPitchCoreTests();if(new URLSearchParams(location.search).get('test')==='pitch-core')setTimeout(()=>runPitchDetectionSelfTests(pitchCoreResult));try{voicePartOverrides=JSON.parse(localStorage.getItem('vocalLabVoiceParts')||'{}')||{}}catch(err){console.warn('Local settings unavailable.',err)}selectedReferenceId='tenor-model';await loadVoicePacks();render();if(!personalVoicePacks.size)setAudioState('','请先创建我的声线')}
 init();
-
-

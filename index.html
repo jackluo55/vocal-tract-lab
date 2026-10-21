@@ -7,9 +7,9 @@
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261018-2">
+  <link rel="stylesheet" href="./styles.css?v=20261018-report-2">
   <link rel="stylesheet" href="./mobile.css?v=20261021-practice-1">
-  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-8">
+  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-report-5">
   <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
 </head>
 <body>
@@ -38,7 +38,7 @@
           <label class="voice-picker">
             <svg class="voice-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 12a7 7 0 0 1-14 0"/><path d="M12 19v3"/></svg>
             <select id="voiceSelect" aria-label="切换声线">
-              <option value="personal-1792314371779">创始人的声线</option>
+              <option value="default-personal">初始声线 · 我的声线</option>
             </select>
           </label>
           <button class="voice-delete-button" id="deleteVoiceButton" type="button" aria-label="删除当前新增声线" title="删除当前新增声线" hidden>删除</button>
@@ -109,8 +109,8 @@
           <button class="vowel-button" data-vowel-select="o" aria-pressed="false">[o]</button>
           <button class="vowel-button" data-vowel-select="u" aria-pressed="false">[u]</button>
         </div>
-
         <p class="practice-scroll-hint">选好元音后，向下滑即可调节参数；发声时可连续听到变化。</p>
+
         <div class="phonation-dock" id="phonationDock">
           <button class="phonate-button" id="phonateButton" type="button" aria-label="开始持续发声" aria-pressed="false">
             <span class="phonate-orbit"></span>
@@ -164,20 +164,6 @@
           <p id="comparisonDescription">左侧是当前滑杆值，右侧是按当前元音音高推算的教学参考；不是男高音实测数据，也不会改变录音。</p>
         </section>
 
-        <div class="preset-section">
-          <div class="section-label"><span>构形记录</span><span id="snapshotCount">0 个快照</span></div>
-          <div class="save-row">
-            <input id="presetName" type="text" maxlength="24" placeholder="命名当前构形" aria-label="构形名称">
-            <button class="button primary" id="savePreset">保存</button>
-          </div>
-          <div class="ab-row">
-            <button class="ab-slot" id="slotA" data-slot="A"><span>A</span><strong>未设置</strong><small>点击载入</small></button>
-            <button class="swap-button" id="swapAB" aria-label="交换 A/B">⇄</button>
-            <button class="ab-slot" id="slotB" data-slot="B"><span>B</span><strong>未设置</strong><small>点击载入</small></button>
-          </div>
-          <div class="snapshot-list" id="snapshotList"><p class="empty-state">保存一个构形，开始 A/B 比较。</p></div>
-          <button class="button export" id="exportCsv">导出 CSV 实验记录</button>
-        </div>
       </section>
 
       <section class="panel acoustics-panel" data-panel="acoustics" aria-labelledby="acousticsTitle">
@@ -255,17 +241,19 @@
   <dialog id="voiceDialog" class="modal">
     <form method="dialog" class="modal-card" id="voiceForm">
       <div class="modal-header"><div><p class="eyebrow">PERSONAL VOICE PACK</p><h2>创建个人声线</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
-      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会分析每段录音的 F0 与 F1/F2/F3，并生成这位声音专属的五个构形参数点；默认只保存在这台设备，不会自动上传。</p>
+      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会估计每段录音的 F0 与 F1/F2/F3，并生成五个教学构形映射点；这些点不是器官位置实测。默认只保存在这台设备，不会自动上传。</p>
       <div class="recording-pitch-guide">
         <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，五个元音都必须唱这个音；检测为其他音高的录音不会保存。</small></div>
         <button class="button" id="playReferencePitch" type="button">播放钢琴参考音</button>
-        <label class="octave-assist-toggle"><input id="humanOctaveAssist" type="checkbox" checked><span>人声低八度校正 +1</span><small>默认开启：仅当检测值恰好比所选目标低约一个八度时使用；调试区仍显示原始 Hz。</small></label>
       </div>
       <div class="pitch-picker" id="pitchPicker" aria-label="选择录制音高">
         <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C6 · Scientific Pitch Notation</small></div>
         <div class="pitch-keyboard" id="pitchKeyboard"></div>
       </div>
       <label class="pack-name">声线名称<input id="packName" type="text" value="我的声线" maxlength="30"></label>
+      <label class="pack-name" style="display:none">声部<select id="newVoicePart"><option value="unspecified">暂不指定</option><option value="tenor">男高音</option></select></label>
+      <p class="model-note" id="voiceDraftStatus" role="status">已录片段自动保留为本机草稿；暂时关闭窗口后可继续，不会自动上传。</p>
+      <button class="button ghost" id="clearVoiceDraft" type="button">清空本次草稿</button>
       <div class="sample-grid" id="sampleGrid"></div>
       <div class="recording-monitor" id="recordingMonitor" data-state="idle" aria-live="polite">
         <div class="recording-monitor-head">
@@ -276,8 +264,9 @@
         <canvas id="recordingWaveform" width="640" height="120" aria-label="麦克风实时音量波形"></canvas>
         <div class="recording-level-labels"><span>安静</span><span id="recordingLevelText">麦克风尚未启用</span><span>响亮</span></div>
       </div>
-      <div class="pitch-debug" id="pitchDebug" aria-live="polite">
-        <div class="pitch-debug-title"><strong>人声音高检测调试</strong><span id="pitchDebugSource">等待录音</span></div>
+      <details class="pitch-debug" id="pitchDebug">
+        <summary class="pitch-debug-title"><strong>音高检测详情与调整</strong><span id="pitchDebugSource">等待录音</span></summary>
+        <label class="octave-assist-toggle"><input id="humanOctaveAssist" type="checkbox" checked><span>按所选音高辅助标注</span><small>仅当检测值接近所选音高的一半时调整音高标注；不改变录音。下方保留原始频率，必要时可关闭。</small></label>
         <dl>
           <div><dt>Raw frequency</dt><dd id="debugRawFrequency">—</dd></div>
           <div><dt>Corrected frequency</dt><dd id="debugCorrectedFrequency">—</dd></div>
@@ -291,7 +280,7 @@
         </dl>
         <p class="pitch-debug-rule">显示音名只由 Corrected frequency 换算：130.81 Hz = C3；261.63 Hz = C4。</p>
         <p id="pitchTestStatus">科学音高自动测试：等待运行</p>
-      </div>
+      </details>
       <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
       <label class="cloud-check cloud-optional"><input type="checkbox" id="offerVoiceSubmission"><span>本机保存后，打开可选提交说明（不会自动上传）</span></label>
       <div class="modal-actions"><button class="button ghost" id="submitSavedVoice" type="button">提交已保存声线（可选）</button><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
@@ -301,7 +290,7 @@
   <dialog id="deleteVoiceDialog" class="modal confirm-voice-delete">
     <div class="modal-card">
       <h2>删除这条声线？</h2>
-      <p id="deleteVoiceMessage">这会删除该声线保存在本机的五段录音和分析结果，无法撤销。创始人的声线不会受影响。</p>
+      <p id="deleteVoiceMessage">这会删除该声线保存在本机的五段录音和分析结果，无法撤销。两条网站内置声线不会受影响。</p>
       <div class="modal-actions"><button class="button ghost" id="cancelDeleteVoice" type="button">取消</button><button class="button danger" id="confirmDeleteVoice" type="button">确认删除</button></div>
     </div>
   </dialog>
@@ -315,17 +304,17 @@
         <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
         <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
       </ol>
-      <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增声线默认只保存在自己的浏览器；可选提交需要另行明确同意，目前云端接收尚未开通。两套内置录音会随公开网页提供。</p></div>
+      <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增声线默认只保存在自己的浏览器；只有在可选提交页面明确同意并提交后才上传给项目负责人。云端提交不公开，也不会自动成为网站内置声线。本机删除与云端撤回分别操作。两套内置录音会随公开网页提供。</p></div>
       <button class="button ghost cloud-admin-link" id="openCloudAdmin" type="button">项目负责人 · 管理提交</button>
       <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；页面优先依据当前元音录音标注的音高作小幅教学估算，没有标注时才用手动目标。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
-      <div class="license-note"><b>个人声线分析</b><p>导入五个持续元音后，程序会在浏览器本机估计基准音高与前三个共振峰，并把结果换算成五个专属构形点。该结果用于声乐教学、听辨和个体比较，不等同于实验室 LPC 校准或医学检查。</p></div>
+      <div class="license-note"><b>个人声线与男高音参考</b><p>导入五个持续元音后，程序会在浏览器本机估计音高与共振峰，并换算成教学构形点。男高音模型没有人人适用的 0–100 器官比例；也可导入经授权的真人录音作个体听辨参考。公开分享老师录音前，请先取得录制与再分发许可。报告不等同于实验室校准或医学检查。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
     </form>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261021-practice-cloud-1"></script>
+  <script src="./app.js?v=20261021-no-snapshots-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261021-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
