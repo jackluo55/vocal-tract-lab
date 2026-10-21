@@ -463,11 +463,12 @@ function discardUnsavedVoiceSamples({refreshStatus=true}={}){
   if(refreshStatus)updateVoiceSave();
 }
 
-let voiceDraftReady=Promise.resolve(),voiceDraftQueue=Promise.resolve(),restoringVoiceDraft=false;
+let voiceDraftReady=Promise.resolve(),voiceDraftQueue=Promise.resolve(),restoringVoiceDraft=false,voiceDraftRevision=0;
 function voiceDraftTransaction(value){return new Promise((resolve,reject)=>{
   const request=indexedDB.open('VocalTractLabDrafts',1);
   request.onupgradeneeded=()=>request.result.createObjectStore('drafts');
   request.onerror=()=>reject(request.error);
+  request.onblocked=()=>{$('#voiceDraftStatus').textContent='本机保存正在等待其他旧版页面关闭，请关闭同站点的其他标签页。'};
   request.onsuccess=()=>{const db=request.result,tx=db.transaction('drafts',value===undefined?'readonly':'readwrite'),store=tx.objectStore('drafts');let result;
     const operation=value===undefined?store.get('current'):value===null?store.delete('current'):store.put(value,'current');
     operation.onsuccess=()=>{result=operation.result};tx.oncomplete=()=>{db.close();resolve(result)};tx.onabort=tx.onerror=()=>{db.close();reject(tx.error||Error('草稿存储失败'))};
@@ -476,15 +477,17 @@ function voiceDraftTransaction(value){return new Promise((resolve,reject)=>{
 function persistVoiceDraft(){
   if(restoringVoiceDraft)return voiceDraftQueue;
   const samples={};for(const [vowel,preview] of Object.entries(previewSamples))if(preview){const sample=personalSamples[vowel],card=$(`.sample-card[data-vowel="${vowel}"]`);samples[vowel]={blob:preview.blob,duration:sample?.duration,peak:sample?.peak,rms:sample?.rms,analysis:sample?.analysis,accepted:Boolean(sample),message:card.querySelector('small').textContent,error:card.classList.contains('error')}}
-  const draft=Object.keys(samples).length?{samples,targetMidi:recordingTargetPitch.midi,name:$('#packName').value,voicePart:$('#newVoicePart').value}:null;
-  voiceDraftQueue=voiceDraftQueue.catch(()=>{}).then(()=>voiceDraftTransaction(draft)).catch(err=>{console.warn('Voice draft unavailable.',err);$('#voiceDraftStatus').textContent='临时进度保留在当前页面；本机草稿写入失败，请不要刷新或关闭网页。'});return voiceDraftQueue;
+  const count=Object.keys(samples).length,revision=++voiceDraftRevision;
+  const draft=count?{samples,targetMidi:recordingTargetPitch.midi,name:$('#packName').value,voicePart:$('#newVoicePart').value,savedAt:new Date().toISOString()}:null;
+  if(count)$('#voiceDraftStatus').textContent='正在保存本机录音草稿…';
+  voiceDraftQueue=voiceDraftQueue.catch(()=>{}).then(async()=>{await voiceDraftTransaction(draft);if(revision===voiceDraftRevision)$('#voiceDraftStatus').textContent=count?`已保存 ${count}/5 段到本机，刷新或关闭后可继续；仅自己可见，尚未上传。`:'录音会自动保存到本机；同一设备、浏览器和网址重新打开可继续。不会自动上传。'}).catch(err=>{console.warn('Voice draft unavailable.',err);if(revision===voiceDraftRevision)$('#voiceDraftStatus').textContent='临时进度保留在当前页面；本机草稿写入失败，请不要刷新或关闭网页。'});return voiceDraftQueue;
 }
 async function restoreVoiceDraft(){
   try{const draft=await voiceDraftTransaction();if(!draft?.samples)return;restoringVoiceDraft=true;
     recordingTargetPitch=pitchFromMidi(draft.targetMidi);$('#packName').value=draft.name||'我的声线';$('#newVoicePart').value=draft.voicePart||'unspecified';
     for(const [vowel,sample] of Object.entries(draft.samples)){if(!Object.hasOwn(personalSamples,vowel)||!sample.blob)continue;setPreviewSample(vowel,sample.blob);personalSamples[vowel]=sample.accepted?{blob:sample.blob,duration:sample.duration,peak:sample.peak,rms:sample.rms,analysis:sample.analysis}:null;const card=$(`.sample-card[data-vowel="${vowel}"]`);card.classList.toggle('ready',Boolean(sample.accepted));card.classList.toggle('error',Boolean(sample.error));card.querySelector('small').textContent=sample.message||'已恢复本次录音，可试听或重新录制'}
     renderPitchSelection();updateVoiceSave();$('#voiceDraftStatus').textContent='已恢复本机录音草稿，可继续录制剩余元音。草稿不会上传。';
-  }catch(err){console.warn('Voice draft restore failed.',err)}finally{restoringVoiceDraft=false}
+  }catch(err){console.warn('Voice draft restore failed.',err);$('#voiceDraftStatus').textContent='本机录音读取失败，请检查浏览器站点数据权限。';}finally{restoringVoiceDraft=false}
 }
 function setupVoiceLab(){
   const grid=$('#sampleGrid');grid.innerHTML=['a','e','i','o','u'].map(v=>`<div class="sample-card" data-vowel="${v}"><strong>[${v}]</strong><small>等待样本</small><div class="sample-actions"><button type="button" class="preview" disabled>试听</button><label>导入<input type="file" accept="audio/wav,.wav,audio/*"></label><button type="button" class="record">录制</button></div></div>`).join('');
@@ -701,10 +704,11 @@ async function saveVoicePack(){
   const id=`personal-${Date.now()}`,name=$('#packName').value.trim()||`我的声线 ${personalVoicePacks.size+1}`,analysis=buildPersonalAnalysis(personalSamples),voicePart=VOICE_PARTS[$('#newVoicePart').value]?$('#newVoicePart').value:'unspecified',manifest={id,name,voicePart,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',analysis,vowels:{}},records=[];
   for(const [v,s] of Object.entries(personalSamples)){manifest.vowels[v]={duration:s.duration,type:s.blob.type||'audio/wav',size:s.blob.size,analysis:s.analysis};records.push({id:`${id}-${v}`,packId:id,vowel:v,blob:s.blob,duration:s.duration,analysis:s.analysis})}
   button.disabled=true;button.textContent='正在保存…';$('#recordStatus').textContent='正在保存到这台设备，请稍候…';
-  try{await dbSaveVoicePack(manifest,records)}catch(err){console.error('Voice pack save failed.',err);button.textContent='保存声线';button.disabled=false;$('#recordStatus').textContent='保存失败：浏览器未能写入本机存储。请确认没有使用无痕模式，并为此页面允许站点数据。';showToast('个人声线保存失败，录音仍保留在当前窗口');return}
-  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));render();button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；可以在切换声线处选择或删除`);
+  try{await dbSaveVoicePack(manifest,records)}catch(err){console.error('Voice pack save failed.',err);button.textContent='保存到本机声线';button.disabled=false;$('#recordStatus').textContent='保存失败：浏览器未能写入本机存储。请确认没有使用无痕模式，并为此页面允许站点数据。';showToast('个人声线保存失败，录音仍保留在当前窗口');return}
+  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));render();button.textContent='保存到本机声线';$('#voiceDialog').close();showToast(`“${name}”已保存到本机；刷新后仍可选择，尚未上传`);
   if(audio){try{stopAndClearAudio();await loadVoicePack(id)}catch(err){console.warn('Saved voice pack could not be loaded immediately.',err);setAudioState('error','声线已保存 · 载入失败');showToast('声线已保存；重新选择该声线即可再次载入')}}
-  discardUnsavedVoiceSamples();$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;$('#newVoicePart').value='unspecified';
+  discardUnsavedVoiceSamples();await voiceDraftQueue;$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;$('#newVoicePart').value='unspecified';
+  try{await navigator.storage?.persist?.()}catch(err){console.warn('Persistent storage request unavailable.',err)}
   if($('#offerVoiceSubmission')?.checked){$('#offerVoiceSubmission').checked=false;window.VocalVoiceCloud?.open()}
 }
 window.getVoiceCloudSubmission=async()=>{

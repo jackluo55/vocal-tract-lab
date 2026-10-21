@@ -252,7 +252,8 @@
       </div>
       <label class="pack-name">声线名称<input id="packName" type="text" value="我的声线" maxlength="30"></label>
       <label class="pack-name" style="display:none">声部<select id="newVoicePart"><option value="unspecified">暂不指定</option><option value="tenor">男高音</option></select></label>
-      <p class="model-note" id="voiceDraftStatus" role="status">已录片段自动保留为本机草稿；暂时关闭窗口后可继续，不会自动上传。</p>
+      <p class="model-note" id="voiceDraftStatus" role="status">录音会自动保存到本机；同一设备、浏览器和网址重新打开可继续。不会自动上传。</p>
+      <p class="model-note">点击“保存到本机声线”后，可在顶部选择并长期使用。清除网站数据或更换网址后无法自动找回，重要录音请“导出当前声线”备份。</p>
       <button class="button ghost" id="clearVoiceDraft" type="button">清空本次草稿</button>
       <div class="sample-grid" id="sampleGrid"></div>
       <div class="recording-monitor" id="recordingMonitor" data-state="idle" aria-live="polite">
@@ -283,7 +284,7 @@
       </details>
       <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
       <label class="cloud-check cloud-optional"><input type="checkbox" id="offerVoiceSubmission"><span>本机保存后，打开可选提交说明（不会自动上传）</span></label>
-      <div class="modal-actions"><button class="button ghost" id="submitSavedVoice" type="button">提交已保存声线（可选）</button><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
+      <div class="modal-actions"><button class="button ghost" id="submitSavedVoice" type="button">提交已保存声线（可选）</button><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">关闭（保留草稿）</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存到本机声线</button></div>
     </form>
   </dialog>
 
@@ -314,7 +315,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261021-no-snapshots-1"></script>
+  <script src="./app.js?v=20261022-local-save-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261021-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
