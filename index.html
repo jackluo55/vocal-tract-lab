@@ -8,8 +8,9 @@
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261018-2">
-  <link rel="stylesheet" href="./mobile.css?v=20261018-2">
+  <link rel="stylesheet" href="./mobile.css?v=20261021-practice-1">
   <link rel="stylesheet" href="./liquid-glass.css?v=20261018-8">
+  <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
 </head>
 <body>
   <div class="app-shell">
@@ -109,6 +110,7 @@
           <button class="vowel-button" data-vowel-select="u" aria-pressed="false">[u]</button>
         </div>
 
+        <p class="practice-scroll-hint">选好元音后，向下滑即可调节参数；发声时可连续听到变化。</p>
         <div class="phonation-dock" id="phonationDock">
           <button class="phonate-button" id="phonateButton" type="button" aria-label="开始持续发声" aria-pressed="false">
             <span class="phonate-orbit"></span>
@@ -253,7 +255,7 @@
   <dialog id="voiceDialog" class="modal">
     <form method="dialog" class="modal-card" id="voiceForm">
       <div class="modal-header"><div><p class="eyebrow">PERSONAL VOICE PACK</p><h2>创建个人声线</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
-      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会分析每段录音的 F0 与 F1/F2/F3，并生成这位声音专属的五个构形参数点；声音和分析结果只保存在这台设备。</p>
+      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会分析每段录音的 F0 与 F1/F2/F3，并生成这位声音专属的五个构形参数点；默认只保存在这台设备，不会自动上传。</p>
       <div class="recording-pitch-guide">
         <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，五个元音都必须唱这个音；检测为其他音高的录音不会保存。</small></div>
         <button class="button" id="playReferencePitch" type="button">播放钢琴参考音</button>
@@ -291,7 +293,8 @@
         <p id="pitchTestStatus">科学音高自动测试：等待运行</p>
       </div>
       <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
-      <div class="modal-actions"><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
+      <label class="cloud-check cloud-optional"><input type="checkbox" id="offerVoiceSubmission"><span>本机保存后，打开可选提交说明（不会自动上传）</span></label>
+      <div class="modal-actions"><button class="button ghost" id="submitSavedVoice" type="button">提交已保存声线（可选）</button><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">取消</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存为新声线</button></div>
     </form>
   </dialog>
 
@@ -312,7 +315,8 @@
         <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
         <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
       </ol>
-      <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增的声线只保存在自己的浏览器，不上传服务器；可在切换声线处删除。两套内置录音会随公开网页提供。</p></div>
+      <div class="license-note"><b>声音来源与处理</b><p>网站内置两套由作者本人授权提供的声线，首次打开即可切换试听，界面中不可删除。访问者新增声线默认只保存在自己的浏览器；可选提交需要另行明确同意，目前云端接收尚未开通。两套内置录音会随公开网页提供。</p></div>
+      <button class="button ghost cloud-admin-link" id="openCloudAdmin" type="button">项目负责人 · 管理提交</button>
       <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；页面优先依据当前元音录音标注的音高作小幅教学估算，没有标注时才用手动目标。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
       <div class="license-note"><b>个人声线分析</b><p>导入五个持续元音后，程序会在浏览器本机估计基准音高与前三个共振峰，并把结果换算成五个专属构形点。该结果用于声乐教学、听辨和个体比较，不等同于实验室 LPC 校准或医学检查。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
@@ -321,8 +325,9 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261021-founder-1"></script>
+  <script src="./app.js?v=20261021-practice-cloud-1"></script>
+  <script src="./voice-cloud-config.js?v=20261021-1"></script>
+  <script src="./voice-cloud.js?v=20261021-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
 </body>
 </html>
-

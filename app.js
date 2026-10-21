@@ -489,7 +489,16 @@ async function saveVoicePack(){
   addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));button.textContent='保存声线';$('#voiceDialog').close();showToast(`“${name}”已新增；可以在切换声线处选择或删除`);
   if(audio){try{stopAndClearAudio();await loadVoicePack(id)}catch(err){console.warn('Saved voice pack could not be loaded immediately.',err);setAudioState('error','声线已保存 · 载入失败');showToast('声线已保存；重新选择该声线即可再次载入')}}
   discardUnsavedVoiceSamples();$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;
+  if($('#offerVoiceSubmission')?.checked){$('#offerVoiceSubmission').checked=false;window.VocalVoiceCloud?.open()}
 }
+window.getVoiceCloudSubmission=async()=>{
+  const pack=personalVoicePacks.get(state.voicePackId);
+  if(!pack||pack.source==='bundled')throw Error('请先选择你在本机录制并保存的个人声线；内置声线不能提交。');
+  const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);
+  if(records.length!==5||new Set(records.map(r=>r.vowel)).size!==5)throw Error('五个元音样本不完整，请先在本机录制并保存。');
+  const samples=[];for(const r of records)samples.push({vowel:r.vowel,duration:r.duration,type:r.blob.type||'audio/webm',analysis:r.analysis,data:await blobToDataUrl(r.blob)});
+  return {pack,samples};
+};
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob)})}
 async function exportCurrentVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack){showToast('当前还没有可导出的个人声线');return}if(pack.source==='bundled'){showToast('创始人的声线已经随网站提供，无需再次导出');return}const button=$('#exportCurrentVoice');button.disabled=true;button.textContent='正在导出…';try{const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);if(records.length!==5)throw Error('当前声线的五个元音样本不完整');const samples=[];for(const record of records)samples.push({id:record.id,packId:record.packId,vowel:record.vowel,duration:record.duration,analysis:record.analysis,type:record.blob.type||'audio/webm',data:await blobToDataUrl(record.blob)});const payload={format:'vocal-tract-lab-voice-pack',version:1,exportedAt:new Date().toISOString(),pack,samples},link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));link.download=`${pack.name.replace(/[\\/:*?"<>|]/g,'_')}.vocalpack.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast(`已导出“${pack.name}”的五个元音`)}catch(err){console.error('Voice export failed.',err);showToast(`导出失败：${err.message}`)}finally{button.disabled=false;button.textContent='导出当前声线'}}
 async function loadVoicePack(id){
@@ -521,10 +530,19 @@ function bindMobileTabs(){
     else if(stage.parentElement!==anatomyPanel){anatomyPanel.insertBefore(stage,vowels);anatomyPanel.append(dock)}
   };
   const selectTab=name=>{
+    layout.dataset.mobileView=name==='acoustics'?'acoustics':'practice';
     $$('.mobile-tabs [data-tab]').forEach(button=>{const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
-    $$('[data-panel]').forEach(panel=>panel.classList.toggle('active',panel.dataset.panel===name));
+    $$('[data-panel]').forEach(panel=>panel.classList.toggle('active',name==='acoustics'?panel.dataset.panel==='acoustics':panel.dataset.panel!=='acoustics'));
+    if(name==='anatomy'){
+      $('[data-panel="controls"]').dataset.controlView='sliders';
+      $$('.mobile-control-modes button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.controlView==='sliders')));
+    }
+    if(mobileQuery.matches&&window.matchMedia('(orientation: portrait)').matches){const collapsed=name==='acoustics';layout.classList.toggle('stage-collapsed',collapsed);const toggle=$('#toggleMobileStage');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.textContent=collapsed?'展开图':'收起图'}
   };
-  $$('.mobile-tabs [data-tab]').forEach(button=>button.addEventListener('click',()=>selectTab(button.dataset.tab)));
+  $$('.mobile-tabs [data-tab]').forEach(button=>button.addEventListener('click',()=>{
+    selectTab(button.dataset.tab);
+    if(mobileQuery.matches){const target=$(`[data-panel="${button.dataset.tab}"]`);requestAnimationFrame(()=>target.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}))}
+  }));
   const controlsPanel=$('[data-panel="controls"]');
   $$('.mobile-control-modes button').forEach(button=>button.addEventListener('click',()=>{
     controlsPanel.dataset.controlView=button.dataset.controlView;
@@ -555,4 +573,5 @@ window.__vocalLab={get audio(){return audio},get state(){return state},acousticV
 
 async function init(){bindControls();bindFormantExplainer();bindPhonation();bindSnapshots();bindMobileTabs();setupVoiceLab();const pitchCoreResult=runPitchCoreTests();if(new URLSearchParams(location.search).get('test')==='pitch-core')setTimeout(()=>runPitchDetectionSelfTests(pitchCoreResult));try{slots={...slots,...JSON.parse(localStorage.getItem('vocalLabSlots')||'{}')}}catch(err){console.warn('Local settings unavailable.',err)}try{snapshots=(await dbAll('snapshots')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}catch(err){console.warn('Snapshot storage unavailable.',err)}await loadVoicePacks();renderSnapshots();render();if(!personalVoicePacks.size)setAudioState('','请先创建我的声线')}
 init();
+
 

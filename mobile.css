@@ -3,6 +3,7 @@
 .mobile-control-modes{display:none}
 .handle{touch-action:none}
 .handle-hit{fill:rgba(0,0,0,.001);stroke:none}
+.practice-scroll-hint{display:none}
 
 @media(max-width:780px), (max-width:950px) and (orientation:landscape){
   .app-shell{padding:8px}
@@ -36,6 +37,19 @@
   .workspace>[data-panel]{display:none!important}
   .workspace>[data-panel].active{display:block!important}
   .workspace>.anatomy-panel.active{display:flex!important}
+  .practice-scroll-hint{display:block;margin:10px 2px 0;color:#456a7c;font-size:12px;line-height:1.6}
+  .mobile-layout[data-mobile-view="practice"] .workspace>.anatomy-panel,
+  .mobile-layout[data-mobile-view="practice"] .workspace>.controls-panel{display:flex!important;flex-direction:column}
+  .mobile-layout[data-mobile-view="practice"] .workspace>.controls-panel{margin-top:10px}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.panel-heading{order:0}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.mobile-control-modes{order:1}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.control-list{order:2}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.parameter-comparison{order:3}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.pitch-reference-banner{order:4;margin-top:14px}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.tenor-preset{order:5}
+  .mobile-layout[data-mobile-view="practice"] .controls-panel>.preset-section{order:6}
+  .workspace>[data-panel]{scroll-margin-top:calc(38dvh + 115px)}
+  .stage-collapsed .workspace>[data-panel]{scroll-margin-top:70px}
   .anatomy-panel .panel-heading p{display:none}
   .vowel-switcher{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}
   .vowel-switcher>div{grid-column:1/-1}
@@ -78,6 +92,7 @@
   .acoustics-panel .formant-value strong{font-size:22px}
 }
 @media(max-width:950px) and (orientation:landscape){
+  .workspace>[data-panel]{scroll-margin-top:65px}
   .topbar{display:flex;align-items:center;gap:10px;padding:5px 9px}
   .brand-mark{width:34px;height:34px;border-radius:9px}
   .brand h1{font-size:15px}
