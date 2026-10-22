@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./styles.css?v=20261018-report-2">
   <link rel="stylesheet" href="./mobile.css?v=20261021-practice-1">
   <link rel="stylesheet" href="./liquid-glass.css?v=20261018-report-5">
-  <link rel="stylesheet" href="./interaction-controls.css?v=20261022-compact-comparison-2">
+  <link rel="stylesheet" href="./interaction-controls.css?v=20261022-original-parameters-1">
   <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
 </head>
 <body>
@@ -125,14 +125,15 @@
       <section class="panel controls-panel" data-panel="controls" aria-labelledby="controlsTitle">
         <div class="panel-heading">
           <div><span class="section-number">B</span><h2 id="controlsTitle">构形参数</h2></div>
-          <button class="text-button" id="resetButton">复位</button>
+          <button class="text-button" id="resetButton" title="恢复当前声线、当前元音的原始教学构形，不切换元音">恢复原值</button>
         </div>
         <div class="pitch-reference-banner" role="note">
-          <span>新录音的目标音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>五个元音录制时须使用同一目标音高；已有录音的参数对比会优先按当前元音的音高标注自动匹配，不会移调声音。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
+          <span>新录音的目标音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>同条声线的已录元音须使用同一目标音高；已有录音的参数对比会优先按当前元音的音高标注自动匹配，不会移调声音。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
           <p class="voice-pitch-status" id="voicePitchStatus" aria-live="polite">正在读取当前声线原音高…</p>
         </div>
         <div class="tenor-preset">
           <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>优先按当前元音录音标注的音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
+          <button class="button tenor-load-button" id="loadTenorModel" type="button">载入模型参数</button>
           <details class="tenor-provenance">
             <summary>这些参数从哪里来？</summary>
             <div>
@@ -146,6 +147,7 @@
           <button type="button" data-control-view="sliders" aria-pressed="true">调节滑杆</button>
           <button type="button" data-control-view="comparison" aria-pressed="false">查看对比</button>
         </div>
+        <div class="original-parameter-toolbar"><small id="originalParameterHint" title="原值是本声线当前元音的初始教学构形，并非器官位置实测">细线标记原始位置</small><button type="button" class="text-button" id="restoreVowelOriginal">恢复本元音原值</button></div>
         <div class="control-list" id="controlList">
           <label class="control-row" data-key="tongueHeight"><span><b>舌高</b><em>Tongue height</em></span><output>30</output><input type="range" min="0" max="100" value="30" aria-label="舌高"></label>
           <label class="control-row" data-key="tongueFrontness"><span><b>舌位前后</b><em>Frontness</em></span><output>52</output><input type="range" min="0" max="100" value="52" aria-label="舌位前后"></label>
@@ -250,10 +252,10 @@
   <dialog id="voiceDialog" class="modal">
     <form method="dialog" class="modal-card" id="voiceForm">
       <div class="modal-header"><div><p class="eyebrow">PERSONAL VOICE PACK</p><h2>创建个人声线</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
-      <p class="modal-intro">在舒适且一致的音高上，分别持续发出五个元音。程序会估计每段录音的 F0 与 F1/F2/F3，并生成五个教学构形映射点；这些点不是器官位置实测。默认只保存在这台设备，不会自动上传。</p>
+      <p class="modal-intro">在舒适且一致的音高上，任选一个或几个元音录制即可保存，无需录满五个。程序只分析已录元音的 F0 与 F1/F2/F3，并生成教学构形映射点；这些点不是器官位置实测。未录元音不提供声音和参数。默认只保存在这台设备，不会自动上传。</p>
       <div class="recording-pitch-guide">
-        <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，五个元音都必须唱这个音；检测为其他音高的录音不会保存。</small></div>
-        <button class="button" id="playReferencePitch" type="button">播放钢琴参考音</button>
+        <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，本条声线中要录的元音均唱这个音；至少录一个即可保存。</small></div>
+        <button class="button" id="playReferencePitch" type="button">播放参考音</button>
       </div>
       <div class="pitch-picker" id="pitchPicker" aria-label="选择录制音高">
         <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C6 · Scientific Pitch Notation</small></div>
@@ -300,7 +302,7 @@
   <dialog id="deleteVoiceDialog" class="modal confirm-voice-delete">
     <div class="modal-card">
       <h2>删除这条声线？</h2>
-      <p id="deleteVoiceMessage">这会删除该声线保存在本机的五段录音和分析结果，无法撤销。网站内置的创始人声线不会受影响。</p>
+      <p id="deleteVoiceMessage">这会删除该声线保存在本机的录音和分析结果，无法撤销。网站内置的创始人声线不会受影响。</p>
       <div class="modal-actions"><button class="button ghost" id="cancelDeleteVoice" type="button">取消</button><button class="button danger" id="confirmDeleteVoice" type="button">确认删除</button></div>
     </div>
   </dialog>
@@ -317,16 +319,16 @@
       <div class="license-note"><b>声音来源与处理</b><p>网站内置一套由作者本人授权提供的创始人声线，首次打开即可试听，界面中不可删除。访问者新增声线默认只保存在自己的浏览器；只有在可选提交页面明确同意并提交后才上传给项目负责人。云端提交不公开，也不会自动成为网站内置声线。本机删除与云端撤回分别操作。创始人录音会随公开网页提供。</p></div>
       <button class="button ghost cloud-admin-link" id="openCloudAdmin" type="button">项目负责人 · 管理提交</button>
       <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；页面优先依据当前元音录音标注的音高作小幅教学估算，没有标注时才用手动目标。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
-      <div class="license-note"><b>个人声线与男高音参考</b><p>导入五个持续元音后，程序会在浏览器本机估计音高与共振峰，并换算成教学构形点。男高音模型没有人人适用的 0–100 器官比例；也可导入经授权的真人录音作个体听辨参考。公开分享老师录音前，请先取得录制与再分发许可。报告不等同于实验室校准或医学检查。</p></div>
+      <div class="license-note"><b>个人声线与男高音参考</b><p>录制或导入任意持续元音后，程序会在浏览器本机估计音高与共振峰，并换算成教学构形点。男高音模型没有人人适用的 0–100 器官比例；也可导入经授权的真人录音作个体听辨参考。公开分享老师录音前，请先取得录制与再分发许可。报告不等同于实验室校准或医学检查。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
     </form>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261022-vowel-chart-1"></script>
+  <script src="./app.js?v=20261022-original-parameters-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
-  <script src="./voice-cloud.js?v=20261021-1"></script>
+  <script src="./voice-cloud.js?v=20261022-partial-vowels-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
 </body>
 </html>

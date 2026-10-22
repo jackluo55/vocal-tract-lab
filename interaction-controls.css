@@ -39,3 +39,20 @@
 .controls-panel .control-row input::-moz-range-progress { height: 4px; background: #21a0b3; }
 .controls-panel .control-row input::-moz-range-thumb { width: 14px; height: 14px; border: 2px solid #168fa3; border-radius: 50%; background: #fff; }
 .controls-panel .control-row:focus-within { background: rgba(255,255,255,.55); }
+.vowel-button.unrecorded { position: relative; opacity: .55; cursor: not-allowed; box-shadow: none; }
+.vowel-button.unrecorded::after { content: '未录'; position: absolute; bottom: 2px; left: 0; width: 100%; font-size: 9px; line-height: 11px; font-weight: 400; }
+.vowel-anchor.unrecorded { opacity: .35; cursor: not-allowed; }
+.original-parameter-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
+.original-parameter-toolbar small { color: #506d7d; font-size: 11px; line-height: 1.4; }
+.original-parameter-toolbar button { flex-shrink: 0; min-height: 36px; font-size: 12px; }
+.original-parameter-toolbar button:disabled { opacity: .5; cursor: default; }
+.mobile-layout[data-mobile-view="practice"] .controls-panel>.original-parameter-toolbar { order: 1; }
+.controls-panel .control-row .original-value { display: block; font-size: 10px; line-height: 12px; color: #58717f; font-weight: 400; }
+.control-origin-mark { grid-column: 2; grid-row: 1; position: relative; height: 12px; margin: 0 9px; z-index: 2; pointer-events: none; }
+.control-origin-mark::after, .comparison-origin-mark::after { content: ''; position: absolute; left: var(--origin-pct); top: 0; height: 100%; border-left: 1px dashed #405d6b; }
+.parameter-comparison .comparison-original { display: block; font-size: 9px; line-height: 11px; color: #58717f; font-style: normal; font-weight: 400; }
+.comparison-origin-mark { position: absolute; inset: 5px; pointer-events: none; z-index: 2; }
+.controls-panel .tenor-preset { grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: start; }
+.tenor-load-button { min-height: 40px; padding: 7px 10px; white-space: nowrap; font-size: 12px; }
+.tenor-provenance { grid-column: 1/-1; }
+@media (max-width: 380px) { .controls-panel .tenor-preset { gap: 6px; } .tenor-load-button { padding: 7px; font-size: 11px; } }

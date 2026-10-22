@@ -62,6 +62,13 @@ function vowelWeights(){
   return Object.fromEntries(Object.keys(VOWELS).map(k=>[k,k===state.currentVowel?1:0]));
 }
 function personalVoiceAnalysis(){return personalVoicePacks.get(state.voicePackId)?.analysis||null}
+function availableVoiceVowels(id=state.voicePackId){return Object.keys(personalVoicePacks.get(id)?.vowels||{}).filter(v=>Object.hasOwn(VOWELS,v))}
+function hasVoiceVowel(vowel){return availableVoiceVowels().includes(vowel)}
+function selectAvailableVoiceVowel(){const available=availableVoiceVowels();if(available.length&&!available.includes(state.currentVowel))state.currentVowel=available[0]}
+function renderVoiceAvailability(){
+  const pack=personalVoicePacks.get(state.voicePackId);
+  $$('.vowel-button,.vowel-anchor').forEach(el=>{const v=el.dataset.vowelSelect||el.dataset.vowel,missing=Boolean(pack)&&!hasVoiceVowel(v);el.setAttribute('aria-disabled',String(missing));el.classList.toggle('unrecorded',missing);el.setAttribute('title',missing?'此声线尚未录制 ['+v+']':'选择 ['+v+']');if(el.tagName==='BUTTON')el.disabled=missing;else el.setAttribute('tabindex',missing?'-1':'0')});
+}
 function vowelPreset(vowel){return personalVoiceAnalysis()?.vowels?.[vowel]?.params||VOWEL_PRESETS[vowel]}
 function highRoundedVowelAmount(){
   if(state.currentVowel!=='o'&&state.currentVowel!=='u')return 0;
@@ -87,7 +94,27 @@ function acousticValues(){
   const f3=clamp((base.f3+(state.larynxHeight-anchor.larynxHeight)*4+(state.suprahyoidTension-anchor.suprahyoidTension)*1.2)*profile.formantScale,1500,3800);
   return {nearest:state.currentVowel,f0:Math.round(measured?.f0||profile.f0),f1:Math.round(f1),f2:Math.round(f2),f3:Math.round(f3),weights:w,pos:vowelPosition()};
 }
+function restoreOriginalParameters(){
+  if(!hasVoiceVowel(state.currentVowel)){showToast('当前元音尚未录制，没有可恢复的原值');return}
+  Object.assign(state,vowelPreset(state.currentVowel));render();showToast(`已恢复当前声线 [${state.currentVowel}] 的原始教学构形`);
+}
+function renderOriginalParameters(){
+  const original=vowelPreset(state.currentVowel),available=hasVoiceVowel(state.currentVowel);
+  for(const row of $$('.control-row')){
+    const key=row.dataset.key,value=Math.round(original[key]);
+    let label=row.querySelector('.original-value');if(!label){label=document.createElement('small');label.className='original-value';row.querySelector('span').append(label)}
+    label.textContent=available?`原值 ${value}`:'原值 —';
+    let mark=row.querySelector('.control-origin-mark');if(!mark){mark=document.createElement('i');mark.className='control-origin-mark';mark.setAttribute('aria-hidden','true');row.append(mark)}
+    mark.hidden=!available;mark.style.setProperty('--origin-pct',`${value}%`);
+    row.querySelector('input').setAttribute('aria-valuetext',`${Math.round(state[key])}，原值 ${available?value:'未录制'}`);
+  }
+  const changed=available&&Object.keys(DEFAULT_STATE).some(key=>Math.round(state[key])!==Math.round(original[key]));
+  const button=$('#restoreVowelOriginal');if(button)button.disabled=!changed;
+  if($('#originalParameterHint'))$('#originalParameterHint').textContent=available?(changed?'已调节；原值数字和细线保持不变。':'当前为本元音原值；细线标记原始位置。'):'此元音尚未录制，无原值';
+}
 function render(){
+  renderVoiceAvailability();
+  renderOriginalParameters();
   $$('.control-row').forEach(row=>{const key=row.dataset.key,input=row.querySelector('input'),val=Math.round(state[key]);input.value=val;input.style.setProperty('--pct',`${val}%`);row.querySelector('output').value=val});
   const a=acousticValues();
   $('#nearestVowel').textContent=`[${a.nearest}]`; $('#vowelDescription').textContent=VOWELS[a.nearest].label;
@@ -165,7 +192,7 @@ function renderTeachingReport(){
   $('#downloadTeachingReport').disabled=!sample;
   $('#applyReportReference').disabled=!reference.params||reference.kind==='recorded'&&!sample;
   if(!sample){
-    add('当前元音',`[${vowel}] 尚无录音分析。可以先试听当前声线，或录制五个元音后查看个人结果。`);
+    add('当前元音',`[${vowel}] 尚无录音分析。可以先试听当前声线，或录制当前元音后查看个人结果。`);
   }else{
     add('这段声音',`${pack.name} · [${vowel}] · 音高标注 ${hasPitch?`${pitch.note}（${hz.toFixed(1)} Hz）`:'未记录'}。${Number.isFinite(Number(sample.pitchStdCents))?`中段音高波动约 ${Math.round(sample.pitchStdCents)} 音分。`:''}`);
     if(verifiedFormants(sample))add('音色观察',`录音估计 F1 ${Math.round(sample.f1)}、F2 ${Math.round(sample.f2)}、F3 ${Math.round(sample.f3)} Hz。它们描述声音的共振，不是舌头或喉部位置的测量。`);
@@ -255,6 +282,8 @@ function renderComparison(){
   $('#comparisonDescription').textContent=reference.kind==='model'?'右侧为人工设定的男高音教学滑杆，不是歌者实测值或声部标准。':reference.kind==='data'?'外部 CSV 只有 F0–F3 数值，没有真实器官位置；滑杆对比留空，请查看下方文字报告。':reference.kind==='cohort'&&comparison.source!=='sample'?'当前元音缺少录音，右侧暂不显示参考组差值。':reference.kind==='cohort'&&!reference.eligible?`参考组当前仅有 ${reference.count} 条同元音、相近音高且质量可用的声线；至少需 3 条。`:reference.kind==='cohort'?'右侧为本机声部参考组的教学滑杆中位数，不是器官实测位置或通用标准。':reference.kind==='recorded'&&comparison.source!=='sample'?'当前元音缺少个人录音，右侧暂不显示差值。':reference.kind==='recorded'&&reference.samePitch?'右侧是另一条同元音、近似同音高录音经算法映射的教学滑杆，不是实测器官位置。':reference.kind==='recorded'?'参考声线与当前录音音高不同；为避免误导，右侧不显示参数差值。':'请在“元音教学报告”中选择可对比的参考声线。';
   if(!rows.firstElementChild)rows.innerHTML=Object.keys(DEFAULT_STATE).map(key=>`<div class="comparison-row" data-comparison-key="${key}"><span>${PARAMETER_LABELS[key]}</span><div class="comparison-pair"><div class="comparison-value current-value"><span></span><b></b><input class="comparison-slider" type="range" min="0" max="100" step="1" data-key="${key}" aria-label="对比图调节${PARAMETER_LABELS[key]}"></div><div class="comparison-value tenor-value"><span></span><b></b></div></div><small></small></div>`).join('');
   for(const row of rows.children){const key=row.dataset.comparisonKey,current=Math.round(state[key]),value=Number(target?.[key]),available=Number.isFinite(value),referenceValue=available?Math.round(value):0,difference=current-referenceValue;
+    const original=Math.round(vowelPreset(state.currentVowel)[key]);let originLabel=row.querySelector('.comparison-original');if(!originLabel){originLabel=document.createElement('em');originLabel.className='comparison-original';row.firstElementChild.append(originLabel)}originLabel.textContent=`原值 ${original}`;
+    let mark=row.querySelector('.comparison-origin-mark');if(!mark){mark=document.createElement('i');mark.className='comparison-origin-mark';mark.setAttribute('aria-hidden','true');row.querySelector('.current-value').append(mark)}mark.style.setProperty('--origin-pct',`${original}%`);
     row.querySelector('.current-value span').style.width=`${current}%`;row.querySelector('.current-value b').textContent=current;const input=row.querySelector('input');input.value=current;input.setAttribute('aria-valuetext',`${current} / 100`);
     row.querySelector('.tenor-value span').style.width=`${referenceValue}%`;row.querySelector('.tenor-value b').textContent=available?referenceValue:'—';row.querySelector('small').textContent=!available?'—':difference===0?'相同':`${difference>0?'+':''}${difference}`;row.querySelector('small').classList.toggle('same',!available||difference===0);
   }
@@ -289,6 +318,7 @@ function setParam(key,value){
   render();
 }
 async function selectVowel(vowel,{audition=false}={}){
+  if(personalVoicePacks.has(state.voicePackId)&&!hasVoiceVowel(vowel)){showToast(`此声线尚未录制 [${vowel}]，暂无声音和参数`);return}
   state.currentVowel=vowel;Object.assign(state,vowelPreset(vowel));render();showToast(`已选择 [${vowel}]；继续调舌位仍保持 [${vowel}]`);
   if(!audition||locked)return;
   clearTimeout(auditionTimer);const sequence=++auditionSequence;auditionActive=true;
@@ -300,10 +330,11 @@ async function switchVoice(id,{announce=true}={}){
   clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;syncLockUi();
   state.voicePackId=id;$('#voiceSelect').value=id;stopAndClearAudio();
   audio=await initAudio();if(personalVoicePacks.has(id))await loadVoicePack(id);
-  Object.assign(state,vowelPreset(state.currentVowel));
-  updateVoiceDeleteButton();if(announce)showToast('已载入所选声线及五个专属元音参数点');render();
+  selectAvailableVoiceVowel();Object.assign(state,vowelPreset(state.currentVowel));
+  updateVoiceDeleteButton();if(announce)showToast(`已载入所选声线的 ${availableVoiceVowels().length} 个已录元音`);render();
 }
 function applyTenorPreset(){
+  if(!hasVoiceVowel(state.currentVowel)){showToast('当前元音尚未录制，暂无可对比参数');return}
   clearTimeout(auditionTimer);auditionSequence++;auditionActive=false;pressing=false;locked=false;phonationRequest++;state.isPhonating=false;
   const phonateButton=$('#phonateButton'),vowel=state.currentVowel,voiceName=$('#voiceSelect').selectedOptions[0]?.textContent?.replace(' · 本机','')||'我的声线';phonateButton.classList.remove('is-playing');syncLockUi();
   const comparison=comparisonPitchForVowel(vowel);
@@ -390,12 +421,13 @@ function updateAudio(a=acousticValues()){
   audio.master.gain.setTargetAtTime(state.isPhonating&&audio.mode!=='error'?.72:0,now,.035);
 }
 async function startPhonation(){
-  if(!personalVoicePacks.has(state.voicePackId)){pressing=false;auditionActive=false;locked=false;syncLockUi();$('#voiceDialog').showModal();showToast('请先录制或导入五个元音，创建“我的声线”');return false}
+  if(personalVoicePacks.has(state.voicePackId)&&!hasVoiceVowel(state.currentVowel)){pressing=false;locked=false;auditionActive=false;state.isPhonating=false;syncLockUi();showToast('当前元音尚未录制，无法发声');return false}
+  if(!personalVoicePacks.has(state.voicePackId)){pressing=false;auditionActive=false;locked=false;syncLockUi();$('#voiceDialog').showModal();showToast('请先录制或导入至少一个元音，创建“我的声线”');return false}
   const request=++phonationRequest;
   try{
     await initAudio();await resumeMediaChannel(audio.ctx);
     if(audio.mode==='empty'){
-      setAudioState('loading','正在载入五个元音…');
+      setAudioState('loading','正在载入已录元音…');
       const currentAudio=audio;
       if(!currentAudio.voiceLoadPromise)currentAudio.voiceLoadPromise=loadVoicePack(state.voicePackId).finally(()=>{currentAudio.voiceLoadPromise=null});
       await currentAudio.voiceLoadPromise;
@@ -437,7 +469,9 @@ function bindControls(){
     anchor.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectVowel(anchor.dataset.vowel)}});
   });
   $('#applyTenorPreset').addEventListener('click',applyTenorPreset);
-  $('#resetButton').addEventListener('click',()=>{Object.assign(state,DEFAULT_STATE);state.currentVowel='a';render();showToast('已恢复默认构形')});
+  $('#loadTenorModel').addEventListener('click',applyTenorPreset);
+  $('#resetButton').addEventListener('click',restoreOriginalParameters);
+  $('#restoreVowelOriginal').addEventListener('click',restoreOriginalParameters);
   const svg=$('#tractSvg');
   $$('.handle').forEach(h=>{h.addEventListener('pointerdown',e=>{dragControl=h.dataset.control;h.setPointerCapture(e.pointerId);e.preventDefault()});h.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const step=e.shiftKey?5:2,key=h.dataset.control;if(key==='tongue')setParam(e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness',(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*step+state[e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness']);else setParam(key,state[key]+(e.key==='ArrowUp'||e.key==='ArrowRight'?step:-step))})});
   svg.addEventListener('pointermove',e=>{if(!dragControl)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());if(dragControl==='tongue'){setParam('tongueFrontness',(p.x-500)/2.2);setParam('tongueHeight',(600-p.y)/2)}else if(dragControl==='jawOpening')setParam('jawOpening',(p.y-690)/.3);else if(dragControl==='lipRounding')setParam('lipRounding',(320-p.x)/.28);else if(dragControl==='velumOpening')setParam('velumOpening',(p.y-410)/.7);else if(dragControl==='suprahyoidTension')setParam('suprahyoidTension',(p.x-620)/1.05);else if(dragControl==='thyrohyoidTension')setParam('thyrohyoidTension',(p.x-748)/.45);else if(dragControl==='larynxHeight')setParam('larynxHeight',(835-p.y)/1.2)});window.addEventListener('pointerup',()=>dragControl=null);
@@ -507,7 +541,7 @@ function setupVoiceLab(){
   $('#openVoiceLab').onclick=()=>openVoiceDialog(false);$('#openPitchPicker').onclick=()=>openVoiceDialog(true);$('#openInfo').onclick=()=>$('#infoDialog').showModal();$('#saveVoicePack').onclick=saveVoicePack;$('#exportCurrentVoice').onclick=exportCurrentVoice;$('#playReferencePitch').onclick=()=>playReferencePitch($('#playReferencePitch'));
   $('#deleteVoiceButton').onclick=promptDeleteVoice;$('#cancelDeleteVoice').onclick=()=>$('#deleteVoiceDialog').close();$('#confirmDeleteVoice').onclick=confirmDeleteVoice;
   $('#humanOctaveAssist').addEventListener('change',event=>{humanOctaveAssist=event.target.checked;resetPitchDebugForTarget();showToast(humanOctaveAssist?'人声低八度校正已开启':'人声低八度校正已关闭')});
-  $('#voiceDialog').addEventListener('close',()=>{cancelRecordingSession();stopSamplePreview();persistVoiceDraft()});
+  $('#voiceDialog').addEventListener('close',()=>{cancelRecordingSession();stopSamplePreview();stopReferencePitch();persistVoiceDraft()});
   $('#packName').addEventListener('input',persistVoiceDraft);
   $('#newVoicePart').addEventListener('change',persistVoiceDraft);
   $('#clearVoiceDraft').onclick=async()=>{if(recordingPhase==='processing'){showToast('正在分析本段录音，请稍候再清空');return}if(!confirm('清空这次未保存的录音草稿？已保存的声线不会受影响。'))return;cancelRecordingSession();discardUnsavedVoiceSamples();await persistVoiceDraft();$('#voiceDraftStatus').textContent='已清空临时录音，可以重新开始。'};
@@ -545,16 +579,16 @@ async function audioFingerprint(bytes){
   let first=2166136261,second=2246822519;for(const byte of bytes){first=Math.imul(first^byte,16777619);second=Math.imul(second+byte,3266489917)}return `content:${bytes.length}:${(first>>>0).toString(16)}:${(second>>>0).toString(16)}`
 }
 async function importReferencePack(file){
-  const status=$('#reportImportStatus');status.textContent='正在读取并检查参考声线…';
-  if(file.size>32*1024*1024){status.textContent='文件超过 32 MB；请导入本站导出的五元音声线文件。';return}
+  const status=$('#reportImportStatus')||$('#recordStatus');status.textContent='正在读取并检查参考声线…';
+  if(file.size>32*1024*1024){status.textContent='文件超过 32 MB；请导入本站导出的声线文件。';return}
   let ctx;
   try{
     const payload=JSON.parse(await file.text()),vowels=['a','e','i','o','u'];
-    if(payload.format!=='vocal-tract-lab-voice-pack'||payload.version!==1||!Array.isArray(payload.samples)||payload.samples.length!==5)throw Error('格式不符；请选择本站导出的 .vocalpack.json 文件');
-    const byVowel=new Map(payload.samples.map(sample=>[sample.vowel,sample]));if(byVowel.size!==5||vowels.some(v=>!byVowel.has(v)))throw Error('参考声线必须含 [a e i o u] 五段独立元音');
+    if(payload.format!=='vocal-tract-lab-voice-pack'||payload.version!==1||!Array.isArray(payload.samples)||(payload.samples.length<1||payload.samples.length>5))throw Error('格式不符；请选择本站导出的 .vocalpack.json 文件');
+    const byVowel=new Map(payload.samples.map(sample=>[sample.vowel,sample]));if(byVowel.size!==payload.samples.length||[...byVowel.keys()].some(v=>!vowels.includes(v)))throw Error('参考声线须含 1–5 段不重复的有效元音');
     const targetMidi=Number(payload.pack?.analysis?.targetPitch?.midi),targetPitch=Number.isInteger(targetMidi)&&targetMidi>=24&&targetMidi<=108?pitchFromMidi(targetMidi):null;
     ctx=new (window.AudioContext||window.webkitAudioContext)();const id=`personal-${crypto.randomUUID()}`,prepared={},records=[];
-    for(const vowel of vowels){
+    for(const vowel of vowels.filter(v=>byVowel.has(v))){
       const item=byVowel.get(vowel);if(typeof item.data!=='string'||!/^data:audio\/[\w.+-]+;base64,/.test(item.data)||item.data.length>10*1024*1024)throw Error(`[${vowel}] 音频数据缺失或过大`);
       const encoded=item.data.slice(item.data.indexOf(',')+1),binary=atob(encoded),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
       const type=typeof item.type==='string'&&item.type.startsWith('audio/')?item.type:'audio/wav',blob=new Blob([bytes],{type}),buffer=await ctx.decodeAudioData(bytes.buffer.slice(0));
@@ -562,28 +596,70 @@ async function importReferencePack(file){
       const data=buffer.getChannelData(0);let peak=0,sum=0;for(let i=0;i<data.length;i+=8){peak=Math.max(peak,Math.abs(data[i]));sum+=data[i]*data[i]}const rms=Math.sqrt(sum/Math.ceil(data.length/8));if(peak>.995||rms<.015)throw Error(`[${vowel}] 存在削波或音量过低，请使用更清晰的原始录音`);
       const analysis=analyzeVoiceSample(buffer,vowel,targetPitch?.hz??null);analysis.audioChecksum=await audioFingerprint(bytes);prepared[vowel]={analysis};records.push({id:`${id}-${vowel}`,packId:id,vowel,blob,duration:buffer.duration,analysis});
     }
-    const inferredPitch=targetPitch||pitchFromHz(median(records.map(record=>record.analysis.f0))),analysis=buildPersonalAnalysis(prepared,inferredPitch),chosen=$('#importVoicePart').value,part=chosen!=='unspecified'&&VOICE_PARTS[chosen]?chosen:VOICE_PARTS[payload.pack?.voicePart]?payload.pack.voicePart:'unspecified',name=String(payload.pack?.name||file.name.replace(/\.vocalpack\.json$/i,'')).trim().slice(0,30)||'导入的参考声线';
+    const inferredPitch=targetPitch||pitchFromHz(median(records.map(record=>record.analysis.f0))),analysis=buildPersonalAnalysis(prepared,inferredPitch),chosen=$('#importVoicePart')?.value||'unspecified',part=chosen!=='unspecified'&&VOICE_PARTS[chosen]?chosen:VOICE_PARTS[payload.pack?.voicePart]?payload.pack.voicePart:'unspecified',name=String(payload.pack?.name||file.name.replace(/\.vocalpack\.json$/i,'')).trim().slice(0,30)||'导入的参考声线';
     const manifest={id,name,voicePart:part,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',importedFrom:String(payload.pack?.name||'外部文件').slice(0,60),originalSource:String(payload.pack?.originalSource||payload.pack?.attribution||'').slice(0,160),originalLicense:String(payload.pack?.originalLicense||payload.pack?.license||'').slice(0,80),analysis,vowels:{}};
     records.forEach(record=>{manifest.vowels[record.vowel]={duration:record.duration,type:record.blob.type,size:record.blob.size,analysis:record.analysis}});
-    await dbSaveVoicePack(manifest,records);addVoiceOption(manifest);selectedReferenceId=id;try{localStorage.setItem('vocalLabReference',id)}catch{}referenceOptionsKey='';render();status.textContent=`已导入“${name}”的五个元音；仅保存在本机。`;showToast('参考声线已导入，可在同音高下比较');
+    await dbSaveVoicePack(manifest,records);addVoiceOption(manifest);selectedReferenceId=id;try{localStorage.setItem('vocalLabReference',id)}catch{}referenceOptionsKey='';render();status.textContent=`已导入“${name}”的 ${records.length} 个元音；仅保存在本机。`;showToast('参考声线已导入，可在同音高下比较');
   }catch(err){console.error('Reference voice import failed.',err);status.textContent=`导入失败：${err.message||'请检查文件及浏览器音频格式支持'}`}
   finally{if(ctx)ctx.close().catch(()=>{})}
 }
-async function openVoiceDialog(focusPitch){await voiceDraftReady;const dialog=$('#voiceDialog');if(!dialog.open)dialog.showModal();if(!Object.values(personalSamples).some(Boolean)&&!Object.values(previewSamples).some(Boolean))resetPitchDebugForTarget();if(focusPitch)setTimeout(()=>{$('#pitchPicker').scrollIntoView({block:'center',behavior:'smooth'});$('.pitch-option.active')?.focus()},80)}
+function centerRecordingPitch(){
+  const keyboard=$('#pitchKeyboard'),selected=$('.pitch-option.active');
+  if(!keyboard||!selected)return;
+  const listRect=keyboard.getBoundingClientRect(),selectedRect=selected.getBoundingClientRect();
+  keyboard.scrollTop+=selectedRect.top-listRect.top-keyboard.clientTop-(keyboard.clientHeight-selectedRect.height)/2;
+}
+async function openVoiceDialog(focusPitch){
+  await voiceDraftReady;
+  const dialog=$('#voiceDialog');if(!dialog.open)dialog.showModal();
+  if(!Object.values(personalSamples).some(Boolean)&&!Object.values(previewSamples).some(Boolean))resetPitchDebugForTarget();
+  requestAnimationFrame(()=>{
+    centerRecordingPitch();
+    if(focusPitch){$('#pitchPicker').scrollIntoView({block:'center',behavior:'smooth'});$('.pitch-option.active')?.focus({preventScroll:true})}
+  });
+}
 function selectRecordingPitch(midi){
   if(recordingPhase!=='idle'){showToast('请先结束当前录音再切换音高');return}
   if(midi===recordingTargetPitch.midi){resetPitchDebugForTarget();return}
   if(Object.values(previewSamples).some(Boolean)&&!confirm('切换目标音高需要清空这次录音草稿，是否继续？'))return;
-  recordingTargetPitch=pitchFromMidi(midi);
+  stopReferencePitch();recordingTargetPitch=pitchFromMidi(midi);
   const hadSamples=Object.values(personalSamples).some(Boolean)||Object.values(previewSamples).some(Boolean);discardUnsavedVoiceSamples();persistVoiceDraft();render();
-  resetPitchDebugForTarget();$('#recordStatus').textContent=`已选择 ${pitchLabel()}。现在五个元音都只能录制这个音高。`;showToast(`${hadSamples?'已清除之前的样本；':''}目标音高已改为 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}`);
+  resetPitchDebugForTarget();$('#recordStatus').textContent=`已选择 ${pitchLabel()}。本条声线的元音均使用这个音高，可只录其中一个。`;showToast(`${hadSamples?'已清除之前的样本；':''}目标音高已改为 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}`);
+}
+function stopReferencePitch(){
+  const tone=referenceTone;if(!tone||tone.finished)return;
+  tone.finished=true;for(const oscillator of tone.oscillators||[]){try{oscillator.stop()}catch{}}
+  releaseMediaChannel(tone.ctx);tone.ctx.close().catch(()=>{});
+  tone.button.disabled=false;tone.button.textContent=tone.originalText;tone.button.dataset.audioState='ready';
+  if(referenceTone===tone)referenceTone=null;if(referenceAudioContext===tone.ctx)referenceAudioContext=null;
+  setAudioState(audio?.mode==='personal'?'ready':'',audio?.mode==='personal'?'我的声线已就绪':'等待发声');
 }
 async function playReferencePitch(button=$('#playReferencePitch')){
-  const originalText='播放钢琴参考音';button.disabled=true;button.textContent=`正在播放 ${recordingTargetPitch.solfege}…`;
-  const finishTone=tone=>{if(!tone||tone.finished)return;tone.finished=true;for(const oscillator of tone.oscillators||[]){try{oscillator.stop()}catch{}}releaseMediaChannel(tone.ctx);tone.ctx.close().catch(()=>{});tone.button.disabled=false;tone.button.textContent=tone.originalText;tone.button.dataset.audioState='ready';if(referenceTone===tone)referenceTone=null;if(referenceAudioContext===tone.ctx)referenceAudioContext=null;setAudioState(audio?.mode==='personal'?'ready':'',audio?.mode==='personal'?'我的声线已就绪':'等待发声')};
-  try{if(referenceTone)finishTone(referenceTone);const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)throw Error('当前浏览器不支持网页音频');const ctx=new AudioContextClass({latencyHint:'interactive'}),mainGain=ctx.createGain(),tone={ctx,oscillators:[],button,originalText,finished:false};referenceAudioContext=ctx;referenceTone=tone;
-  const referenceFrequency=PitchCore.midiToFrequency(recordingTargetPitch.midi),partials=[[1,1],[2.002,.5],[3.006,.26],[4.012,.14],[5.02,.075],[6.03,.04]];for(const [ratio,level] of partials){const oscillator=ctx.createOscillator(),partialGain=ctx.createGain();oscillator.type='sine';oscillator.frequency.setValueAtTime(referenceFrequency*ratio,ctx.currentTime);partialGain.gain.value=level;oscillator.connect(partialGain).connect(mainGain);tone.oscillators.push(oscillator)}await routeToMediaChannel(ctx,mainGain,'声道实验台钢琴参考音');if(tone.finished)return;const now=ctx.currentTime+.03,duration=2.35;
-  updatePitchDebug({rawFrequency:referenceFrequency,correctedFrequency:referenceFrequency,confidence:1,source:`钢琴式参考音 · ${recordingTargetPitch.note} 基频实际值`,sampleRate:ctx.sampleRate,duration,detector:'Web Audio 钢琴式谐波音色（非录音检测）'});mainGain.gain.setValueAtTime(.0001,now);mainGain.gain.exponentialRampToValueAtTime(.17,now+.012);mainGain.gain.exponentialRampToValueAtTime(.07,now+.55);mainGain.gain.exponentialRampToValueAtTime(.025,now+1.85);mainGain.gain.exponentialRampToValueAtTime(.0001,now+duration);for(const oscillator of tone.oscillators){oscillator.start(now);oscillator.stop(now+duration)}button.dataset.audioState='playing';setAudioState('playing',`钢琴参考音 ${recordingTargetPitch.note} · 基频 ${referenceFrequency.toFixed(4)} Hz`);tone.oscillators[0].onended=()=>finishTone(tone)}catch(err){console.error('Reference pitch failed.',err);if(referenceTone)finishTone(referenceTone);button.disabled=false;button.textContent='重新测试声音';button.dataset.audioState='error';setAudioState('error','参考音播放失败');showToast('参考音未能播放：请调高媒体音量后重试')}
+  stopReferencePitch();
+  const pitch={...recordingTargetPitch},originalText='播放参考音';button.disabled=true;button.textContent=`正在播放 ${pitch.note}…`;
+  try{
+    const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)throw Error('当前浏览器不支持网页音频');
+    const ctx=new AudioContextClass({latencyHint:'interactive'}),mainGain=ctx.createGain(),tone={ctx,oscillators:[],button,originalText,finished:false,pitch};
+    mainGain.gain.value=0;referenceAudioContext=ctx;referenceTone=tone;
+    const referenceFrequency=PitchCore.midiToFrequency(pitch.midi);
+    // Integer harmonics share one fixed fundamental; no detuning, vibrato or frequency ramps.
+    for(const [ratio,level] of [[1,1],[2,.18],[3,.06]]){
+      const oscillator=ctx.createOscillator(),partialGain=ctx.createGain();oscillator.type='sine';
+      oscillator.frequency.setValueAtTime(referenceFrequency*ratio,ctx.currentTime);oscillator.detune.setValueAtTime(0,ctx.currentTime);
+      partialGain.gain.value=level;oscillator.connect(partialGain).connect(mainGain);tone.oscillators.push(oscillator);
+    }
+    await routeToMediaChannel(ctx,mainGain,'声道实验台固定音高参考音');
+    if(tone.finished)return;
+    const now=ctx.currentTime+.04,duration=2.35;
+    mainGain.gain.setValueAtTime(0,now);mainGain.gain.linearRampToValueAtTime(.17,now+.025);
+    mainGain.gain.setValueAtTime(.17,now+duration-.1);mainGain.gain.linearRampToValueAtTime(0,now+duration);
+    for(const oscillator of tone.oscillators){oscillator.start(now);oscillator.stop(now+duration)}
+    updatePitchDebug({rawFrequency:referenceFrequency,correctedFrequency:referenceFrequency,confidence:1,source:`参考音合成设定 · ${pitch.note}（不是扬声器实测）`,sampleRate:ctx.sampleRate,duration,detector:'固定基频 + 整数倍泛音，无滑音'});
+    button.dataset.audioState='playing';setAudioState('playing',`参考音 ${pitch.note} · ${referenceFrequency.toFixed(4)} Hz`);
+    tone.oscillators[0].onended=()=>{if(referenceTone===tone)stopReferencePitch()};
+  }catch(err){
+    console.error('Reference pitch failed.',err);stopReferencePitch();button.disabled=false;button.textContent='重试参考音';button.dataset.audioState='error';setAudioState('error','参考音播放失败');showToast('参考音未能播放：请调高媒体音量后重试');
+  }
 }
 function median(values){const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b);if(!sorted.length)return 0;const mid=Math.floor(sorted.length/2);return sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2}
 function normalizedCorrelation(frame,lag){let sum=0,first=0,second=0;for(let i=0;i<frame.length-lag;i++){const a=frame[i],b=frame[i+lag];sum+=a*b;first+=a*a;second+=b*b}return sum/Math.sqrt(first*second+1e-12)}
@@ -704,18 +780,18 @@ async function recordSample(vowel,button){
 function updateVoiceSave(){
   persistVoiceDraft();
   const ready=Object.entries(personalSamples).filter(([,sample])=>Boolean(sample)).map(([vowel])=>vowel),missing=Object.keys(personalSamples).filter(vowel=>!personalSamples[vowel]),button=$('#saveVoicePack');
-  button.disabled=ready.length!==5;
+  button.disabled=ready.length===0||recordingPhase!=='idle';
   if(recordingPhase!=='idle')return;
-  if(ready.length===5){const f0=Math.round(median(Object.values(personalSamples).map(sample=>sample.analysis.f0))),cents=Math.round(1200*Math.log2(f0/recordingTargetPitch.hz));$('#recordStatus').textContent=`五个元音已完成 · 目标 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note} · 中位 F0 ${f0} Hz · 偏差 ${cents>0?'+':''}${cents} 音分；可以保存。`}else $('#recordStatus').textContent=`已分析 ${ready.length}/5；目标 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}；还需要：${missing.map(v=>`[${v}]`).join(' ')}`;
+  if(ready.length){const f0=Math.round(median(Object.values(personalSamples).filter(Boolean).map(sample=>sample.analysis.f0))),cents=Math.round(1200*Math.log2(f0/recordingTargetPitch.hz));$('#recordStatus').textContent=`已完成 ${ready.length}/5 个元音，可直接保存 · 目标 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note} · 中位 F0 ${f0} Hz · 偏差 ${cents>0?'+':''}${cents} 音分；可以保存。`}else $('#recordStatus').textContent=`目标 ${recordingTargetPitch.solfege} ${recordingTargetPitch.note}；录制任意一个元音即可保存，未录元音不提供声音或参数。`;
 }
 async function saveVoicePack(){
-  const button=$('#saveVoicePack'),missing=Object.keys(personalSamples).filter(v=>!personalSamples[v]);
-  if(missing.length){$('#recordStatus').textContent=`还缺少：${missing.map(v=>`[${v}]`).join(' ')}`;return}
-  const id=`personal-${Date.now()}`,name=$('#packName').value.trim()||`我的声线 ${personalVoicePacks.size+1}`,analysis=buildPersonalAnalysis(personalSamples),voicePart=VOICE_PARTS[$('#newVoicePart').value]?$('#newVoicePart').value:'unspecified',manifest={id,name,voicePart,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',analysis,vowels:{}},records=[];
-  for(const [v,s] of Object.entries(personalSamples)){manifest.vowels[v]={duration:s.duration,type:s.blob.type||'audio/wav',size:s.blob.size,analysis:s.analysis};records.push({id:`${id}-${v}`,packId:id,vowel:v,blob:s.blob,duration:s.duration,analysis:s.analysis})}
+  const button=$('#saveVoicePack'),samples=Object.fromEntries(Object.entries(personalSamples).filter(([,sample])=>Boolean(sample)));
+  if(recordingPhase!=='idle'||!Object.keys(samples).length){$('#recordStatus').textContent='请先完成至少一个元音的录制与分析。';return}
+  const id=`personal-${Date.now()}`,name=$('#packName').value.trim()||`我的声线 ${personalVoicePacks.size+1}`,analysis=buildPersonalAnalysis(samples),voicePart=VOICE_PARTS[$('#newVoicePart').value]?$('#newVoicePart').value:'unspecified',manifest={id,name,voicePart,createdAt:new Date().toISOString(),f0:analysis.f0,source:'local',analysis,vowels:{}},records=[];
+  for(const [v,s] of Object.entries(samples)){manifest.vowels[v]={duration:s.duration,type:s.blob.type||'audio/wav',size:s.blob.size,analysis:s.analysis};records.push({id:`${id}-${v}`,packId:id,vowel:v,blob:s.blob,duration:s.duration,analysis:s.analysis})}
   button.disabled=true;button.textContent='正在保存…';$('#recordStatus').textContent='正在保存到这台设备，请稍候…';
   try{await dbSaveVoicePack(manifest,records)}catch(err){console.error('Voice pack save failed.',err);button.textContent='保存到本机声线';button.disabled=false;$('#recordStatus').textContent='保存失败：浏览器未能写入本机存储。请确认没有使用无痕模式，并为此页面允许站点数据。';showToast('个人声线保存失败，录音仍保留在当前窗口');return}
-  addVoiceOption(manifest,{select:true});Object.assign(state,vowelPreset(state.currentVowel));render();button.textContent='保存到本机声线';$('#voiceDialog').close();showToast(`“${name}”已保存到本机；刷新后仍可选择，尚未上传`);
+  addVoiceOption(manifest,{select:true});selectAvailableVoiceVowel();Object.assign(state,vowelPreset(state.currentVowel));render();button.textContent='保存到本机声线';$('#voiceDialog').close();showToast(`“${name}”已保存到本机；刷新后仍可选择，尚未上传`);
   if(audio){try{stopAndClearAudio();await loadVoicePack(id)}catch(err){console.warn('Saved voice pack could not be loaded immediately.',err);setAudioState('error','声线已保存 · 载入失败');showToast('声线已保存；重新选择该声线即可再次载入')}}
   discardUnsavedVoiceSamples();await voiceDraftQueue;$('#packName').value=`我的声线 ${personalVoicePacks.size+1}`;$('#newVoicePart').value='unspecified';
   try{await navigator.storage?.persist?.()}catch(err){console.warn('Persistent storage request unavailable.',err)}
@@ -725,20 +801,20 @@ window.getVoiceCloudSubmission=async()=>{
   const pack=personalVoicePacks.get(state.voicePackId);
   if(!pack||pack.source==='bundled')throw Error('请先选择你在本机录制并保存的个人声线；内置声线不能提交。');
   const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);
-  if(records.length!==5||new Set(records.map(r=>r.vowel)).size!==5)throw Error('五个元音样本不完整，请先在本机录制并保存。');
+  if(!records.length||records.length!==availableVoiceVowels().length)throw Error('已录元音样本缺失，请重新保存声线。');
   const samples=[];for(const r of records)samples.push({vowel:r.vowel,duration:r.duration,type:r.blob.type||'audio/webm',analysis:r.analysis,data:await blobToDataUrl(r.blob)});
   return {pack,samples};
 };
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob)})}
-async function exportCurrentVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack){showToast('当前还没有可导出的个人声线');return}if(pack.source==='bundled'){showToast('初始声线已经随网站提供，无需再次导出');return}const button=$('#exportCurrentVoice');button.disabled=true;button.textContent='正在导出…';try{const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);if(records.length!==5)throw Error('当前声线的五个元音样本不完整');const samples=[];for(const record of records)samples.push({id:record.id,packId:record.packId,vowel:record.vowel,duration:record.duration,analysis:record.analysis,type:record.blob.type||'audio/webm',data:await blobToDataUrl(record.blob)});const payload={format:'vocal-tract-lab-voice-pack',version:1,exportedAt:new Date().toISOString(),pack,samples},link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));link.download=`${pack.name.replace(/[\\/:*?"<>|]/g,'_')}.vocalpack.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast(`已导出“${pack.name}”的五个元音`)}catch(err){console.error('Voice export failed.',err);showToast(`导出失败：${err.message}`)}finally{button.disabled=false;button.textContent='导出当前声线'}}
+async function exportCurrentVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack){showToast('当前还没有可导出的个人声线');return}if(pack.source==='bundled'){showToast('初始声线已经随网站提供，无需再次导出');return}const button=$('#exportCurrentVoice');button.disabled=true;button.textContent='正在导出…';try{const records=(await dbAll('voiceSamples')).filter(record=>record.packId===pack.id);if(!records.length||records.length!==availableVoiceVowels().length)throw Error('当前声线的已录样本缺失');const samples=[];for(const record of records)samples.push({id:record.id,packId:record.packId,vowel:record.vowel,duration:record.duration,analysis:record.analysis,type:record.blob.type||'audio/webm',data:await blobToDataUrl(record.blob)});const payload={format:'vocal-tract-lab-voice-pack',version:1,exportedAt:new Date().toISOString(),pack,samples},link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));link.download=`${pack.name.replace(/[\\/:*?"<>|]/g,'_')}.vocalpack.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast(`已导出“${pack.name}”的 ${records.length} 个元音`)}catch(err){console.error('Voice export failed.',err);showToast(`导出失败：${err.message}`)}finally{button.disabled=false;button.textContent='导出当前声线'}}
 async function loadVoicePack(id){
   const pack=personalVoicePacks.get(id);if(!pack)throw Error('找不到所选声线');if(!audio)await initAudio();clearAudioVoices();
   if(pack.source==='bundled'){
     for(const [vowel,item] of Object.entries(pack.vowels)){let encoded;if(item.audioPath.startsWith('data:')){const base64=item.audioPath.slice(item.audioPath.indexOf(',')+1),binary=atob(base64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);encoded=bytes.buffer}else{const response=await fetch(item.audioPath);if(!response.ok)throw Error(`初始声线 [${vowel}] 加载失败`);encoded=await response.arrayBuffer()}const buffer=await audio.ctx.decodeAudioData(encoded);createLoopSource(vowel,buffer)}
   }else{
-    const records=(await dbAll('voiceSamples')).filter(r=>r.packId===id);if(records.length!==5)throw Error('个人声线样本不完整');const needsPitchUpgrade=pack.analysis?.pitchAlgorithm!=='mcleod-yin-octave-assist-v8',targetPitch=pack.analysis?.targetPitch||pitchFromMidi(60),recalibrated={};let upgradeFailed=false;
+    const records=(await dbAll('voiceSamples')).filter(r=>r.packId===id);if(!records.length||records.length!==availableVoiceVowels(id).length)throw Error('个人声线已录样本缺失');const needsPitchUpgrade=pack.analysis?.pitchAlgorithm!=='mcleod-yin-octave-assist-v8',targetPitch=pack.analysis?.targetPitch||pitchFromMidi(60),recalibrated={};let upgradeFailed=false;
     for(const r of records){const buffer=await audio.ctx.decodeAudioData(await r.blob.arrayBuffer());if(needsPitchUpgrade&&!upgradeFailed){try{r.analysis=analyzeVoiceSample(buffer,r.vowel,targetPitch.hz);recalibrated[r.vowel]={analysis:r.analysis}}catch(err){upgradeFailed=true;console.warn('Existing voice pitch recalibration was skipped.',err)}}createLoopSource(r.vowel,buffer)}
-    if(needsPitchUpgrade&&!upgradeFailed&&Object.keys(recalibrated).length===5){pack.analysis=buildPersonalAnalysis(recalibrated,targetPitch);pack.f0=pack.analysis.f0;for(const [vowel,sample] of Object.entries(recalibrated))if(pack.vowels?.[vowel])pack.vowels[vowel].analysis=sample.analysis;await dbSaveVoicePack(pack,records);personalVoicePacks.set(pack.id,pack);showToast(`“${pack.name}”已用新版人声八度消歧算法重新校准`)}
+    if(needsPitchUpgrade&&!upgradeFailed&&Object.keys(recalibrated).length===records.length){pack.analysis=buildPersonalAnalysis(recalibrated,targetPitch);pack.f0=pack.analysis.f0;for(const [vowel,sample] of Object.entries(recalibrated))if(pack.vowels?.[vowel])pack.vowels[vowel].analysis=sample.analysis;await dbSaveVoicePack(pack,records);personalVoicePacks.set(pack.id,pack);showToast(`“${pack.name}”已用新版人声八度消歧算法重新校准`)}
   }
   audio.mode='personal';setAudioState('ready',pack.source==='bundled'?'内置声线已就绪':'个人声线已就绪');render()
 }
@@ -748,7 +824,7 @@ function clearAudioVoices(){
 function stopAndClearAudio(){if(!audio)return;cancelAnimationFrame(audio.raf);clearAudioVoices();const ctx=audio.ctx;releaseMediaChannel(ctx);try{ctx.close()}catch{}audio=null}
 function addVoiceOption(pack,{select=false}={}){personalVoicePacks.set(pack.id,pack);const voiceSelect=$('#voiceSelect');voiceSelect.querySelector(`option[value="${PERSONAL_EMPTY_ID}"]`)?.remove();let opt=[...voiceSelect.options].find(option=>option.value===pack.id);if(!opt){opt=document.createElement('option');opt.value=pack.id;voiceSelect.append(opt)}opt.textContent=voiceOptionLabel(pack);voiceSelect.disabled=false;if(select){voiceSelect.value=pack.id;state.voicePackId=pack.id}referenceOptionsKey='';updateVoiceDeleteButton()}
 function updateVoiceDeleteButton(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#deleteVoiceButton');button.hidden=!pack||pack.source==='bundled';button.disabled=!pack||pack.source==='bundled'}
-function promptDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack||pack.source==='bundled')return;$('#deleteVoiceMessage').textContent=`“${pack.name}”保存在这台设备的五段录音和分析结果将被删除，无法撤销。删除前可在“添加声线”中导出备份。网站内置的创始人声线不会受影响。`;$('#deleteVoiceDialog').showModal()}
+function promptDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId);if(!pack||pack.source==='bundled')return;$('#deleteVoiceMessage').textContent=`“${pack.name}”保存在这台设备的录音和分析结果将被删除，无法撤销。删除前可在“添加声线”中导出备份。网站内置的创始人声线不会受影响。`;$('#deleteVoiceDialog').showModal()}
 async function confirmDeleteVoice(){const pack=personalVoicePacks.get(state.voicePackId),button=$('#confirmDeleteVoice');if(!pack||pack.source==='bundled'){$('#deleteVoiceDialog').close();return}button.disabled=true;try{await dbDeleteVoicePack(pack.id);personalVoicePacks.delete(pack.id);[...$('#voiceSelect').options].find(option=>option.value===pack.id)?.remove();if(selectedReferenceId===pack.id)selectedReferenceId='none';referenceOptionsKey='';$('#deleteVoiceDialog').close();const fallback=personalVoicePacks.has(DEFAULT_VOICE_ID)?DEFAULT_VOICE_ID:personalVoicePacks.keys().next().value;await switchVoice(fallback,{announce:false});showToast(`已删除“${pack.name}”的本机录音`)}catch(err){console.error('Voice deletion failed.',err);showToast('删除失败，请检查浏览器存储空间后重试')}finally{button.disabled=false}}
 async function loadVoicePacks(){try{const response=await fetch('./assets/second-voice.json',{cache:'no-cache'});if(!response.ok)throw Error(`内置声线清单 ${response.status}`);addVoiceOption(await response.json(),{select:true})}catch(err){console.warn('Bundled voice unavailable.',err)}try{const packs=(await dbAll('voicePacks')).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));packs.forEach(pack=>{if(pack.id!=='default-personal'&&!personalVoicePacks.has(pack.id))addVoiceOption(pack,{select:!personalVoicePacks.size})})}catch(err){console.warn('Local voice storage unavailable.',err)}if(!personalVoicePacks.size){$('#voiceSelect').disabled=true;$('#voiceSelect').options[0].textContent='声线加载失败，请刷新或添加声线'}$('#voiceSelect').addEventListener('change',e=>switchVoice(e.target.value));updateVoiceDeleteButton()}
 
