@@ -32,7 +32,7 @@ function pitchFromMidi(midi){return PitchCore.midiToPitch(midi)}
 function pitchFromHz(hz){return PitchCore.frequencyToPitch(hz)}
 let recordingTargetPitch=pitchFromMidi(60);
 let humanOctaveAssist=true;
-const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',suprahyoidTension:'舌骨上肌群',thyrohyoidTension:'甲状舌骨肌',jawOpening:'下颌开度',lipRounding:'唇部圆展',larynxHeight:'喉位',velumOpening:'软腭开度'};
+const PARAMETER_LABELS={tongueHeight:'舌高',tongueFrontness:'舌位前后',suprahyoidTension:'舌骨上肌群',thyrohyoidTension:'甲状舌骨肌',jawOpening:'下颌开度',lipRounding:'唇部圆展',larynxHeight:'喉位 ↓',velumOpening:'软腭上抬 ↑'};
 const VOICE_PARTS={unspecified:'暂不指定',soprano:'女高音',mezzo:'女中音',alto:'女低音',tenor:'男高音',baritone:'男中音',bass:'男低音'};
 const PERSONAL_EMPTY_ID='personal-empty',DEFAULT_VOICE_ID='personal-1792314371779';
 const DEFAULT_STATE={tongueHeight:30,tongueFrontness:52,suprahyoidTension:30,thyrohyoidTension:35,jawOpening:72,lipRounding:22,larynxHeight:42,velumOpening:18};
@@ -127,12 +127,12 @@ function render(){
   $('#tonguePath').setAttribute('d',`M${354+tf*.55} ${564+jo*.18} C${430+tf*.35} ${585-th*2.15} ${510+tf*2.3} ${590-th*2.1} ${795+tf*.32} ${610-th*.25} C${738+tf*.16} ${632+jo*.38} ${575+tf*.3} ${676+jo*.2} ${400+tf*.12} ${637+jo*.12} C370 ${625+jo*.06} 352 ${595+jo*.08} ${354+tf*.55} ${564+jo*.18}Z`);
   $('#suprahyoidPath').setAttribute('d',`M${450+sh*.34} ${682-sh*.18} Q${575+sh*.7} ${724-sh*.32} ${704+sh*.62} ${687-sh*.45} Q${640+sh*.22} ${758-sh*.4} ${490+sh*.2} ${739-sh*.25}Z`);
   $('#thyrohyoidPath').setAttribute('d',`M${714+thy*.25} ${694-thy*.16} Q${761+thy*.3} ${727-thy*.18} ${772+thy*.25} ${808-thy*.42} L${735+thy*.18} ${816-thy*.36} Q${737+thy*.15} ${751-thy*.2} ${696+thy*.25} ${718-thy*.12}Z`);
-  moveHandle('tongue',tx,ty); moveHandle('jawOpening',500,690+jo*.3); moveHandle('lipRounding',320-lr*.28,520); moveHandle('velumOpening',765,410+vo*.7); moveHandle('suprahyoidTension',620+sh*1.05,724-sh*.65); moveHandle('thyrohyoidTension',748+thy*.45,782-thy*.72); moveHandle('larynxHeight',790,835-lh*1.2);
+  moveHandle('tongue',tx,ty); moveHandle('jawOpening',500,690+jo*.3); moveHandle('lipRounding',320-lr*.28,520); moveHandle('velumOpening',765,435.2-vo*.7); moveHandle('suprahyoidTension',620+sh*1.05,724-sh*.65); moveHandle('thyrohyoidTension',748+thy*.45,782-thy*.72); moveHandle('larynxHeight',790,734.2+lh*1.2);
   $('#jawGroup').setAttribute('transform',`rotate(${jo*.055-3} 352 618) translate(0 ${jo*.12})`);
   const rounding=lr/100;
   $('#lipsGroup').setAttribute('transform',`translate(${-rounding*18} 0) translate(334 520) scale(${1+rounding*.1} ${1-rounding*.12}) translate(-334 -520)`);
-  $('#larynxGroup').setAttribute('transform',`translate(0 ${48-lh*.96-thy*.14})`);
-  $('#velumGroup').setAttribute('transform',`rotate(${vo*.16-5} 715 370)`);
+  $('#larynxGroup').setAttribute('transform',`translate(0 ${7.68+(lh-42)*.96-thy*.14})`);
+  $('#velumGroup').setAttribute('transform',`rotate(${-2.12-(vo-18)*.16} 715 370)`);
   const hv=$('[data-control="tongue"] .handle-value'); if(hv)hv.textContent=`H ${Math.round(th)} · F ${Math.round(tf)}`;
   $$('[role="slider"].handle').forEach(h=>{const key=h.dataset.control;h.setAttribute('aria-valuenow',key==='tongue'?Math.round(th):Math.round(state[key]))});
   document.body.classList.toggle('playing',state.isPhonating); updateAudio(a);
@@ -473,8 +473,8 @@ function bindControls(){
   $('#resetButton').addEventListener('click',restoreOriginalParameters);
   $('#restoreVowelOriginal').addEventListener('click',restoreOriginalParameters);
   const svg=$('#tractSvg');
-  $$('.handle').forEach(h=>{h.addEventListener('pointerdown',e=>{dragControl=h.dataset.control;h.setPointerCapture(e.pointerId);e.preventDefault()});h.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const step=e.shiftKey?5:2,key=h.dataset.control;if(key==='tongue')setParam(e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness',(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*step+state[e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness']);else setParam(key,state[key]+(e.key==='ArrowUp'||e.key==='ArrowRight'?step:-step))})});
-  svg.addEventListener('pointermove',e=>{if(!dragControl)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());if(dragControl==='tongue'){setParam('tongueFrontness',(p.x-500)/2.2);setParam('tongueHeight',(600-p.y)/2)}else if(dragControl==='jawOpening')setParam('jawOpening',(p.y-690)/.3);else if(dragControl==='lipRounding')setParam('lipRounding',(320-p.x)/.28);else if(dragControl==='velumOpening')setParam('velumOpening',(p.y-410)/.7);else if(dragControl==='suprahyoidTension')setParam('suprahyoidTension',(p.x-620)/1.05);else if(dragControl==='thyrohyoidTension')setParam('thyrohyoidTension',(p.x-748)/.45);else if(dragControl==='larynxHeight')setParam('larynxHeight',(835-p.y)/1.2)});window.addEventListener('pointerup',()=>dragControl=null);
+  $$('.handle').forEach(h=>{h.addEventListener('pointerdown',e=>{dragControl=h.dataset.control;h.setPointerCapture(e.pointerId);e.preventDefault()});h.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const step=e.shiftKey?5:2,key=h.dataset.control;if(key==='tongue')setParam(e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness',(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*step+state[e.key==='ArrowUp'||e.key==='ArrowDown'?'tongueHeight':'tongueFrontness']);else {const increase=key==='larynxHeight'?(e.key==='ArrowDown'||e.key==='ArrowRight'):(e.key==='ArrowUp'||e.key==='ArrowRight');setParam(key,state[key]+(increase?step:-step))}})});
+  svg.addEventListener('pointermove',e=>{if(!dragControl)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());if(dragControl==='tongue'){setParam('tongueFrontness',(p.x-500)/2.2);setParam('tongueHeight',(600-p.y)/2)}else if(dragControl==='jawOpening')setParam('jawOpening',(p.y-690)/.3);else if(dragControl==='lipRounding')setParam('lipRounding',(320-p.x)/.28);else if(dragControl==='velumOpening')setParam('velumOpening',(435.2-p.y)/.7);else if(dragControl==='suprahyoidTension')setParam('suprahyoidTension',(p.x-620)/1.05);else if(dragControl==='thyrohyoidTension')setParam('thyrohyoidTension',(p.x-748)/.45);else if(dragControl==='larynxHeight')setParam('larynxHeight',(p.y-734.2)/1.2)});window.addEventListener('pointerup',()=>dragControl=null);
 }
 function showFormantExplanation(key){
   if(!FORMANT_EXPLANATIONS[key])return;

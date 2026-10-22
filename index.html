@@ -155,8 +155,8 @@
           <label class="control-row" data-key="thyrohyoidTension"><span><b>甲状舌骨肌</b><em>放松 — 喉位靠近舌骨</em></span><output>35</output><input type="range" min="0" max="100" value="35" aria-label="甲状舌骨肌"></label>
           <label class="control-row" data-key="jawOpening"><span><b>下颌开度</b><em>Jaw opening</em></span><output>72</output><input type="range" min="0" max="100" value="72" aria-label="下颌开度"></label>
           <label class="control-row" data-key="lipRounding"><span><b>唇部圆展</b><em>展唇 — 向前圆唇</em></span><output>22</output><input type="range" min="0" max="100" value="22" aria-label="唇部圆展"></label>
-          <label class="control-row" data-key="larynxHeight"><span><b>喉位</b><em>Larynx height</em></span><output>42</output><input type="range" min="0" max="100" value="42" aria-label="喉位"></label>
-          <label class="control-row" data-key="velumOpening"><span><b>软腭开度</b><em>Velum opening</em></span><output>18</output><input type="range" min="0" max="100" value="18" aria-label="软腭开度"></label>
+          <label class="control-row" data-key="larynxHeight" title="数值增大，图示喉位下降"><span><b>喉位 ↓</b><em>数值越大，喉位越低</em></span><output>42</output><input type="range" min="0" max="100" value="42" aria-label="喉位"></label>
+          <label class="control-row" data-key="velumOpening" title="数值增大，图示软腭上抬"><span><b>软腭上抬 ↑</b><em>数值越大，软腭越高</em></span><output>18</output><input type="range" min="0" max="100" value="18" aria-label="软腭上抬"></label>
         </div>
 
         <section class="parameter-comparison" aria-labelledby="comparisonTitle">
@@ -326,7 +326,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261022-original-parameters-1"></script>
+  <script src="./app.js?v=20261022-organ-directions-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261022-partial-vowels-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
