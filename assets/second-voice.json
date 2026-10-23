@@ -4,10 +4,782 @@
   "source": "bundled",
   "protected": true,
   "createdAt": "2026-10-18T09:06:11.779Z",
-  "f0": 788.08,
+  "f0": 392.68,
   "analysis": {
-    "f0": 788.08,
+    "f0": 392.68,
     "targetPitch": {
+      "midi": 67,
+      "note": "G4",
+      "noteName": "G",
+      "octave": 4,
+      "solfege": "Sol",
+      "hz": 391.99543598174927,
+      "landmark": "",
+      "exactMidi": 67.03020716040011,
+      "cents": 3
+    },
+    "vowels": {
+      "a": {
+        "f0": 397.65,
+        "measuredF0": 397.65,
+        "rawFrequency": 397.65,
+        "correctedFrequency": 397.65,
+        "manualOctave": 0,
+        "mcleodFrequency": 397.65,
+        "yinFrequency": 397.74,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.929,
+        "pitchFrames": 18,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 0.9523809523809523,
+        "pitchStdCents": 6.5,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 307.6251576240101,
+            "confidence": 0.8756554364953109
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 350.2196504165776,
+            "confidence": 0.722719471205014
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 393.5687805228003,
+            "confidence": 0.9193279193460538
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 396.7470215845435,
+            "confidence": 0.8581077532521617
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 399.43432627974784,
+            "confidence": 0.9382712281713753
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 396.3071285061719,
+            "confidence": 0.8588051005474809
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 398.5015113193869,
+            "confidence": 0.9735813123745035
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 397.76747858595303,
+            "confidence": 0.9581691550823274
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 396.455970370737,
+            "confidence": 0.9101473487736658
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 399.6241339760257,
+            "confidence": 0.9648640768147781
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 396.24215517758523,
+            "confidence": 0.8926359163032178
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 396.3391838749064,
+            "confidence": 0.89367420343683
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 396.6799285689841,
+            "confidence": 0.8910091900708698
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 398.00526260975334,
+            "confidence": 0.9619902563398623
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 397.8046664949499,
+            "confidence": 0.9427653467707426
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 396.8954052459944,
+            "confidence": 0.9291004389355004
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 398.63380586682973,
+            "confidence": 0.9507014115133153
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 397.52293266751406,
+            "confidence": 0.942131557341832
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 398.4776152741337,
+            "confidence": 0.9653843834148016
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 399.64115306690115,
+            "confidence": 0.9775040353666136
+          }
+        ],
+        "sampleRate": 48000,
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 840,
+        "f2": 1401,
+        "f3": 2511,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          9,
+          76,
+          122
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          5500,
+          5000,
+          4500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 23.333333333333332,
+          "tongueFrontness": 61.13636363636364,
+          "suprahyoidTension": 30,
+          "thyrohyoidTension": 35,
+          "jawOpening": 77,
+          "lipRounding": 14.821428571428571,
+          "larynxHeight": 57.56,
+          "velumOpening": 92
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "e": {
+        "f0": 392.68,
+        "measuredF0": 392.68,
+        "rawFrequency": 392.68,
+        "correctedFrequency": 392.68,
+        "manualOctave": 0,
+        "mcleodFrequency": 392.68,
+        "yinFrequency": 392.76,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.904,
+        "pitchFrames": 19,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 0.9047619047619048,
+        "pitchStdCents": 12.3,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 381.4432136881614,
+            "confidence": 0.9469605320613304
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 391.34175328554744,
+            "confidence": 0.947123903232434
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 392.68031787654417,
+            "confidence": 0.8993826005530495
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 392.0702559587174,
+            "confidence": 0.9309483428300396
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 393.12613238359637,
+            "confidence": 0.9244592194802189
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 391.6664543224807,
+            "confidence": 0.9378706527020805
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 392.7521682771314,
+            "confidence": 0.9275339923063837
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 392.3650525204843,
+            "confidence": 0.8911987435006681
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 394.49583370040534,
+            "confidence": 0.8471835367508408
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 393.46509136553135,
+            "confidence": 0.8926310065594218
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 393.50516786592266,
+            "confidence": 0.8600205493753351
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 395.3070034182672,
+            "confidence": 0.8380271711946818
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 392.72714664295586,
+            "confidence": 0.8987615904708782
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 392.11926571740906,
+            "confidence": 0.9059971403817509
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 393.6681074014299,
+            "confidence": 0.886768033522458
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 392.28891672539623,
+            "confidence": 0.8986921265493119
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 393.00131057608803,
+            "confidence": 0.8923581761121159
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 392.5908292948383,
+            "confidence": 0.9060787609939832
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 391.31152197324417,
+            "confidence": 0.9357393685377462
+          }
+        ],
+        "sampleRate": 48000,
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 791,
+        "f2": 1597,
+        "f3": 2282,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          7,
+          9,
+          19
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          4500,
+          5500,
+          5000
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 11.166666666666664,
+          "tongueFrontness": 53.13636363636364,
+          "suprahyoidTension": 34,
+          "thyrohyoidTension": 35,
+          "jawOpening": 84.625,
+          "lipRounding": 27.964285714285715,
+          "larynxHeight": 76.72,
+          "velumOpening": 93
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "i": {
+        "f0": 397.14,
+        "measuredF0": 397.14,
+        "rawFrequency": 397.14,
+        "correctedFrequency": 397.14,
+        "manualOctave": 0,
+        "mcleodFrequency": 397.14,
+        "yinFrequency": 397.23,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.89,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 7.4,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 397.35128445770965,
+            "confidence": 0.9054716284413491
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 398.147327202928,
+            "confidence": 0.9290671385876945
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 396.6741839292737,
+            "confidence": 0.8787836144875001
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 397.98437846188347,
+            "confidence": 0.9079953542782139
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 397.06690014551026,
+            "confidence": 0.8839688693219385
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 398.6663616555519,
+            "confidence": 0.9407528469805937
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 398.9946427383093,
+            "confidence": 0.9252363837657559
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 392.6748311832746,
+            "confidence": 0.8817352150088131
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 395.1869393086492,
+            "confidence": 0.8227921471264616
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 395.49649150028324,
+            "confidence": 0.8412367809203676
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 396.48238212721026,
+            "confidence": 0.8633901266073816
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 397.3310485127295,
+            "confidence": 0.8974070768865479
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 399.4927650541464,
+            "confidence": 0.9369755919457774
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 397.13738461061644,
+            "confidence": 0.8885885760248311
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 394.5968741335547,
+            "confidence": 0.8279013730959619
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 399.1074214934235,
+            "confidence": 0.9173391422610526
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 398.53855385374703,
+            "confidence": 0.9347794001622441
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 395.9384791020219,
+            "confidence": 0.91048210170823
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 395.5951070550457,
+            "confidence": 0.8550672237719903
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 399.02882702752623,
+            "confidence": 0.8607707182386115
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 397.02959617099896,
+            "confidence": 0.8809587869467264
+          }
+        ],
+        "sampleRate": 48000,
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": null,
+        "f2": null,
+        "f3": null,
+        "formantQuality": "uncertain",
+        "formantMethod": "多配置共振峰结果未形成一致轨迹",
+        "formantFrames": 0,
+        "params": {
+          "tongueHeight": 88,
+          "tongueFrontness": 90,
+          "suprahyoidTension": 38,
+          "thyrohyoidTension": 35,
+          "jawOpening": 24,
+          "lipRounding": 5,
+          "larynxHeight": 54,
+          "velumOpening": 94
+        },
+        "parameterSource": "neutral-teaching-anchor-no-reliable-formants"
+      },
+      "o": {
+        "f0": 389.4,
+        "measuredF0": 389.4,
+        "rawFrequency": 389.4,
+        "correctedFrequency": 389.4,
+        "manualOctave": 0,
+        "mcleodFrequency": 389.4,
+        "yinFrequency": 389.5,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.94,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 11.2,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 396.9592589583176,
+            "confidence": 0.8770583891122856
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 393.31957604308036,
+            "confidence": 0.882406467654475
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 387.2285617800004,
+            "confidence": 0.9410602317788651
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 384.98196199403054,
+            "confidence": 0.8973686541087206
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 386.0453483045049,
+            "confidence": 0.8976102417263809
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 388.64439042217583,
+            "confidence": 0.9784511815288165
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 389.0737081905098,
+            "confidence": 0.9838910206543647
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 390.3297420113144,
+            "confidence": 0.9380975261528895
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 389.7407740808918,
+            "confidence": 0.9645249177414845
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 391.8798678471478,
+            "confidence": 0.9021122826048444
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 388.9908974896342,
+            "confidence": 0.9316423615249664
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 387.3423219208015,
+            "confidence": 0.9398229278101454
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 390.86081106269353,
+            "confidence": 0.971536538376867
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 389.1432968850642,
+            "confidence": 0.9795948892694807
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 389.39536372085786,
+            "confidence": 0.9469732110772141
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 387.5493602411597,
+            "confidence": 0.9202529128388119
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 388.64941353731757,
+            "confidence": 0.9682212053329181
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 389.42041489131657,
+            "confidence": 0.9658414448919886
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 389.489207693274,
+            "confidence": 0.9685054332385242
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 390.45976998576015,
+            "confidence": 0.9662869416344227
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 391.8660936741707,
+            "confidence": 0.921916630487356
+          }
+        ],
+        "sampleRate": 48000,
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 796,
+        "f2": 1329,
+        "f3": 2674,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          8,
+          67,
+          10
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          5000,
+          4500,
+          5500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 2.6666666666666643,
+          "tongueFrontness": 53.5,
+          "suprahyoidTension": 31,
+          "thyrohyoidTension": 37,
+          "jawOpening": 85,
+          "lipRounding": 56.67857142857143,
+          "larynxHeight": 51.04,
+          "velumOpening": 92
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "u": {
+        "f0": 390.15,
+        "measuredF0": 390.15,
+        "rawFrequency": 390.15,
+        "correctedFrequency": 390.15,
+        "manualOctave": 0,
+        "mcleodFrequency": 390.15,
+        "yinFrequency": 390.25,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.937,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 10.1,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 388.99107857410314,
+            "confidence": 0.8859527413358808
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 390.7445102566697,
+            "confidence": 0.9804906888082418
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 390.14496910795077,
+            "confidence": 0.9127322453129771
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 389.4040582542663,
+            "confidence": 0.9500646021032554
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 388.46447486229266,
+            "confidence": 0.9602140296776819
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 392.62537623102605,
+            "confidence": 0.9437313508112621
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 387.4861475544263,
+            "confidence": 0.9033596550522853
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 387.76568058620984,
+            "confidence": 0.9430349642310092
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 389.0563133323133,
+            "confidence": 0.9650007306750797
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 390.14566416914107,
+            "confidence": 0.9786795953771367
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 390.13227583363954,
+            "confidence": 0.955439368552578
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 392.2577643058448,
+            "confidence": 0.9628076246555662
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 394.4657628481365,
+            "confidence": 0.8563960475232583
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 393.0040254467124,
+            "confidence": 0.9132313476435775
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 393.78104893194507,
+            "confidence": 0.8917924901772323
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 390.1448973563468,
+            "confidence": 0.9721962013118937
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 391.5098156987953,
+            "confidence": 0.9681714706628849
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 388.52361870733057,
+            "confidence": 0.9560789030178694
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 391.5605642042936,
+            "confidence": 0.9721970851737857
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 394.542354052543,
+            "confidence": 0.8956838281653917
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 393.83721582100145,
+            "confidence": 0.8996356137206076
+          }
+        ],
+        "sampleRate": 48000,
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 775,
+        "f2": 1227,
+        "f3": 2628,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          10,
+          16,
+          53
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          4500,
+          5000,
+          5500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 11.166666666666671,
+          "tongueFrontness": 45.95454545454545,
+          "suprahyoidTension": 36,
+          "thyrohyoidTension": 39,
+          "jawOpening": 78.125,
+          "lipRounding": 73.17857142857143,
+          "larynxHeight": 46.879999999999995,
+          "velumOpening": 94
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      }
+    },
+    "method": "MPM + YIN 连续多帧独立检测；多配置 LPC 质量核验；手动调整单独记录",
+    "pitchAlgorithm": "mpm-yin-track-v9",
+    "parameterModelVersion": 3,
+    "targetPitchOrigin": "estimated-from-existing-recordings",
+    "originalRecordingTarget": {
       "midi": 79,
       "note": "G5",
       "noteName": "G",
@@ -15,243 +787,1023 @@
       "solfege": "Sol",
       "hz": 783.9908719634985,
       "landmark": ""
-    },
-    "vowels": {
-      "a": {
-        "f0": 796.85,
-        "rawFrequency": 398.42,
-        "correctedFrequency": 796.85,
-        "mcleodFrequency": 398.41,
-        "yinFrequency": 398.42,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.972,
-        "pitchFrames": 3,
-        "sampleRate": 48000,
-        "f1": 1080,
-        "f2": 1200,
-        "f3": 3170,
-        "referencePitchCents": 28,
-        "targetMidi": 79,
-        "params": {
-          "tongueHeight": 0,
-          "tongueFrontness": 52,
-          "suprahyoidTension": 30,
-          "thyrohyoidTension": 35,
-          "jawOpening": 100,
-          "lipRounding": 22,
-          "larynxHeight": 68.8,
-          "velumOpening": 8
-        }
-      },
-      "e": {
-        "f0": 788.08,
-        "rawFrequency": 394.04,
-        "correctedFrequency": 788.08,
-        "mcleodFrequency": 394.02,
-        "yinFrequency": 394.04,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.946,
-        "pitchFrames": 5,
-        "sampleRate": 48000,
-        "f1": 450,
-        "f2": 1550,
-        "f3": 3550,
-        "referencePitchCents": 9,
-        "targetMidi": 79,
-        "params": {
-          "tongueHeight": 68,
-          "tongueFrontness": 51,
-          "suprahyoidTension": 34,
-          "thyrohyoidTension": 35,
-          "jawOpening": 42,
-          "lipRounding": 29.642857142857142,
-          "larynxHeight": 74,
-          "velumOpening": 7
-        }
-      },
-      "i": {
-        "f0": 791.31,
-        "rawFrequency": 395.66,
-        "correctedFrequency": 791.31,
-        "mcleodFrequency": 395.64,
-        "yinFrequency": 395.66,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.91,
-        "pitchFrames": 3,
-        "sampleRate": 48000,
-        "f1": 300,
-        "f2": 3070,
-        "f3": 3000,
-        "referencePitchCents": 16,
-        "targetMidi": 79,
-        "params": {
-          "tongueHeight": 88,
-          "tongueFrontness": 100,
-          "suprahyoidTension": 38,
-          "thyrohyoidTension": 35,
-          "jawOpening": 24,
-          "lipRounding": 0,
-          "larynxHeight": 46,
-          "velumOpening": 6
-        }
-      },
-      "o": {
-        "f0": 777.49,
-        "rawFrequency": 388.74,
-        "correctedFrequency": 777.49,
-        "mcleodFrequency": 388.74,
-        "yinFrequency": 388.74,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.973,
-        "pitchFrames": 5,
-        "sampleRate": 48000,
-        "f1": 970,
-        "f2": 3030,
-        "f3": 3800,
-        "referencePitchCents": -14,
-        "targetMidi": 79,
-        "params": {
-          "tongueHeight": 0,
-          "tongueFrontness": 100,
-          "suprahyoidTension": 31,
-          "thyrohyoidTension": 37,
-          "jawOpening": 100,
-          "lipRounding": 0,
-          "larynxHeight": 94,
-          "velumOpening": 8
-        }
-      },
-      "u": {
-        "f0": 781.27,
-        "rawFrequency": 390.64,
-        "correctedFrequency": 781.27,
-        "mcleodFrequency": 390.61,
-        "yinFrequency": 390.64,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.976,
-        "pitchFrames": 5,
-        "sampleRate": 48000,
-        "f1": 980,
-        "f2": 3040,
-        "f3": 3490,
-        "referencePitchCents": -6,
-        "targetMidi": 79,
-        "params": {
-          "tongueHeight": 0,
-          "tongueFrontness": 100,
-          "suprahyoidTension": 36,
-          "thyrohyoidTension": 39,
-          "jawOpening": 100,
-          "lipRounding": 8.42857142857143,
-          "larynxHeight": 87.6,
-          "velumOpening": 6
-        }
-      }
-    },
-    "method": "McLeod MPM + YIN + 奇偶谐波频谱证据 + 可见的目标八度辅助；浏览器 LPC 教学估计",
-    "pitchAlgorithm": "mcleod-yin-octave-assist-v8"
+    }
   },
   "vowels": {
     "a": {
       "audioPath": "./assets/second-a.wav",
       "duration": 6,
       "analysis": {
-        "f0": 796.85,
-        "rawFrequency": 398.42,
-        "correctedFrequency": 796.85,
-        "mcleodFrequency": 398.41,
-        "yinFrequency": 398.42,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.972,
-        "pitchFrames": 3,
+        "f0": 397.65,
+        "measuredF0": 397.65,
+        "rawFrequency": 397.65,
+        "correctedFrequency": 397.65,
+        "manualOctave": 0,
+        "mcleodFrequency": 397.65,
+        "yinFrequency": 397.74,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.929,
+        "pitchFrames": 18,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 0.9523809523809523,
+        "pitchStdCents": 6.5,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 307.6251576240101,
+            "confidence": 0.8756554364953109
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 350.2196504165776,
+            "confidence": 0.722719471205014
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 393.5687805228003,
+            "confidence": 0.9193279193460538
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 396.7470215845435,
+            "confidence": 0.8581077532521617
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 399.43432627974784,
+            "confidence": 0.9382712281713753
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 396.3071285061719,
+            "confidence": 0.8588051005474809
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 398.5015113193869,
+            "confidence": 0.9735813123745035
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 397.76747858595303,
+            "confidence": 0.9581691550823274
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 396.455970370737,
+            "confidence": 0.9101473487736658
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 399.6241339760257,
+            "confidence": 0.9648640768147781
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 396.24215517758523,
+            "confidence": 0.8926359163032178
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 396.3391838749064,
+            "confidence": 0.89367420343683
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 396.6799285689841,
+            "confidence": 0.8910091900708698
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 398.00526260975334,
+            "confidence": 0.9619902563398623
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 397.8046664949499,
+            "confidence": 0.9427653467707426
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 396.8954052459944,
+            "confidence": 0.9291004389355004
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 398.63380586682973,
+            "confidence": 0.9507014115133153
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 397.52293266751406,
+            "confidence": 0.942131557341832
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 398.4776152741337,
+            "confidence": 0.9653843834148016
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 399.64115306690115,
+            "confidence": 0.9775040353666136
+          }
+        ],
         "sampleRate": 48000,
-        "f1": 1080,
-        "f2": 1200,
-        "f3": 3170,
-        "referencePitchCents": 28,
-        "targetMidi": 79
-      }
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 840,
+        "f2": 1401,
+        "f3": 2511,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          9,
+          76,
+          122
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          5500,
+          5000,
+          4500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 23.333333333333332,
+          "tongueFrontness": 61.13636363636364,
+          "suprahyoidTension": 30,
+          "thyrohyoidTension": 35,
+          "jawOpening": 77,
+          "lipRounding": 14.821428571428571,
+          "larynxHeight": 57.56,
+          "velumOpening": 92
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "analysisHistory": [
+        {
+          "f0": 796.85,
+          "rawFrequency": 398.42,
+          "correctedFrequency": 796.85,
+          "mcleodFrequency": 398.41,
+          "yinFrequency": 398.42,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.972,
+          "pitchFrames": 3,
+          "sampleRate": 48000,
+          "f1": 1080,
+          "f2": 1200,
+          "f3": 3170,
+          "referencePitchCents": 28,
+          "targetMidi": 79
+        }
+      ]
     },
     "e": {
       "audioPath": "./assets/second-e.wav",
       "duration": 6,
       "analysis": {
-        "f0": 788.08,
-        "rawFrequency": 394.04,
-        "correctedFrequency": 788.08,
-        "mcleodFrequency": 394.02,
-        "yinFrequency": 394.04,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.946,
-        "pitchFrames": 5,
+        "f0": 392.68,
+        "measuredF0": 392.68,
+        "rawFrequency": 392.68,
+        "correctedFrequency": 392.68,
+        "manualOctave": 0,
+        "mcleodFrequency": 392.68,
+        "yinFrequency": 392.76,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.904,
+        "pitchFrames": 19,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 0.9047619047619048,
+        "pitchStdCents": 12.3,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": null,
+            "confidence": 0
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 381.4432136881614,
+            "confidence": 0.9469605320613304
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 391.34175328554744,
+            "confidence": 0.947123903232434
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 392.68031787654417,
+            "confidence": 0.8993826005530495
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 392.0702559587174,
+            "confidence": 0.9309483428300396
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 393.12613238359637,
+            "confidence": 0.9244592194802189
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 391.6664543224807,
+            "confidence": 0.9378706527020805
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 392.7521682771314,
+            "confidence": 0.9275339923063837
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 392.3650525204843,
+            "confidence": 0.8911987435006681
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 394.49583370040534,
+            "confidence": 0.8471835367508408
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 393.46509136553135,
+            "confidence": 0.8926310065594218
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 393.50516786592266,
+            "confidence": 0.8600205493753351
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 395.3070034182672,
+            "confidence": 0.8380271711946818
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 392.72714664295586,
+            "confidence": 0.8987615904708782
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 392.11926571740906,
+            "confidence": 0.9059971403817509
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 393.6681074014299,
+            "confidence": 0.886768033522458
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 392.28891672539623,
+            "confidence": 0.8986921265493119
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 393.00131057608803,
+            "confidence": 0.8923581761121159
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 392.5908292948383,
+            "confidence": 0.9060787609939832
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 391.31152197324417,
+            "confidence": 0.9357393685377462
+          }
+        ],
         "sampleRate": 48000,
-        "f1": 450,
-        "f2": 1550,
-        "f3": 3550,
-        "referencePitchCents": 9,
-        "targetMidi": 79
-      }
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 791,
+        "f2": 1597,
+        "f3": 2282,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          7,
+          9,
+          19
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          4500,
+          5500,
+          5000
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 11.166666666666664,
+          "tongueFrontness": 53.13636363636364,
+          "suprahyoidTension": 34,
+          "thyrohyoidTension": 35,
+          "jawOpening": 84.625,
+          "lipRounding": 27.964285714285715,
+          "larynxHeight": 76.72,
+          "velumOpening": 93
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "analysisHistory": [
+        {
+          "f0": 788.08,
+          "rawFrequency": 394.04,
+          "correctedFrequency": 788.08,
+          "mcleodFrequency": 394.02,
+          "yinFrequency": 394.04,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.946,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 450,
+          "f2": 1550,
+          "f3": 3550,
+          "referencePitchCents": 9,
+          "targetMidi": 79
+        }
+      ]
     },
     "i": {
       "audioPath": "./assets/second-i.wav",
       "duration": 6,
       "analysis": {
-        "f0": 791.31,
-        "rawFrequency": 395.66,
-        "correctedFrequency": 791.31,
-        "mcleodFrequency": 395.64,
-        "yinFrequency": 395.66,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.91,
-        "pitchFrames": 3,
+        "f0": 397.14,
+        "measuredF0": 397.14,
+        "rawFrequency": 397.14,
+        "correctedFrequency": 397.14,
+        "manualOctave": 0,
+        "mcleodFrequency": 397.14,
+        "yinFrequency": 397.23,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.89,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 7.4,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 397.35128445770965,
+            "confidence": 0.9054716284413491
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 398.147327202928,
+            "confidence": 0.9290671385876945
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 396.6741839292737,
+            "confidence": 0.8787836144875001
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 397.98437846188347,
+            "confidence": 0.9079953542782139
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 397.06690014551026,
+            "confidence": 0.8839688693219385
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 398.6663616555519,
+            "confidence": 0.9407528469805937
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 398.9946427383093,
+            "confidence": 0.9252363837657559
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 392.6748311832746,
+            "confidence": 0.8817352150088131
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 395.1869393086492,
+            "confidence": 0.8227921471264616
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 395.49649150028324,
+            "confidence": 0.8412367809203676
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 396.48238212721026,
+            "confidence": 0.8633901266073816
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 397.3310485127295,
+            "confidence": 0.8974070768865479
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 399.4927650541464,
+            "confidence": 0.9369755919457774
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 397.13738461061644,
+            "confidence": 0.8885885760248311
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 394.5968741335547,
+            "confidence": 0.8279013730959619
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 399.1074214934235,
+            "confidence": 0.9173391422610526
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 398.53855385374703,
+            "confidence": 0.9347794001622441
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 395.9384791020219,
+            "confidence": 0.91048210170823
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 395.5951070550457,
+            "confidence": 0.8550672237719903
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 399.02882702752623,
+            "confidence": 0.8607707182386115
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 397.02959617099896,
+            "confidence": 0.8809587869467264
+          }
+        ],
         "sampleRate": 48000,
-        "f1": 300,
-        "f2": 3070,
-        "f3": 3000,
-        "referencePitchCents": 16,
-        "targetMidi": 79
-      }
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": null,
+        "f2": null,
+        "f3": null,
+        "formantQuality": "uncertain",
+        "formantMethod": "多配置共振峰结果未形成一致轨迹",
+        "formantFrames": 0,
+        "params": {
+          "tongueHeight": 88,
+          "tongueFrontness": 90,
+          "suprahyoidTension": 38,
+          "thyrohyoidTension": 35,
+          "jawOpening": 24,
+          "lipRounding": 5,
+          "larynxHeight": 54,
+          "velumOpening": 94
+        },
+        "parameterSource": "neutral-teaching-anchor-no-reliable-formants"
+      },
+      "analysisHistory": [
+        {
+          "f0": 791.31,
+          "rawFrequency": 395.66,
+          "correctedFrequency": 791.31,
+          "mcleodFrequency": 395.64,
+          "yinFrequency": 395.66,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.91,
+          "pitchFrames": 3,
+          "sampleRate": 48000,
+          "f1": 300,
+          "f2": 3070,
+          "f3": 3000,
+          "referencePitchCents": 16,
+          "targetMidi": 79
+        }
+      ]
     },
     "o": {
       "audioPath": "./assets/second-o.wav",
       "duration": 6,
       "analysis": {
-        "f0": 777.49,
-        "rawFrequency": 388.74,
-        "correctedFrequency": 777.49,
-        "mcleodFrequency": 388.74,
-        "yinFrequency": 388.74,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.973,
-        "pitchFrames": 5,
+        "f0": 389.4,
+        "measuredF0": 389.4,
+        "rawFrequency": 389.4,
+        "correctedFrequency": 389.4,
+        "manualOctave": 0,
+        "mcleodFrequency": 389.4,
+        "yinFrequency": 389.5,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.94,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 11.2,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 396.9592589583176,
+            "confidence": 0.8770583891122856
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 393.31957604308036,
+            "confidence": 0.882406467654475
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 387.2285617800004,
+            "confidence": 0.9410602317788651
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 384.98196199403054,
+            "confidence": 0.8973686541087206
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 386.0453483045049,
+            "confidence": 0.8976102417263809
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 388.64439042217583,
+            "confidence": 0.9784511815288165
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 389.0737081905098,
+            "confidence": 0.9838910206543647
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 390.3297420113144,
+            "confidence": 0.9380975261528895
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 389.7407740808918,
+            "confidence": 0.9645249177414845
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 391.8798678471478,
+            "confidence": 0.9021122826048444
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 388.9908974896342,
+            "confidence": 0.9316423615249664
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 387.3423219208015,
+            "confidence": 0.9398229278101454
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 390.86081106269353,
+            "confidence": 0.971536538376867
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 389.1432968850642,
+            "confidence": 0.9795948892694807
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 389.39536372085786,
+            "confidence": 0.9469732110772141
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 387.5493602411597,
+            "confidence": 0.9202529128388119
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 388.64941353731757,
+            "confidence": 0.9682212053329181
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 389.42041489131657,
+            "confidence": 0.9658414448919886
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 389.489207693274,
+            "confidence": 0.9685054332385242
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 390.45976998576015,
+            "confidence": 0.9662869416344227
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 391.8660936741707,
+            "confidence": 0.921916630487356
+          }
+        ],
         "sampleRate": 48000,
-        "f1": 970,
-        "f2": 3030,
-        "f3": 3800,
-        "referencePitchCents": -14,
-        "targetMidi": 79
-      }
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 796,
+        "f2": 1329,
+        "f3": 2674,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          8,
+          67,
+          10
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          5000,
+          4500,
+          5500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 2.6666666666666643,
+          "tongueFrontness": 53.5,
+          "suprahyoidTension": 31,
+          "thyrohyoidTension": 37,
+          "jawOpening": 85,
+          "lipRounding": 56.67857142857143,
+          "larynxHeight": 51.04,
+          "velumOpening": 92
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "analysisHistory": [
+        {
+          "f0": 777.49,
+          "rawFrequency": 388.74,
+          "correctedFrequency": 777.49,
+          "mcleodFrequency": 388.74,
+          "yinFrequency": 388.74,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.973,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 970,
+          "f2": 3030,
+          "f3": 3800,
+          "referencePitchCents": -14,
+          "targetMidi": 79
+        }
+      ]
     },
     "u": {
       "audioPath": "./assets/second-u.wav",
       "duration": 6,
       "analysis": {
-        "f0": 781.27,
-        "rawFrequency": 390.64,
-        "correctedFrequency": 781.27,
-        "mcleodFrequency": 390.61,
-        "yinFrequency": 390.64,
-        "octaveCorrection": "target-octave-assist+1",
-        "pitchConfidence": 0.976,
-        "pitchFrames": 5,
+        "f0": 390.15,
+        "measuredF0": 390.15,
+        "rawFrequency": 390.15,
+        "correctedFrequency": 390.15,
+        "manualOctave": 0,
+        "mcleodFrequency": 390.15,
+        "yinFrequency": 390.25,
+        "octaveCorrection": "none",
+        "pitchConfidence": 0.937,
+        "pitchFrames": 21,
+        "pitchTotalFrames": 21,
+        "pitchVoicedRatio": 1,
+        "pitchStdCents": 10.1,
+        "pitchTrace": [
+          {
+            "timeSeconds": 0.9,
+            "f0": 388.99107857410314,
+            "confidence": 0.8859527413358808
+          },
+          {
+            "timeSeconds": 1.11,
+            "f0": 390.7445102566697,
+            "confidence": 0.9804906888082418
+          },
+          {
+            "timeSeconds": 1.3199375,
+            "f0": 390.14496910795077,
+            "confidence": 0.9127322453129771
+          },
+          {
+            "timeSeconds": 1.53,
+            "f0": 389.4040582542663,
+            "confidence": 0.9500646021032554
+          },
+          {
+            "timeSeconds": 1.7399375,
+            "f0": 388.46447486229266,
+            "confidence": 0.9602140296776819
+          },
+          {
+            "timeSeconds": 1.9499375,
+            "f0": 392.62537623102605,
+            "confidence": 0.9437313508112621
+          },
+          {
+            "timeSeconds": 2.16,
+            "f0": 387.4861475544263,
+            "confidence": 0.9033596550522853
+          },
+          {
+            "timeSeconds": 2.37,
+            "f0": 387.76568058620984,
+            "confidence": 0.9430349642310092
+          },
+          {
+            "timeSeconds": 2.5799375,
+            "f0": 389.0563133323133,
+            "confidence": 0.9650007306750797
+          },
+          {
+            "timeSeconds": 2.79,
+            "f0": 390.14566416914107,
+            "confidence": 0.9786795953771367
+          },
+          {
+            "timeSeconds": 3,
+            "f0": 390.13227583363954,
+            "confidence": 0.955439368552578
+          },
+          {
+            "timeSeconds": 3.2099375,
+            "f0": 392.2577643058448,
+            "confidence": 0.9628076246555662
+          },
+          {
+            "timeSeconds": 3.4199375,
+            "f0": 394.4657628481365,
+            "confidence": 0.8563960475232583
+          },
+          {
+            "timeSeconds": 3.63,
+            "f0": 393.0040254467124,
+            "confidence": 0.9132313476435775
+          },
+          {
+            "timeSeconds": 3.8399375,
+            "f0": 393.78104893194507,
+            "confidence": 0.8917924901772323
+          },
+          {
+            "timeSeconds": 4.05,
+            "f0": 390.1448973563468,
+            "confidence": 0.9721962013118937
+          },
+          {
+            "timeSeconds": 4.26,
+            "f0": 391.5098156987953,
+            "confidence": 0.9681714706628849
+          },
+          {
+            "timeSeconds": 4.47,
+            "f0": 388.52361870733057,
+            "confidence": 0.9560789030178694
+          },
+          {
+            "timeSeconds": 4.68,
+            "f0": 391.5605642042936,
+            "confidence": 0.9721970851737857
+          },
+          {
+            "timeSeconds": 4.89,
+            "f0": 394.542354052543,
+            "confidence": 0.8956838281653917
+          },
+          {
+            "timeSeconds": 5.1,
+            "f0": 393.83721582100145,
+            "confidence": 0.8996356137206076
+          }
+        ],
         "sampleRate": 48000,
-        "f1": 980,
-        "f2": 3040,
-        "f3": 3490,
-        "referencePitchCents": -6,
-        "targetMidi": 79
-      }
+        "analysisSampleRate": 16000,
+        "pitchAlgorithm": "mpm-yin-track-v9",
+        "parameterModelVersion": 3,
+        "f1": 775,
+        "f2": 1227,
+        "f3": 2628,
+        "formantQuality": "stable",
+        "formantStdHz": [
+          10,
+          16,
+          53
+        ],
+        "formantFrames": 5,
+        "formantConfigurations": [
+          4500,
+          5000,
+          5500
+        ],
+        "formantMethod": "多上限配置、5帧LPC一致性核验（声学估计）",
+        "params": {
+          "tongueHeight": 11.166666666666671,
+          "tongueFrontness": 45.95454545454545,
+          "suprahyoidTension": 36,
+          "thyrohyoidTension": 39,
+          "jawOpening": 78.125,
+          "lipRounding": 73.17857142857143,
+          "larynxHeight": 46.879999999999995,
+          "velumOpening": 94
+        },
+        "parameterSource": "acoustic-teaching-mapping"
+      },
+      "analysisHistory": [
+        {
+          "f0": 781.27,
+          "rawFrequency": 390.64,
+          "correctedFrequency": 781.27,
+          "mcleodFrequency": 390.61,
+          "yinFrequency": 390.64,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.976,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 980,
+          "f2": 3040,
+          "f3": 3490,
+          "referencePitchCents": -6,
+          "targetMidi": 79
+        }
+      ]
     }
-  }
+  },
+  "analysisHistory": [
+    {
+      "f0": 788.08,
+      "targetPitch": {
+        "midi": 79,
+        "note": "G5",
+        "noteName": "G",
+        "octave": 5,
+        "solfege": "Sol",
+        "hz": 783.9908719634985,
+        "landmark": ""
+      },
+      "vowels": {
+        "a": {
+          "f0": 796.85,
+          "rawFrequency": 398.42,
+          "correctedFrequency": 796.85,
+          "mcleodFrequency": 398.41,
+          "yinFrequency": 398.42,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.972,
+          "pitchFrames": 3,
+          "sampleRate": 48000,
+          "f1": 1080,
+          "f2": 1200,
+          "f3": 3170,
+          "referencePitchCents": 28,
+          "targetMidi": 79,
+          "params": {
+            "tongueHeight": 0,
+            "tongueFrontness": 52,
+            "suprahyoidTension": 30,
+            "thyrohyoidTension": 35,
+            "jawOpening": 100,
+            "lipRounding": 22,
+            "larynxHeight": 68.8,
+            "velumOpening": 8
+          }
+        },
+        "e": {
+          "f0": 788.08,
+          "rawFrequency": 394.04,
+          "correctedFrequency": 788.08,
+          "mcleodFrequency": 394.02,
+          "yinFrequency": 394.04,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.946,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 450,
+          "f2": 1550,
+          "f3": 3550,
+          "referencePitchCents": 9,
+          "targetMidi": 79,
+          "params": {
+            "tongueHeight": 68,
+            "tongueFrontness": 51,
+            "suprahyoidTension": 34,
+            "thyrohyoidTension": 35,
+            "jawOpening": 42,
+            "lipRounding": 29.642857142857142,
+            "larynxHeight": 74,
+            "velumOpening": 7
+          }
+        },
+        "i": {
+          "f0": 791.31,
+          "rawFrequency": 395.66,
+          "correctedFrequency": 791.31,
+          "mcleodFrequency": 395.64,
+          "yinFrequency": 395.66,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.91,
+          "pitchFrames": 3,
+          "sampleRate": 48000,
+          "f1": 300,
+          "f2": 3070,
+          "f3": 3000,
+          "referencePitchCents": 16,
+          "targetMidi": 79,
+          "params": {
+            "tongueHeight": 88,
+            "tongueFrontness": 100,
+            "suprahyoidTension": 38,
+            "thyrohyoidTension": 35,
+            "jawOpening": 24,
+            "lipRounding": 0,
+            "larynxHeight": 46,
+            "velumOpening": 6
+          }
+        },
+        "o": {
+          "f0": 777.49,
+          "rawFrequency": 388.74,
+          "correctedFrequency": 777.49,
+          "mcleodFrequency": 388.74,
+          "yinFrequency": 388.74,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.973,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 970,
+          "f2": 3030,
+          "f3": 3800,
+          "referencePitchCents": -14,
+          "targetMidi": 79,
+          "params": {
+            "tongueHeight": 0,
+            "tongueFrontness": 100,
+            "suprahyoidTension": 31,
+            "thyrohyoidTension": 37,
+            "jawOpening": 100,
+            "lipRounding": 0,
+            "larynxHeight": 94,
+            "velumOpening": 8
+          }
+        },
+        "u": {
+          "f0": 781.27,
+          "rawFrequency": 390.64,
+          "correctedFrequency": 781.27,
+          "mcleodFrequency": 390.61,
+          "yinFrequency": 390.64,
+          "octaveCorrection": "target-octave-assist+1",
+          "pitchConfidence": 0.976,
+          "pitchFrames": 5,
+          "sampleRate": 48000,
+          "f1": 980,
+          "f2": 3040,
+          "f3": 3490,
+          "referencePitchCents": -6,
+          "targetMidi": 79,
+          "params": {
+            "tongueHeight": 0,
+            "tongueFrontness": 100,
+            "suprahyoidTension": 36,
+            "thyrohyoidTension": 39,
+            "jawOpening": 100,
+            "lipRounding": 8.42857142857143,
+            "larynxHeight": 87.6,
+            "velumOpening": 6
+          }
+        }
+      },
+      "method": "McLeod MPM + YIN + 奇偶谐波频谱证据 + 可见的目标八度辅助；浏览器 LPC 教学估计",
+      "pitchAlgorithm": "mcleod-yin-octave-assist-v8"
+    }
+  ],
+  "parameterModelVersion": 3,
+  "reanalyzedAt": "2026-10-23T08:43:49.991Z"
 }
-
