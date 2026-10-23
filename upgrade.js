@@ -50,24 +50,36 @@ function analyzeVoiceSample(buffer,vowel,expectedFrequency=recordingTargetPitch.
 }
 async function analyzeVoiceSampleAsync(buffer,vowel,target,options={}){const client=new PitchWorkerClient();try{const pitch=await client.run('analyze',analysisChannel(buffer),buffer.sampleRate);return analyzeVoiceSample(buffer,vowel,target,{...options,pitch})}finally{client.close()}}
 async function validateSample(vowel,file){
-  const card=$(`.sample-card[data-vowel="${vowel}"]`),msg=card.querySelector('small');card.classList.remove('ready','error');if(!file)return;
-  personalSamples[vowel]=null;setPreviewSample(vowel,file);persistVoiceDraft();let ctx,ownsContext=false;
+  if(!file)return false;
+  const card=$(`.sample-card[data-vowel="${vowel}"]`),msg=card.querySelector('small'),oldMessage=msg.textContent,oldReady=card.classList.contains('ready'),oldError=card.classList.contains('error'),ownsProcessing=recordingPhase==='idle';
+  if(ownsProcessing){recordingPhase='processing';setRecordButtons(card.querySelector('.record'),'截取中…')}
+  $('#saveVoicePack').disabled=true;
+  let ctx,ownsContext=false,confirmed=false;
   const target={...recordingTargetPitch},shift=manualOctave;
   try{
     ownsContext=!audio?.ctx;ctx=audio?.ctx||new (window.AudioContext||window.webkitAudioContext)();
-    const buffer=await ctx.decodeAudioData(await file.arrayBuffer()),duration=buffer.duration,data=analysisChannel(buffer),quality=sampleQuality(data),{peak,rms}=quality;
-    if(duration<2.5||duration>7)throw Error(`时长 ${duration.toFixed(1)} 秒，请保持3—6秒后重新录制`);
-    if(quality.clippedSamples)throw Error('检测到削波，请降低录音音量后重新录制');
-    if(rms<.015)throw Error('音量过低，请靠近麦克风重新录制');
-    msg.textContent='正在分析连续发声的音高与质量…';
+    let buffer=await ctx.decodeAudioData(await file.arrayBuffer());
+    if(!$('#voiceDialog').open)return false;
+    stopSamplePreview();
+    const selection=await VoiceTrim.choose(buffer,vowel);
+    if(!selection){msg.textContent=oldMessage;card.classList.toggle('ready',oldReady);card.classList.toggle('error',oldError);return false}
+    if(!$('#voiceDialog').open||recordingTargetPitch.midi!==target.midi)return false;
+    confirmed=true;file=selection.file;buffer=await ctx.decodeAudioData(await file.arrayBuffer());
+    personalSamples[vowel]=null;setPreviewSample(vowel,file);card.classList.remove('ready','error');persistVoiceDraft();
+    const duration=buffer.duration,data=analysisChannel(buffer),quality=sampleQuality(data),{peak,rms}=quality;
+    if(duration<.999||duration>7.001)throw Error('请截取 1—7 秒连续元音，建议至少保留 2 秒');
+    if(quality.clippedSamples)throw Error('选中片段存在削波，请降低录音音量重新录制');
+    if(rms<.015)throw Error('选中片段音量过低，请重新选取或靠近麦克风录制');
+    msg.textContent='正在分析选中片段的音高与质量…';
     const analysis=await analyzeVoiceSampleAsync(buffer,vowel,target.hz,{manualOctave:shift}),pitchCents=Math.round(1200*Math.log2(analysis.f0/target.hz)),detected=PitchCore.frequencyToPitch(analysis.f0);
-    if(recordingTargetPitch.midi!==target.midi)throw Error('分析期间目标音高已改变，请重新导入本段录音');
-    updatePitchDebug({rawFrequency:analysis.rawFrequency,correctedFrequency:analysis.correctedFrequency,confidence:analysis.pitchConfidence,source:`录音 [${vowel}] · ${analysis.pitchFrames}/${analysis.pitchTotalFrames} 帧`,sampleRate:analysis.sampleRate,duration,detector:'MPM + YIN 多帧独立检测'+(shift?' · 手动调整':'')});
+    if(!$('#voiceDialog').open||recordingTargetPitch.midi!==target.midi)throw Error('分析期间录音窗口或目标音高已改变，请重试');
+    updatePitchDebug({rawFrequency:analysis.rawFrequency,correctedFrequency:analysis.correctedFrequency,confidence:analysis.pitchConfidence,source:`选中录音 [${vowel}] · ${analysis.pitchFrames}/${analysis.pitchTotalFrames} 帧`,sampleRate:analysis.sampleRate,duration,detector:'MPM + YIN 多帧独立检测'});
     if(Math.abs(pitchCents)>50)throw Error(`分析为 ${detected.note}（${analysis.f0.toFixed(2)} Hz），与所选 ${target.note} 相差 ${pitchCents>0?'+':''}${pitchCents} 音分`);
-    analysis.referencePitchCents=pitchCents;analysis.targetMidi=target.midi;personalSamples[vowel]={blob:file,buffer,duration,peak,rms,analysis};card.classList.add('ready');
-    msg.textContent=`${duration.toFixed(1)}秒 · ${detected.note} ${analysis.f0.toFixed(2)} Hz · ${analysis.pitchFrames}个有效帧 · ${analysis.formantQuality==='stable'?'共振峰可观察':'共振峰暂不作为构型依据'}`;
-  }catch(err){personalSamples[vowel]=null;card.classList.add('error');msg.textContent=`${err.message}；原录音保留，可试听或重试`}
-  finally{if(ownsContext&&ctx)await ctx.close().catch(()=>{});updateVoiceSave()}
+    analysis.trim=selection.trim;analysis.referencePitchCents=pitchCents;analysis.targetMidi=target.midi;personalSamples[vowel]={blob:file,buffer,duration,peak,rms,analysis};card.classList.add('ready');
+    msg.textContent=`已截取 ${duration.toFixed(2)}秒 · ${detected.note} ${analysis.f0.toFixed(2)} Hz · ${analysis.pitchFrames}个有效帧 · ${analysis.formantQuality==='stable'?'共振峰可观察':'共振峰暂不作为构型依据'}`;
+    return true;
+  }catch(err){if(confirmed){personalSamples[vowel]=null;card.classList.add('error')}msg.textContent=`${err.message}；可试听后重新截取或录制`;return false}
+  finally{if(ownsContext&&ctx)await ctx.close().catch(()=>{});if(ownsProcessing){recordingPhase='idle';setRecordButtons(null)}updateVoiceSave()}
 }
 function startRecordingMeter(stream){
   stopRecordingMeter();const Context=window.AudioContext||window.webkitAudioContext,canvas=$('#recordingWaveform');if(!Context||!canvas)return;

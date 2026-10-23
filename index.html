@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="20261023-release-2">
+  <meta name="application-version" content="20261024-release-1">
   <meta name="theme-color" content="#eaf2f8">
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="./interaction-controls.css?v=20261022-original-parameters-1">
   <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
   <link rel="stylesheet" href="./upgrade.css?v=20261023-release-2">
+  <link rel="stylesheet" href="./speech-portrait.css?v=20261023-speech-4">
+  <link rel="stylesheet" href="./voice-trim.css?v=20261024-trim-1">
 </head>
 <body>
   <div class="app-shell">
@@ -48,6 +50,7 @@
         </div>
         <button class="button ghost" id="openVoiceLab"><span class="btn-plus">+</span>添加声线</button>
         <button class="icon-button" id="openInfo" aria-label="查看使用说明">i</button>
+        <button class="button ghost speech-entry" id="openSpeechPortrait" type="button"><svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 11h2l2-6 3 10 3-12 3 10 2-4h1"/></svg>说话音高测试</button>
       </div>
     </header>
 
@@ -329,11 +332,16 @@
   <script src="./three.min.js"></script>
   <script src="./pitch-engine.js?v=20261023-local-1"></script>
   <script src="./parameter-model.js?v=20261023-axes-3"></script>
-  <script src="./upgrade.js?v=20261023-release-2"></script>
-  <script src="./piano-reference.js?v=20261023-release-2"></script>
-  <script src="./app.js?v=20261023-release-2"></script>
+  <script src="./upgrade.js?v=20261024-trim-1"></script>
+  <script src="./piano-reference.js?v=20261024-auto-reference-1"></script>
+  <script src="./app.js?v=20261024-save-fix-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261022-partial-vowels-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>
+  <script src="./speech-reference.js?v=20261023-preview-2"></script>
+  <script src="./speech-dsp.js?v=20261023-speech-3"></script>
+  <script src="./speech-capture.js?v=20261023-speech-3"></script>
+  <script src="./speech-portrait.js?v=20261023-speech-4"></script>
+  <script src="./voice-trim.js?v=20261024-trim-1"></script>
 </body>
 </html>

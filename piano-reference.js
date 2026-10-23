@@ -10,13 +10,13 @@ async function loadPianoBuffer(ctx,sample){
   const bytes=await pianoReferenceBuffers.get(sample.file);return ctx.decodeAudioData(bytes.slice(0));
 }
 async function playReferencePitch(button=$('#playReferencePitch')){
-  stopReferencePitch();const pitch={...recordingTargetPitch},displayNote=pitchNotation(pitch,$('#newVoicePart').value),originalText='播放钢琴参考音';let tone;
+  stopReferencePitch();const recordingPitch={...recordingTargetPitch},pitch=pianoPitchForVoice(recordingPitch,$('#newVoicePart').value),displayNote=pitch.note,originalText='播放钢琴参考音';let tone;
   button.disabled=true;button.textContent=`正在准备 ${displayNote}…`;
   try{
-    if(!NATURAL_PITCH_MIDIS.includes(pitch.midi))throw Error('请选择C3—C6列表中的音高');
+    if(!NATURAL_PITCH_MIDIS.includes(recordingPitch.midi))throw Error('请选择C3—C6列表中的音高');
     const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw Error('当前浏览器不支持网页音频');
     const ctx=new Context({latencyHint:'interactive'}),gain=ctx.createGain();gain.gain.value=0;
-    tone={ctx,oscillators:[],sources:[],button,originalText,finished:false,pitch,kind:'piano-sample'};referenceAudioContext=ctx;referenceTone=tone;
+    tone={ctx,oscillators:[],sources:[],button,originalText,finished:false,pitch,recordingPitch,kind:'piano-sample'};referenceAudioContext=ctx;referenceTone=tone;
     const sample=nearestPianoSample(pitch.midi),buffer=await loadPianoBuffer(ctx,sample);if(tone.finished||referenceTone!==tone)return;
     const target=PitchCore.midiToFrequency(pitch.midi),rate=target/sample.frequency,source=ctx.createBufferSource();source.buffer=buffer;source.playbackRate.setValueAtTime(rate,ctx.currentTime);source.detune.setValueAtTime(0,ctx.currentTime);source.connect(gain);tone.sources.push(source);tone.sample=sample;tone.playbackRate=rate;
     await routeToMediaChannel(ctx,gain,'声道实验台钢琴参考音');if(tone.finished||referenceTone!==tone)return;
