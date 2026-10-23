@@ -3,15 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="application-version" content="20261023-release-1">
   <meta name="theme-color" content="#eaf2f8">
   <meta name="description" content="面向声乐研究与教学的交互式声道、元音与频谱实验工具">
   <title>声道实验台 · Vocal Tract Lab</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071018'/%3E%3Cpath d='M14 35c9-15 24-20 36-13-12 2-17 9-18 25-6-6-11-9-18-12Z' fill='none' stroke='%234ce0c1' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='23' r='4' fill='%23ffd166'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261018-report-2">
+  <link rel="stylesheet" href="./styles.css?v=20261023-release-1">
   <link rel="stylesheet" href="./mobile.css?v=20261021-practice-1">
-  <link rel="stylesheet" href="./liquid-glass.css?v=20261018-report-5">
+  <link rel="stylesheet" href="./liquid-glass.css?v=20261023-release-1">
   <link rel="stylesheet" href="./interaction-controls.css?v=20261022-original-parameters-1">
   <link rel="stylesheet" href="./voice-cloud.css?v=20261021-1">
+  <link rel="stylesheet" href="./upgrade.css?v=20261023-release-1">
 </head>
 <body>
   <div class="app-shell">
@@ -29,7 +31,7 @@
           </svg>
         </div>
         <div class="brand-text">
-          <p class="eyebrow">VOCAL TRACT LAB · 01</p>
+          <p class="eyebrow">VOCAL TRACT LAB</p>
           <h1>声道实验台</h1>
         </div>
       </div>
@@ -127,17 +129,13 @@
           <div><span class="section-number">B</span><h2 id="controlsTitle">构形参数</h2></div>
           <button class="text-button" id="resetButton" title="恢复当前声线、当前元音的原始教学构形，不切换元音">恢复原值</button>
         </div>
-        <div class="pitch-reference-banner" role="note">
-          <span>新录音的目标音高</span><strong id="activePitchLabel">C4 · 261.63 Hz</strong><small>同条声线的已录元音须使用同一目标音高；已有录音的参数对比会优先按当前元音的音高标注自动匹配，不会移调声音。</small><button class="button" id="openPitchPicker" type="button">选择音高</button>
-          <p class="voice-pitch-status" id="voicePitchStatus" aria-live="polite">正在读取当前声线原音高…</p>
-        </div>
         <div class="tenor-preset">
-          <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>优先按当前元音录音标注的音高载入教学估算参数；保留当前声线，不改变录音原音高。</small></div>
+          <div><span class="preset-kicker">TEACHING REFERENCE · 非歌者实测</span><strong>经典意大利男高音构形</strong><small>按当前元音和音高匹配教学模型；载入不改变原录音。</small></div>
           <button class="button tenor-load-button" id="loadTenorModel" type="button">载入模型参数</button>
           <details class="tenor-provenance">
             <summary>这些参数从哪里来？</summary>
             <div>
-              <p><b>数值来源：</b>本项目先用五个元音的教学锚点，人工设定 C4 下的 0–100 构形数值；当前元音有录音音高标注时，按该音高作有限幅度的教学推算；没有标注时才用手动录音目标音高。它们<b>不是</b>帕瓦罗蒂或某位男高音的测量数据，也不是论文给出的标准比例。</p>
+              <p><b>数值来源：</b>本项目以五个元音的教学锚点，人工设定 C4 下的 0–100 构形数值。C3—C6 的其他音高以 C4 为起点，按半音差作限幅公式推算，并非逐音高采集的歌者数据。喉位和软腭沿用新版数值方向。它们<b>不是</b>帕瓦罗蒂或某位男高音的测量数据，也不是论文给出的标准比例。</p>
               <p><b>研究能支持什么：</b>舌、颌、唇与声道形状会影响共振峰；训练歌者会随音高调整元音和声道构形。研究支持方向和机制，不能把某一套 0–100 数值规定为所有人的正确答案。</p>
               <p class="source-links"><a href="https://www.csc.kth.se/utbildning/kth/kurser/DT2212/Singing%20Sundberg.pdf" target="_blank" rel="noopener noreferrer">Sundberg，1974：歌唱共振峰</a><a href="https://pubmed.ncbi.nlm.nih.gov/28029556/" target="_blank" rel="noopener noreferrer">Titze 等，2016：歌者共振峰范围</a></p>
             </div>
@@ -147,6 +145,7 @@
           <button type="button" data-control-view="sliders" aria-pressed="true">调节滑杆</button>
           <button type="button" data-control-view="comparison" aria-pressed="false">查看对比</button>
         </div>
+        <p class="current-voice-pitch" id="activePitchLabel" aria-live="polite">正在读取当前录音音高…</p>
         <div class="original-parameter-toolbar"><small id="originalParameterHint" title="原值是本声线当前元音的初始教学构形，并非器官位置实测">细线标记原始位置</small><button type="button" class="text-button" id="restoreVowelOriginal">恢复本元音原值</button></div>
         <div class="control-list" id="controlList">
           <label class="control-row" data-key="tongueHeight"><span><b>舌高</b><em>Tongue height</em></span><output>30</output><input type="range" min="0" max="100" value="30" aria-label="舌高"></label>
@@ -155,16 +154,18 @@
           <label class="control-row" data-key="thyrohyoidTension"><span><b>甲状舌骨肌</b><em>放松 — 喉位靠近舌骨</em></span><output>35</output><input type="range" min="0" max="100" value="35" aria-label="甲状舌骨肌"></label>
           <label class="control-row" data-key="jawOpening"><span><b>下颌开度</b><em>Jaw opening</em></span><output>72</output><input type="range" min="0" max="100" value="72" aria-label="下颌开度"></label>
           <label class="control-row" data-key="lipRounding"><span><b>唇部圆展</b><em>展唇 — 向前圆唇</em></span><output>22</output><input type="range" min="0" max="100" value="22" aria-label="唇部圆展"></label>
-          <label class="control-row" data-key="larynxHeight" title="数值增大，图示喉位下降"><span><b>喉位 ↓</b><em>数值越大，喉位越低</em></span><output>42</output><input type="range" min="0" max="100" value="42" aria-label="喉位"></label>
-          <label class="control-row" data-key="velumOpening" title="数值增大，图示软腭上抬"><span><b>软腭上抬 ↑</b><em>数值越大，软腭越高</em></span><output>18</output><input type="range" min="0" max="100" value="18" aria-label="软腭上抬"></label>
+          <label class="control-row" data-key="larynxHeight" title="数值增大，图示喉位下降"><span><b>喉位 ↓</b><em>数值越大，喉位越低</em></span><output>58</output><input type="range" min="0" max="100" value="58" aria-label="喉位"></label>
+          <label class="control-row" data-key="velumOpening" title="数值增大，图示软腭上抬"><span><b>软腭上抬 ↑</b><em>数值越大，软腭越高</em></span><output>82</output><input type="range" min="0" max="100" value="82" aria-label="软腭上抬"></label>
         </div>
 
         <section class="parameter-comparison" aria-labelledby="comparisonTitle">
-          <div class="comparison-heading"><div><span class="preset-kicker">SAMPLE-PITCH COMPARISON</span><strong id="comparisonTitle">同音高·参数对比</strong></div><button class="button comparison-preset-button" id="applyTenorPreset" type="button" title="载入当前元音、对应音高的教学模型参数，不改变录音原音高">载入教学参数</button><span><b id="comparisonPitch">C4 · 261.63 Hz · 录音目标</b> · <b id="comparisonVowel">[a]</b></span></div>
-          <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">经典男高音</b></span></div>
+          <div class="comparison-heading"><div><span class="preset-kicker">SAMPLE-PITCH COMPARISON</span><strong id="comparisonTitle">同音高·参数对比</strong></div><button class="button comparison-preset-button" id="applyTenorPreset" type="button" hidden title="载入当前元音、对应音高的教学模型参数，不改变录音原音高">载入教学参数</button><span><b id="comparisonPitch">C4 · 261.63 Hz · 录音目标</b> · <b id="comparisonVowel">[a]</b></span></div>
+          <div class="reference-toolbar"><select id="referenceVoiceSelect" aria-label="选择对比参考"></select><button class="button ghost" id="openReferenceLibrary" type="button">参考资料</button></div>
+          <div class="comparison-legend"><span><i class="current-dot"></i><b id="comparisonCurrentName">当前构形</b></span><span><i class="tenor-dot"></i><b id="comparisonTenorName">参考声线</b></span></div>
           <p class="comparison-adjust-hint">拖动左侧蓝色条调参数；右侧为教学参考。</p>
           <div class="comparison-rows" id="comparisonRows"></div>
           <p id="comparisonDescription">左侧是当前滑杆值，右侧是按当前元音音高推算的教学参考；不是男高音实测数据，也不会改变录音。</p>
+          <div id="researchSummary" class="research-summary" hidden></div>
         </section>
 
       </section>
@@ -255,18 +256,19 @@
       <p class="modal-intro">在舒适且一致的音高上，任选一个或几个元音录制即可保存，无需录满五个。程序只分析已录元音的 F0 与 F1/F2/F3，并生成教学构形映射点；这些点不是器官位置实测。未录元音不提供声音和参数。默认只保存在这台设备，不会自动上传。</p>
       <div class="recording-pitch-guide">
         <div><span>先选择你要录制的唯一音高</span><strong id="recordingPitchLabel">C4 · 261.63 Hz</strong><small>选定后，本条声线中要录的元音均唱这个音；至少录一个即可保存。</small></div>
-        <button class="button" id="playReferencePitch" type="button">播放参考音</button>
+        <button class="button" id="playReferencePitch" type="button">播放钢琴参考音</button>
       </div>
       <div class="pitch-picker" id="pitchPicker" aria-label="选择录制音高">
-        <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C6 · Scientific Pitch Notation</small></div>
-        <div class="pitch-keyboard" id="pitchKeyboard"></div>
+        <div class="pitch-picker-heading"><strong>上下滚动，点击一个音高</strong><small>C3—C6</small></div>
+        <div class="pitch-keyboard" id="pitchKeyboard"></div><p class="model-note" id="pitchNotationNote">音名按实际音高显示。</p>
       </div>
       <label class="pack-name">声线名称<input id="packName" type="text" value="我的声线" maxlength="30"></label>
-      <label class="pack-name" style="display:none">声部<select id="newVoicePart"><option value="unspecified">暂不指定</option><option value="tenor">男高音</option></select></label>
+      <label class="pack-name">声部<select id="newVoicePart"><option value="unspecified">请选择声部</option><option value="male">男声</option><option value="female">女声</option><option value="mixed">假声男高音</option><option value="soprano">女高音</option><option value="mezzo">女中音</option><option value="alto">女低音</option><option value="tenor">男高音</option><option value="baritone">男中音</option><option value="bass">男低音</option></select></label>
       <p class="model-note" id="voiceDraftStatus" role="status">录音会自动保存到本机；同一设备、浏览器和网址重新打开可继续。不会自动上传。</p>
       <p class="model-note">点击“保存到本机声线”后，可在顶部选择并长期使用。清除网站数据或更换网址后无法自动找回，重要录音请“导出当前声线”备份。</p>
       <button class="button ghost" id="clearVoiceDraft" type="button">清空本次草稿</button>
-      <div class="sample-grid" id="sampleGrid"></div>
+      
+    <div class="sample-grid" id="sampleGrid"></div>
       <div class="recording-monitor" id="recordingMonitor" data-state="idle" aria-live="polite">
         <div class="recording-monitor-head">
           <span class="recording-dot" aria-hidden="true"></span>
@@ -274,26 +276,11 @@
           <time id="recordingTime">00:00.0</time>
         </div>
         <canvas id="recordingWaveform" width="640" height="120" aria-label="麦克风实时音量波形"></canvas>
+        <div class="live-pitch"><strong id="livePitchValue">—</strong><small id="livePitchDetail">录音时显示所选分析音高</small></div>
         <div class="recording-level-labels"><span>安静</span><span id="recordingLevelText">麦克风尚未启用</span><span>响亮</span></div>
       </div>
-      <details class="pitch-debug" id="pitchDebug">
-        <summary class="pitch-debug-title"><strong>音高检测详情与调整</strong><span id="pitchDebugSource">等待录音</span></summary>
-        <label class="octave-assist-toggle"><input id="humanOctaveAssist" type="checkbox" checked><span>按所选音高辅助标注</span><small>仅当检测值接近所选音高的一半时调整音高标注；不改变录音。下方保留原始频率，必要时可关闭。</small></label>
-        <dl>
-          <div><dt>Raw frequency</dt><dd id="debugRawFrequency">—</dd></div>
-          <div><dt>Corrected frequency</dt><dd id="debugCorrectedFrequency">—</dd></div>
-          <div><dt>Pitch confidence</dt><dd id="debugPitchConfidence">—</dd></div>
-          <div><dt>MIDI</dt><dd id="debugMidi">—</dd></div>
-          <div><dt>Note name</dt><dd id="debugNote">—</dd></div>
-          <div><dt>Octave</dt><dd id="debugOctave">—</dd></div>
-          <div><dt>Decoded sample rate</dt><dd id="debugSampleRate">—</dd></div>
-          <div><dt>Recording duration</dt><dd id="debugDuration">—</dd></div>
-          <div><dt>Detector</dt><dd id="debugDetector">MPM + YIN</dd></div>
-        </dl>
-        <p class="pitch-debug-rule">显示音名只由 Corrected frequency 换算：130.81 Hz = C3；261.63 Hz = C4。</p>
-        <p id="pitchTestStatus">科学音高自动测试：等待运行</p>
-      </details>
-      <div class="record-status" id="recordStatus">当前目标：C4（261.63 Hz）。每段 3–6 秒；其他音高不会通过检查。</div>
+  
+      <div id="recordStatus" hidden></div>
       <label class="cloud-check cloud-optional"><input type="checkbox" id="offerVoiceSubmission"><span>本机保存后，打开可选提交说明（不会自动上传）</span></label>
       <div class="modal-actions"><button class="button ghost" id="submitSavedVoice" type="button">提交已保存声线（可选）</button><button class="button ghost" id="exportCurrentVoice" type="button">导出当前声线</button><button class="button ghost" value="cancel">关闭（保留草稿）</button><button class="button primary" id="saveVoicePack" type="button" disabled>保存到本机声线</button></div>
     </form>
@@ -314,19 +301,37 @@
         <li><b>调整构形</b><span>拖动剖面节点，或使用参数滑杆做精细调整。</span></li>
         <li><b>听辨变化</b><span>点击“发声”持续试听当前元音，再次点击停止；调节参数时声音会连续变化。</span></li>
         <li><b>观察共振</b><span>比较 IPA 位置、F1/F2/F3 与频谱包络的同步变化。</span></li>
-        <li><b>保存对照</b><span>保存构形并放入 A/B 槽，快速切换听辨。</span></li>
+        <li><b>保存声线</b><span>录制任意元音保存到本机，之后可选择参考声线或导出备份。</span></li>
       </ol>
       <div class="license-note"><b>声音来源与处理</b><p>网站内置一套由作者本人授权提供的创始人声线，首次打开即可试听，界面中不可删除。访问者新增声线默认只保存在自己的浏览器；只有在可选提交页面明确同意并提交后才上传给项目负责人。云端提交不公开，也不会自动成为网站内置声线。本机删除与云端撤回分别操作。创始人录音会随公开网页提供。</p></div>
       <button class="button ghost cloud-admin-link" id="openCloudAdmin" type="button">项目负责人 · 管理提交</button>
-      <div class="license-note"><b>经典意大利男高音预设</b><p>C4（261.63 Hz）是本模型的参考构形；页面优先依据当前元音录音标注的音高作小幅教学估算，没有标注时才用手动目标。音高升降时，真实歌者会改变元音修饰、下颌、舌位和声道调谐，因此结果不是每位歌者的唯一正确答案。它也不是帕瓦罗蒂本人录音、声音克隆或医学结论。</p><a href="https://audiologiaefoniatria.padovauniversitypress.it/2024/2/4" target="_blank" rel="noreferrer">查看帕瓦罗蒂声学综述</a></div>
-      <div class="license-note"><b>个人声线与男高音参考</b><p>录制或导入任意持续元音后，程序会在浏览器本机估计音高与共振峰，并换算成教学构形点。男高音模型没有人人适用的 0–100 器官比例；也可导入经授权的真人录音作个体听辨参考。公开分享老师录音前，请先取得录制与再分发许可。报告不等同于实验室校准或医学检查。</p></div>
+      <div class="license-note"><b>钢琴参考音</b><p>使用Alexander Holm录制的Salamander Grand Piano钢琴采样，按固定速率播放对应音高，不使用滑音。</p><a href="https://github.com/Tonejs/audio/tree/master/salamander" target="_blank" rel="noopener noreferrer">钢琴采样来源 · CC BY 3.0</a></div>
+      <div class="license-note"><b>个人声线与录音参考</b><p>录制或导入持续元音后，在本机估计音高与共振峰并换算教学构形点。参考参数只在有同元音、相近音高且可靠分析的资料时提供；没有数据的项目保持不显示。公开分享老师录音前，请先取得录制与再分发许可。</p></div>
       <p class="disclaimer">本工具是声乐教学与听觉实验模型，不用于医学诊断。图示和共振峰为近似映射。</p>
     </form>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="referenceDialog" class="reference-dialog">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><div><p class="eyebrow">REFERENCE LIBRARY</p><h2>参考声线与研究资料</h2></div><button class="icon-button" value="cancel" aria-label="关闭参考资料">×</button></div>
+      <p>导入已授权的声线包，或带来源的研究CSV。仅保存在本机。</p>
+      <label>声线包（本站导出的 .vocalpack.json）<input id="importReferencePack" type="file" accept=".json,application/json"></label>
+      <label>声部<select id="importVoicePart"><option value="unspecified">保留文件声部 / 暂不指定</option><option value="male">男声</option><option value="female">女声</option><option value="mixed">假声男高音</option><option value="soprano">女高音</option><option value="mezzo">女中音</option><option value="alto">女低音</option><option value="tenor">男高音</option><option value="baritone">男中音</option><option value="bass">男低音</option></select></label>
+      <label>研究资料（UTF-8 CSV）<input id="importResearchCsv" type="file" accept=".csv,text/csv"></label>
+      <p>支持多个声部、元音和音高；F1—F3、R1—R3及毫米形态测量可分别留空。形态测量保留原单位。</p>
+      <div class="modal-actions"><button class="button ghost" id="downloadResearchTemplate" type="button">下载空白模板</button><button class="button ghost" id="deleteResearchDataset" type="button" hidden>删除当前资料</button><button class="button ghost" id="reanalyzeVoice" type="button">重新分析当前本机声线</button></div>
+      <p id="reportImportStatus" role="status">尚未导入新的研究资料。机构原始数据需要整理并核对许可后导入。</p>
+      <p class="model-note">重新分析会保留旧结果。内置创始人声线保持原样。</p>
+      <div class="modal-actions"><button class="button primary" value="cancel">完成</button></div>
+    </form>
+  </dialog>
   <script src="./three.min.js"></script>
-  <script src="./app.js?v=20261022-organ-directions-1"></script>
+  <script src="./pitch-engine.js?v=20261023-local-1"></script>
+  <script src="./parameter-model.js?v=20261023-axes-3"></script>
+  <script src="./upgrade.js?v=20261023-release-1"></script>
+  <script src="./piano-reference.js?v=20261023-release-1"></script>
+  <script src="./app.js?v=20261023-release-1"></script>
   <script src="./voice-cloud-config.js?v=20261021-1"></script>
   <script src="./voice-cloud.js?v=20261022-partial-vowels-1"></script>
   <script src="./spectrum3d.js?v=20261018-1"></script>

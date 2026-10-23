@@ -330,3 +330,36 @@ button:active { transform: translateY(1px) scale(.985); }
 @supports not (backdrop-filter: blur(1px)) {
   .topbar, .panel, .modal-card, .mobile-tabs, .mobile-stage-anchor { background: #f6fbfe; }
 }
+
+/* 声部声线与教学报告：清楚区分实录、模型和推测。 */
+.teaching-report { grid-column: 1/-1; border: 1px solid rgba(112,158,184,.29); border-radius: 17px; padding: 17px; background: rgba(248,252,255,.82); color: var(--ink); }
+.teaching-report-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.teaching-report-heading h3 { margin: 3px 0 0; font-size: 17px; }
+.teaching-report-heading .button { min-height: 40px; white-space: nowrap; }
+.report-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.report-fields label, .pack-name { display: grid; gap: 6px; color: #506d7d; font-size: 12px; }
+.report-fields select, .pack-name select { box-sizing: border-box; width: 100%; min-height: 42px; padding: 8px 11px; border: 1px solid rgba(112,158,184,.35); border-radius: 11px; background: #fff; color: #1e3e50; font: inherit; font-size: 14px; }
+.report-fields select:focus-visible, .pack-name select:focus-visible, .report-import label:focus-within { outline: 2px solid #0b92a5; outline-offset: 2px; }
+.report-import { display: flex; align-items: center; gap: 11px; margin-top: 12px; }
+.report-import-part { display: grid; gap: 4px; color: #506d7d; font-size: 11px; }
+.report-import-part select { min-width: 125px; min-height: 41px; padding: 7px 9px; border: 1px solid rgba(112,158,184,.35); border-radius: 10px; background: #fff; color: #1e3e50; font: inherit; font-size: 13px; }
+.report-import label { position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; min-height: 41px; white-space: nowrap; }
+.report-import label.report-import-part { display: grid; justify-content: stretch; cursor: default; }
+.report-import input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.report-import small, .report-import-status { color: #64808e; font-size: 11px; line-height: 1.5; }
+.report-apply { margin-top: 10px; min-height: 40px; }
+.report-import-status:not(:empty) { margin-top: 8px; }
+.report-data-import { margin-top: 11px; padding: 10px 12px; border: 1px solid rgba(112,158,184,.28); border-radius: 12px; background: rgba(255,255,255,.45); }
+.report-data-import summary { cursor: pointer; color: #31596a; font-size: 12px; font-weight: 700; }
+.report-data-import p, .report-data-import small { display: block; margin: 8px 0; color: #64808e; font-size: 11px; line-height: 1.55; }
+.report-data-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.report-data-actions .button { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; cursor: pointer; }
+.report-data-actions input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.report-data-actions .button:focus-within { outline: 2px solid #0b92a5; outline-offset: 2px; }
+.teaching-report-body { display: grid; gap: 10px; margin-top: 15px; }
+.report-block { border: 1px solid rgba(112,158,184,.23); border-radius: 12px; background: rgba(255,255,255,.72); padding: 11px 13px; }
+.report-block h4 { margin: 0 0 6px; font-size: 13px; color: #244b5c; }
+.report-block p { margin: 4px 0; font-size: 12px; line-height: 1.65; color: #4c6a7b; }
+.report-block strong { color: #0a8197; }
+.report-disclaimer { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid rgba(112,158,184,.23); color: #6b7f89; font-size: 11px; line-height: 1.6; }
+@media (max-width: 700px) { .report-fields { grid-template-columns: 1fr; } .report-import { align-items: stretch; flex-direction: column; } .teaching-report-heading { align-items: flex-start; } .teaching-report-heading .button { font-size: 11px; padding: 7px 9px; } }
